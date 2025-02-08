@@ -1,6 +1,7 @@
 package controller;
 
 import model.Budget;
+import utils.EmailNotifier;
 
 public class BudgetController {
     private Budget budget;

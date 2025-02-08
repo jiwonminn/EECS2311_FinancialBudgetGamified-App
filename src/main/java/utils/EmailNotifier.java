@@ -6,8 +6,8 @@ import javax.mail.internet.*;
 
 public class EmailNotifier {
 
-    private static final String FROM_EMAIL = "your-email@gmail.com"; // Replace with your email
-    private static final String PASSWORD = "your-app-password"; // Replace with app password
+    private static final String FROM_EMAIL = "financegame9@gmail.com"; // Replace with your email
+    private static final String PASSWORD = "hmst zckp fwza issw"; // Replace with app password
 
     public static void sendBudgetExceededEmail(String recipientEmail, String username, double budget, double spending) {
         Properties properties = new Properties();
