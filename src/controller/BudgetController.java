@@ -9,8 +9,21 @@ public class BudgetController {
         this.budget = new Budget(monthlyLimit, weeklyLimit);
     }
 
-    public boolean isOverBudget(double expense) {
+    public boolean isOverWeeklyBudget(double expense) {
         return expense > budget.getWeeklyLimit();
+    }
+
+    public boolean isOverMonthlyBudget(double expense) {
+        return expense > budget.getMonthlyLimit();
+    }
+
+    public void checkBudgetAndNotify(String recipientEmail, String username, double expense) {
+        if (isOverWeeklyBudget(expense)) {
+            EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getWeeklyLimit(), expense);
+        }
+        if (isOverMonthlyBudget(expense)) {
+            EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getMonthlyLimit(), expense);
+        }
     }
 
     public void updateBudget(double monthly, double weekly) {
