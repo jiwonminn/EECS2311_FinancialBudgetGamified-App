@@ -4,7 +4,7 @@ import controller.UserController;
 
 public class MainUI {
     public static void main(String[] args) {
-        UserController userController = new UserController("Alice", 1000);
+        UserController userController = new UserController("Alice", "hhhhh",1000);
         
         System.out.println("Welcome to Financial Budget Gamified App!");
         System.out.println(userController.getUserInfo());
