@@ -2,18 +2,22 @@ package main.java.view;
 
 import main.java.controller.TransactionController;
 import main.java.model.Transaction;
-import org.jdatepicker.JDatePicker;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.UtilDateModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.Properties;
 
 public class CalendarUI extends JFrame {
     private TransactionController transactionController;
-    private JDatePicker datePicker;
+    private JDatePickerImpl datePicker;
     private JTextField descriptionField;
     private JTextField amountField;
     private JRadioButton incomeButton;
@@ -27,22 +31,28 @@ public class CalendarUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(6, 1));
 
-        // Date Picker
-        datePicker = new JDatePicker();
-        add(new JLabel("Select Date:"));
-        add((Component) datePicker);
+        // Setup Date Picker Model
+        UtilDateModel model = new UtilDateModel();
+        Properties p = new Properties();
+        p.put("text.today", "Today");
+        p.put("text.month", "Month");
+        p.put("text.year", "Year");
 
-        // Transaction Description
+        JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
+        datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+
+        // Add components to UI
+        add(new JLabel("Select Date:"));
+        add(datePicker);
+
         descriptionField = new JTextField();
         add(new JLabel("Description:"));
         add(descriptionField);
 
-        // Amount Input
         amountField = new JTextField();
         add(new JLabel("Amount:"));
         add(amountField);
 
-        // Income/Expense Selection
         incomeButton = new JRadioButton("Income");
         expenseButton = new JRadioButton("Expense");
         ButtonGroup group = new ButtonGroup();
@@ -53,16 +63,13 @@ public class CalendarUI extends JFrame {
         radioPanel.add(expenseButton);
         add(radioPanel);
 
-        // Submit Button
         JButton submitButton = new JButton("Log Transaction");
         add(submitButton);
 
-        // Transaction Display
         transactionDisplay = new JTextArea(10, 30);
         transactionDisplay.setEditable(false);
         add(new JScrollPane(transactionDisplay));
 
-        // Button Click Listener
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -75,7 +82,13 @@ public class CalendarUI extends JFrame {
 
     private void logTransaction() {
         try {
-            LocalDate date = LocalDate.parse(datePicker.getFormattedTextField().getText());
+            Date selectedDate = (Date) datePicker.getModel().getValue();
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Please select a date.");
+                return;
+            }
+
+            LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             String description = descriptionField.getText();
             double amount = Double.parseDouble(amountField.getText());
             boolean isIncome = incomeButton.isSelected();
@@ -88,9 +101,8 @@ public class CalendarUI extends JFrame {
     }
 
     private void updateTransactionDisplay() {
-        List<Transaction> transactions = transactionController.getTransactions();
         transactionDisplay.setText("");
-        for (Transaction t : transactions) {
+        for (Transaction t : transactionController.getTransactions()) {
             transactionDisplay.append(t.toString() + "\n");
         }
     }
