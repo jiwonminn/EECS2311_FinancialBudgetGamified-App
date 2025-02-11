@@ -33,7 +33,7 @@ public class TransactionController {
     // READ: Fetch all transactions
     public List<Transaction> getTransactions() {
         List<Transaction> transactions = new ArrayList<>();
-        String query = "SELECT * FROM transactions";
+        String query = "SELECT * FROM transactions ORDER BY date DESC";
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
