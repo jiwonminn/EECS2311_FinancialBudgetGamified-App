@@ -1,7 +1,7 @@
 package main.java.view;
 
 import main.java.controller.TransactionController;
-import main.java.model.Transaction;
+import main.java.model.*;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.UtilDateModel;
@@ -31,17 +31,15 @@ public class CalendarUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(6, 1));
 
-        // Setup Date Picker Model
+        // Date Picker Setup
         UtilDateModel model = new UtilDateModel();
         Properties p = new Properties();
         p.put("text.today", "Today");
         p.put("text.month", "Month");
         p.put("text.year", "Year");
-
         JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
         datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
 
-        // Add components to UI
         add(new JLabel("Select Date:"));
         add(datePicker);
 
@@ -81,23 +79,14 @@ public class CalendarUI extends JFrame {
     }
 
     private void logTransaction() {
-        try {
-            Date selectedDate = (Date) datePicker.getModel().getValue();
-            if (selectedDate == null) {
-                JOptionPane.showMessageDialog(this, "Please select a date.");
-                return;
-            }
+        Date selectedDate = (Date) datePicker.getModel().getValue();
+        LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        String description = descriptionField.getText();
+        double amount = Double.parseDouble(amountField.getText());
+        boolean isIncome = incomeButton.isSelected();
 
-            LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            String description = descriptionField.getText();
-            double amount = Double.parseDouble(amountField.getText());
-            boolean isIncome = incomeButton.isSelected();
-
-            transactionController.addTransaction(description, amount, date, isIncome);
-            updateTransactionDisplay();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid input. Please check your entries.");
-        }
+        transactionController.addTransaction(description, amount, date, isIncome);
+        updateTransactionDisplay();
     }
 
     private void updateTransactionDisplay() {

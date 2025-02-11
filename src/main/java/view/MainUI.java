@@ -1,6 +1,6 @@
 package view;
 
-import controller.UserController;
+import main.java.controller.UserController;
 
 public class MainUI {
     public static void main(String[] args) {

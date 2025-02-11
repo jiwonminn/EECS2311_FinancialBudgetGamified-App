@@ -2,7 +2,8 @@ package tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-import model.User;
+
+import main.java.model.User;
 
 public class UserTest {
 //

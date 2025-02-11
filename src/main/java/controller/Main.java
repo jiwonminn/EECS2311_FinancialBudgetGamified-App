@@ -1,6 +1,6 @@
-package controller;
+package main.java.controller;
 
-import controller.BudgetController;
+import main.java.controller.BudgetController;
 
 
 

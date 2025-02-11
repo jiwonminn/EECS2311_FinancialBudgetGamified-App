@@ -1,4 +1,4 @@
-package model;
+package main.java.model;
 
 public class Budget {
     private double monthlyLimit;
