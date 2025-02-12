@@ -4,6 +4,7 @@ S:\EECS2311_FinancialBudgetGamified-App\src\main\java\controller\Main.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\controller\QuizController.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\controller\TransactionController.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\controller\UserController.java
+S:\EECS2311_FinancialBudgetGamified-App\src\main\java\database\DatabaseManager.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\model\Budget.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\model\Leaderboard.java
 S:\EECS2311_FinancialBudgetGamified-App\src\main\java\model\Quiz.java
