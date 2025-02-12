@@ -1,7 +1,7 @@
-package main.java.controller;
+package controller;
 
 import database.DatabaseManager;
-import main.java.model.Transaction;
+import model.Transaction;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;

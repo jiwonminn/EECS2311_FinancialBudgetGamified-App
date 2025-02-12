@@ -1,6 +1,6 @@
-package main.java.controller;
+package controller;
 
-import main.java.model.Budget;
+import model.Budget;
 import utils.EmailNotifier;
 
 public class BudgetController {

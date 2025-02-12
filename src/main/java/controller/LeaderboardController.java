@@ -1,4 +1,4 @@
-package main.java.controllercontroller;
+package controller;
 
 public class LeaderboardController {
 
