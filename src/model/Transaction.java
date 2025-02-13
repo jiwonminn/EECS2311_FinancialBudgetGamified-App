@@ -7,6 +7,7 @@ public class Transaction {
     private String date;
     private String description;
     private double amount;
+    
 
     public Transaction(String date, String description, double amount) {
         this.date = date;
