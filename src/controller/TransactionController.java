@@ -16,6 +16,10 @@ public class TransactionController {
         transactions.add(new Transaction(date, description, amount));
     }
 
+    public List<Transaction> getTransactions() {
+        return new ArrayList<>(transactions); 
+    }
+    
     public void displayTransactions() {
         if (transactions.isEmpty()) {
             System.out.println("No transactions available.");
@@ -47,7 +51,7 @@ public class TransactionController {
     }
 
     // Filter transactions by date range
-    public void filterByDateRange(String startDate, String endDate) {
+    public List<Transaction> filterByDateRange(String startDate, String endDate) {
         List<Transaction> filtered = transactions.stream()
             .filter(t -> t.getDate().compareTo(startDate) >= 0 && t.getDate().compareTo(endDate) <= 0)
             .collect(Collectors.toList());
@@ -58,10 +62,11 @@ public class TransactionController {
             System.out.println("Transactions between " + startDate + " and " + endDate + ":");
             filtered.forEach(System.out::println);
         }
+        return filtered;
     }
 
     // Filter transactions by description keyword
-    public void filterByDescription(String keyword) {
+    public List<Transaction> filterByDescription(String keyword) {
         List<Transaction> filtered = transactions.stream()
             .filter(t -> t.getDescription().toLowerCase().contains(keyword.toLowerCase()))
             .collect(Collectors.toList());
@@ -72,6 +77,7 @@ public class TransactionController {
             System.out.println("Transactions containing '" + keyword + "':");
             filtered.forEach(System.out::println);
         }
+        return filtered;
     }
 
 
