@@ -18,11 +18,11 @@ import java.util.Properties;
 public class CalendarUI extends JFrame {
     private TransactionController transactionController;
     private JDatePickerImpl datePicker;
-    private JTextField descriptionField;
     private JTextField amountField;
     private JRadioButton incomeButton;
     private JRadioButton expenseButton;
     private JTextArea transactionDisplay;
+    private JComboBox<String> catalogBox;
 
     public CalendarUI() {
         transactionController = new TransactionController();
@@ -43,13 +43,14 @@ public class CalendarUI extends JFrame {
         add(new JLabel("Select Date:"));
         add(datePicker);
 
-        descriptionField = new JTextField();
-        add(new JLabel("Description:"));
-        add(descriptionField);
-
         amountField = new JTextField();
         add(new JLabel("Amount:"));
         add(amountField);
+
+        String[] catalogs = {"Food", "Rent", "Salary", "Shopping", "Transport", "Entertainment", "Other"};
+        catalogBox = new JComboBox<>(catalogs);
+        add(new JLabel("Catalog:"));
+        add(catalogBox);
 
         incomeButton = new JRadioButton("Income");
         expenseButton = new JRadioButton("Expense");
@@ -74,20 +75,40 @@ public class CalendarUI extends JFrame {
                 logTransaction();
             }
         });
+        JButton openFilterButton = new JButton("Filtering");
+        add(openFilterButton);
 
+        openFilterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new FilterUI(transactionController);
+            }
+        });
         setVisible(true);
     }
 
     private void logTransaction() {
         Date selectedDate = (Date) datePicker.getModel().getValue();
+        if (selectedDate == null) {
+            JOptionPane.showMessageDialog(this, "Please select a date.");
+            return;
+        }
+
         LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        String description = descriptionField.getText();
-        double amount = Double.parseDouble(amountField.getText());
+        String catalog = (String) catalogBox.getSelectedItem();
+        double amount;
+        try {
+            amount = Double.parseDouble(amountField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid amount.");
+            return;
+        }
         boolean isIncome = incomeButton.isSelected();
 
-        transactionController.addTransaction(description, amount, date, isIncome);
+        transactionController.addTransaction(catalog, amount, date, isIncome);
         updateTransactionDisplay();
     }
+
 
     private void updateTransactionDisplay() {
         transactionDisplay.setText("");

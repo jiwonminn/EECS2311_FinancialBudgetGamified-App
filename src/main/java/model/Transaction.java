@@ -3,20 +3,20 @@ package model;
 import java.time.LocalDate;
 
 public class Transaction {
-    private String description;
+    private String catalog;
     private double amount;
     private LocalDate date;
     private boolean isIncome; // true = income, false = expense
 
-    public Transaction(String description, double amount, LocalDate date, boolean isIncome) {
-        this.description = description;
+    public Transaction(String catalog, double amount, LocalDate date, boolean isIncome) {
+        this.catalog = catalog;
         this.amount = amount;
         this.date = date;
         this.isIncome = isIncome;
     }
 
-    public String getDescription() {
-        return description;
+    public String getCatalog() {
+        return catalog;
     }
 
     public double getAmount() {
@@ -37,6 +37,6 @@ public class Transaction {
 
     @Override
     public String toString() {
-        return date + " | " + getType() + ": " + description + " - $" + amount;
+        return date + " | " + getType() + ": " + catalog + " - $" + amount;
     }
 }
