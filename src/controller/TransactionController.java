@@ -31,7 +31,7 @@ public class TransactionController {
     }
 
  // Sort transactions
-    public void sortTransactions(String criteria) {
+    public List<Transaction> sortTransactions(String criteria) {
         switch (criteria.toLowerCase()) {
             case "date":
                 transactions.sort(Comparator.comparing(Transaction::getDate));
@@ -44,10 +44,11 @@ public class TransactionController {
                 break;
             default:
                 System.out.println("Invalid sorting criteria! Use 'date', 'amount', or 'description'.");
-                return;
+                return null;
         }
         System.out.println("Transactions sorted by " + criteria + ":");
         displayTransactions();
+    return transactions;
     }
 
     // Filter transactions by date range
