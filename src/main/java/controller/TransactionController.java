@@ -15,10 +15,10 @@ public class TransactionController {
     }
 
     //REATE: Add Transaction
-    public void addTransaction(String catalog, double amount, LocalDate date, boolean isIncome) {
-        String query = "INSERT INTO transactions (catalog, amount, date, is_income) VALUES (?, ?, ?, ?)";
+    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
+        String query = "INSERT INTO transactions (description, amount, date, is_income) VALUES (?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, catalog);
+            stmt.setString(1, description);
             stmt.setDouble(2, amount);
             stmt.setDate(3, Date.valueOf(date));
             stmt.setBoolean(4, isIncome);
@@ -39,7 +39,7 @@ public class TransactionController {
 
             while (rs.next()) {
                 Transaction transaction = new Transaction(
-                        rs.getString("catalog"),
+                        rs.getString("description"),
                         rs.getDouble("amount"),
                         rs.getDate("date").toLocalDate(),
                         rs.getBoolean("is_income")
@@ -65,54 +65,4 @@ public class TransactionController {
             System.out.println("Failed to delete transaction!");
         }
     }
-
-    // View a transaction by filtering
-    public List<Transaction> getTransactionsByFilters(LocalDate startDate, LocalDate endDate, String catalog, boolean sortByAmount) {
-        List<Transaction> transactions = new ArrayList<>();
-        String query = "SELECT * FROM transactions WHERE 1=1";
-
-        if (startDate != null) {
-            query += " AND date >= ?";
-        }
-        if (endDate != null) {
-            query += " AND date <= ?";
-        }
-        if (!"All".equals(catalog)) {
-            query += " AND catalog = ?";
-        }
-        if (sortByAmount) {
-            query += " ORDER BY amount DESC";
-        } else {
-            query += " ORDER BY date DESC";
-        }
-
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            int paramIndex = 1;
-            if (startDate != null) {
-                stmt.setDate(paramIndex++, Date.valueOf(startDate));
-            }
-            if (endDate != null) {
-                stmt.setDate(paramIndex++, Date.valueOf(endDate));
-            }
-            if (!"All".equals(catalog)) {
-                stmt.setString(paramIndex++, catalog);
-            }
-
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Transaction transaction = new Transaction(
-                        rs.getString("catalog"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        rs.getBoolean("is_income")
-                );
-                transactions.add(transaction);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Failed to fetch transactions!");
-        }
-        return transactions;
-    }
-
 }
