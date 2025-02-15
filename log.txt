@@ -1,0 +1,59 @@
+February 3rd, 2025
+-Had a meeting for a class
+-Discussed on further assignments for ITR1
+-We decided to split up the tasks and each person will be responsible for one user story
+-Joshua for log, Khalifa for alerts, Jiwon for catalog, Andy for budget, Peyton for log viewing
+-Decided to complete a frame work as soon as possible because we wish to develop in deeper depth with it
+
+February 9th, 2025
+-Peyton
+--Added the base of Transaction and TransactionControlle
+--Simple ability to add and display transactions with TransactionController class
+
+February 11th, 2025
+-Joshua
+--Added the basic logging feature on simple GUI
+--Decided to add simple local MYSQL server hosting
+--Time spent around 5 hours
+
+-As a group
+--Discuess our coding plans in details and shared concerns
+--Helped each other when someone get stuck on something or search for an assistance
+--Convinced with individual work, make sure everyone is on the right track
+--Spend around 2 hours
+
+February 13th, 2025
+-Peyton
+--Worked on own version of class for TransactionController with new method that allow filtering and sorting of transaction
+--Modified those to allow test and added test cases for Transaction and TransactionController class in master branch
+--Time spent around 3 hours
+---Realized it is different from what we wanted so did not push into main branch as a result 
+
+February 14th, 2025
+-Jiwon
+--Added a dropbox on Calendar UI insteads of description part to allow users for catalogize their income and expense
+--Created a Filter UI to show user for filtered transactions based on their selected preferences
+--Time spent around 3 hours
+--Also worked on planning document for the modified version and the log text file for Iteration 1
+--Time spent around 2.5 hours
+--Also added a tag for the codes
+--Time spent around 1.5 hours
+
+-Andy
+--Added the Transaction Log UI so it displays a table full of data from the SQL database
+--Connected the UI so it retrieves the data from the SQL database server
+--Typed up the Wiki for Iteration 1
+--Time spent around 5 hours
+
+-Khalifa
+--Developed Email Notifier for budget alerts
+--Added budget overuse alert functionality
+--Created User Info Dialog UI for collecting user details
+--Time spent 8 hours
+--Set up the project's architecture
+--Issue encountered:
+---SMTP authentication failure
+---UI layout adjustments for modal dialog
+--Lesson learned:
+---Implemented environment variables for credentials
+---Improved UI usability and validatoion techniques
