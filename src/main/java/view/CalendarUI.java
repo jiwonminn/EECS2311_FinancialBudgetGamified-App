@@ -1,6 +1,7 @@
 package view;
 
 import controller.TransactionController;
+import controller.UserController;
 import model.*;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.JDatePanelImpl;
@@ -25,6 +26,23 @@ public class CalendarUI extends JFrame {
     private JComboBox<String> catalogBox;
 
     public CalendarUI() {
+
+        UserInfoDialog userInfoDialog = new UserInfoDialog(null);
+        userInfoDialog.setVisible(true);
+
+        // If the user didn't submit details, exit the program
+        if (!userInfoDialog.isSubmitted()) {
+            System.exit(0);
+        }
+
+        // Get user details
+        String userName = userInfoDialog.getUserName();
+        String userEmail = userInfoDialog.getUserEmail();
+
+        // Initialize the UserController with user details
+        UserController userController = new UserController(userName, userEmail, 1000);
+
+
         transactionController = new TransactionController();
         setTitle("Financial Budget Gamified - Transaction Logger");
         setSize(500, 400);

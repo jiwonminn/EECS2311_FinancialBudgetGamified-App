@@ -18,6 +18,6 @@ public class UserController {
     }
 
     public String getUserInfo() {
-        return "User: " + user.getUsername() + ", Balance: " + user.getBalance() + ", Points: " + user.getPoints();
+        return "User: " + user.getUsername() + ", Email: "+ user.getEmail()+ ", Balance: " + user.getBalance() + ", Points: " + user.getPoints();
     }
 }
