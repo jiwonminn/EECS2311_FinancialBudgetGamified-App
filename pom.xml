@@ -12,17 +12,20 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.9.2</junit.version>
     </properties>
 
     <!-- Add repositories -->
     <repositories>
         <repository>
             <id>central</id>
-            <url>https://repo1.maven.org/maven2</url>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
         <repository>
-            <id>jdatepicker</id>
-            <url>https://mvnrepository.com/artifact/org.jdatepicker/jdatepicker</url>
+            <id>google-maven-central</id>
+            <name>Google Maven Central</name>
+            <url>https://maven-central.storage.googleapis.com/maven2/</url>
         </repository>
     </repositories>
 
@@ -34,25 +37,40 @@
             <version>8.0.33</version>
         </dependency>
 
-        <!-- Jakarta Mail API -->
+        <!-- JavaMail API -->
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
-            <version>2.0.1</version>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>1.4.7</version>
         </dependency>
 
-        <!-- JCalendar instead of JDatePicker -->
+        <!-- Activation API -->
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+
+        <!-- JCalendar -->
         <dependency>
             <groupId>com.toedter</groupId>
             <artifactId>jcalendar</artifactId>
             <version>1.4</version>
         </dependency>
 
-        <!-- JUnit Jupiter for testing -->
+        <!-- JUnit Jupiter API -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <!-- JUnit Jupiter Engine -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -66,6 +84,10 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
+                    <compilerArgs>
+                        <arg>--add-modules</arg>
+                        <arg>ALL-MODULE-PATH</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

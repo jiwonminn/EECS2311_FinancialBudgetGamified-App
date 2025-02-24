@@ -2,8 +2,9 @@ module FBGApp {
     requires java.base;
     requires java.sql;
     requires java.desktop;
-    requires jakarta.mail;
-    requires com.toedter.jcalendar;
+    requires jcalendar;
+    requires mail;  // Automatic module name for javax.mail
+    requires activation;  // Automatic module name for javax.activation
     
     exports view;
     exports controller;
@@ -12,5 +13,7 @@ module FBGApp {
     exports database;
     
     // Open packages for testing
-    opens com.fbg.test;
+    opens model;
+    opens controller;
+    opens utils;
 }

@@ -2,33 +2,55 @@ package controller;
 
 import model.Budget;
 import utils.EmailNotifier;
+import jakarta.mail.MessagingException;
 
 public class BudgetController {
-    private Budget budget;
+    private double monthlyLimit;
+    private double weeklyLimit;
+    private EmailNotifier emailNotifier;
 
     public BudgetController(double monthlyLimit, double weeklyLimit) {
-        this.budget = new Budget(monthlyLimit, weeklyLimit);
+        this.monthlyLimit = monthlyLimit;
+        this.weeklyLimit = weeklyLimit;
+        // Initialize with your email credentials
+        this.emailNotifier = new EmailNotifier("your-email@gmail.com", "your-app-password");
     }
 
     public boolean isOverWeeklyBudget(double expense) {
-        return expense > budget.getWeeklyLimit();
+        return expense > weeklyLimit;
     }
 
     public boolean isOverMonthlyBudget(double expense) {
-        return expense > budget.getMonthlyLimit();
+        return expense > monthlyLimit;
     }
 
-    public void checkBudgetAndNotify(String recipientEmail, String username, double expense) {
-        if (isOverWeeklyBudget(expense)) {
-            EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getWeeklyLimit(), expense);
-        }
-        if (isOverMonthlyBudget(expense)) {
-            EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getMonthlyLimit(), expense);
+    public void checkBudget(String userEmail, double currentSpending) {
+        try {
+            if (currentSpending > monthlyLimit) {
+                emailNotifier.sendBudgetExceededEmail(userEmail, "Monthly", monthlyLimit, currentSpending);
+            }
+            if (currentSpending > weeklyLimit) {
+                emailNotifier.sendBudgetExceededEmail(userEmail, "Weekly", weeklyLimit, currentSpending);
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
         }
     }
 
     public void updateBudget(double monthly, double weekly) {
-        budget.setMonthlyLimit(monthly);
-        budget.setWeeklyLimit(weekly);
+        monthlyLimit = monthly;
+        weeklyLimit = weekly;
+    }
+
+    public void checkBudgetAndNotify(String userEmail, String category, double amount) {
+        try {
+            if (category.equalsIgnoreCase("monthly") && amount > monthlyLimit) {
+                emailNotifier.sendBudgetExceededEmail(userEmail, "Monthly", monthlyLimit, amount);
+            } else if (category.equalsIgnoreCase("weekly") && amount > weeklyLimit) {
+                emailNotifier.sendBudgetExceededEmail(userEmail, "Weekly", weeklyLimit, amount);
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
     }
 }
