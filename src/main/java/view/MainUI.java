@@ -5,31 +5,42 @@ import javax.swing.*;
 
 public class MainUI {
     public static void main(String[] args) {
-        // Show the user info pop-up before proceeding
-        UserInfoDialog userInfoDialog = new UserInfoDialog(null);
-        userInfoDialog.setVisible(true);
-
-        // If the user didn't submit details, exit the program
-        if (!userInfoDialog.isSubmitted()) {
-            System.exit(0);
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // Get user details
-        String userName = userInfoDialog.getUserName();
-        String userEmail = userInfoDialog.getUserEmail();
+        SwingUtilities.invokeLater(() -> {
+            // Show the user info pop-up before proceeding
+            UserInfoDialog userInfoDialog = new UserInfoDialog(null);
+            userInfoDialog.setVisible(true);
 
-        // Initialize the UserController with user details
-        UserController userController = new UserController(userName, userEmail, 1000);
+            // If the user didn't submit details, exit the program
+            if (!userInfoDialog.isSubmitted()) {
+                System.exit(0);
+            }
 
-        System.out.println("Welcome to Financial Budget Gamified App!");
-        System.out.println(userController.getUserInfo());
+            // Get user details
+            String userName = userInfoDialog.getUserName();
+            String userEmail = userInfoDialog.getUserEmail();
 
-        userController.updateBalance(-200);
-        userController.addPoints(10);
+            // Initialize the UserController with user details
+            UserController userController = new UserController(userName, userEmail, 1000);
 
-        System.out.println("Updated User Info: " + userController.getUserInfo());
+            // Launch the main dashboard
+            DashboardGUI dashboard = new DashboardGUI();
+            dashboard.setVisible(true);
+        });
+    }
 
-        // Launch the main dashboard (if applicable)
-        SwingUtilities.invokeLater(() -> new DashboardGUI());
+    private static void addGameElements(UserController userController) {
+        JButton quizButton = new JButton("Take Financial Quiz");
+        quizButton.addActionListener(e -> new QuizUI(userController));
+        
+        JButton leaderboardButton = new JButton("View Leaderboard");
+        leaderboardButton.addActionListener(e -> new LeaderboardUI());
+        
+        // Add these buttons to your UI
     }
 }
