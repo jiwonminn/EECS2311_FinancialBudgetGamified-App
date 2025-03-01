@@ -299,18 +299,14 @@ public class LoginScreen extends JFrame {
         return userEmail;
     }
     
+    /**
+     * @deprecated This method has been replaced by app.Main.main().
+     * Please use app.Main.main() as the main entry point for the application.
+     */
+    @Deprecated
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
-            // Add custom styling to UI defaults
-            UIManager.put("OptionPane.background", new Color(40, 24, 69));
-            UIManager.put("Panel.background", new Color(40, 24, 69));
-            UIManager.put("OptionPane.messageForeground", Color.WHITE);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        SwingUtilities.invokeLater(() -> new LoginScreen());
+        System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
+        // Forward to the new main method
+        app.Main.main(args);
     }
 } 

@@ -2,6 +2,7 @@ package view;
 
 import controller.TransactionController;
 import controller.UserController;
+import controller.QuizController;
 import model.*;
 
 import javax.swing.*;
@@ -63,23 +64,11 @@ public class CalendarUI extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
         
-        // Create header panel with user info
-        JPanel headerPanel = createHeaderPanel(userName);
-        add(headerPanel, BorderLayout.NORTH);
+        // Initialize the UI with the Dashboard tab
+        switchTab("Dashboard");
         
-        // Create main content panel with two sections
-        JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        contentPanel.setBackground(BACKGROUND_COLOR);
-        contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        add(contentPanel, BorderLayout.CENTER);
-        
-        // Left panel - Transaction logging form
-        JPanel logPanel = createTransactionLogPanel();
-        contentPanel.add(logPanel);
-        
-        // Right panel - Transaction history
-        JPanel historyPanel = createTransactionHistoryPanel();
-        contentPanel.add(historyPanel);
+        // Center the window on screen
+        setLocationRelativeTo(null);
         
         setVisible(true);
     }
@@ -111,31 +100,221 @@ public class CalendarUI extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
         
-        // Create header panel with user info
-        JPanel headerPanel = createHeaderPanel(userName);
-        add(headerPanel, BorderLayout.NORTH);
+        // Initialize the UI with the Dashboard tab
+        switchTab("Dashboard");
         
-        // Create main content panel with two sections
-        JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        contentPanel.setBackground(BACKGROUND_COLOR);
-        contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        add(contentPanel, BorderLayout.CENTER);
-        
-        // Left panel - Transaction logging form
-        JPanel logPanel = createTransactionLogPanel();
-        contentPanel.add(logPanel);
-        
-        // Right panel - Transaction history
-        JPanel historyPanel = createTransactionHistoryPanel();
-        contentPanel.add(historyPanel);
+        // Center the window on screen
+        setLocationRelativeTo(null);
         
         setVisible(true);
+    }
+    
+    /**
+     * Creates the top navigation panel with tabs.
+     */
+    private JPanel createNavigationPanel() {
+        // Create a panel with FlowLayout centered, with proper spacing
+        JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
+        navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
+        
+        // Create tabs as shown in the screenshot
+        String[] tabNames = {"Dashboard", "Character", "Boss Battle", "Quests", "Quiz"};
+        
+        for (String tabName : tabNames) {
+            boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
+            JPanel tabPanel = createTabPanel(tabName, isSelected);
+            navigationPanel.add(tabPanel);
+            
+            // Add tab click listener
+            tabPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    // Set all tabs to unselected style
+                    for (Component comp : navigationPanel.getComponents()) {
+                        if (comp instanceof JPanel) {
+                            comp.setBackground(new Color(18, 12, 31));
+                            // Update labels inside the panel
+                            for (Component inner : ((JPanel)comp).getComponents()) {
+                                if (inner instanceof JLabel) {
+                                    JLabel label = (JLabel)inner;
+                                    if (label.getText() != null && !label.getText().isEmpty() 
+                                            && label.getText().length() > 1) {
+                                        label.setForeground(new Color(200, 200, 200));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Set clicked tab to selected style
+                    tabPanel.setBackground(ACCENT_COLOR);
+                    for (Component inner : tabPanel.getComponents()) {
+                        if (inner instanceof JLabel) {
+                            JLabel label = (JLabel)inner;
+                            if (label.getText() != null && !label.getText().isEmpty() 
+                                    && label.getText().length() > 1) {
+                                label.setForeground(TEXT_COLOR);
+                            }
+                        }
+                    }
+                    
+                    switchTab(tabName);
+                }
+            });
+        }
+        
+        // Wrap the navigation panel in a container to ensure it takes full width
+        JPanel navContainer = new JPanel(new BorderLayout());
+        navContainer.setBackground(new Color(18, 12, 31));
+        navContainer.add(navigationPanel, BorderLayout.CENTER);
+        
+        return navContainer;
+    }
+    
+    /**
+     * Creates a single tab panel for the navigation bar.
+     */
+    private JPanel createTabPanel(String tabName, boolean isSelected) {
+        JPanel tabPanel = new JPanel();
+        tabPanel.setLayout(new BoxLayout(tabPanel, BoxLayout.Y_AXIS));
+        tabPanel.setBackground(isSelected ? ACCENT_COLOR : new Color(18, 12, 31));
+        tabPanel.setPreferredSize(new Dimension(110, 50)); // Smaller height
+        tabPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        tabPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        
+        // Tab icon
+        JLabel iconLabel = new JLabel(getTabIcon(tabName));
+        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconLabel.setForeground(TEXT_COLOR);
+        iconLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        tabPanel.add(iconLabel);
+        
+        // Add some space between icon and text
+        tabPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+        
+        // Tab name
+        JLabel nameLabel = new JLabel(tabName);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nameLabel.setForeground(isSelected ? TEXT_COLOR : new Color(200, 200, 200));
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 11));
+        tabPanel.add(nameLabel);
+        
+        return tabPanel;
+    }
+    
+    /**
+     * Gets the icon text for a tab name.
+     */
+    private String getTabIcon(String tabName) {
+        switch (tabName) {
+            case "Dashboard": return "📊";
+            case "Character": return "👤";
+            case "Boss Battle": return "👾";
+            case "Quests": return "📝";
+            case "Analytics": return "📈";
+            case "Investments": return "💰";
+            case "Achievements": return "🏆";
+            case "Quiz": return "❓";
+            default: return "•";
+        }
+    }
+    
+    /**
+     * Switches to the selected tab.
+     */
+    private void switchTab(String tabName) {
+        System.out.println("Switching to tab: " + tabName);
+        
+        // Reset the content pane
+        getContentPane().removeAll();
+        
+        // Create navigation panel
+        JPanel navigationPanel = createNavigationPanel();
+        
+        // Create a container panel for the top section that will hold both navigation and header
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.setBackground(BACKGROUND_COLOR);
+        
+        // Add navigation panel to the top of the container
+        topContainer.add(navigationPanel, BorderLayout.NORTH);
+        
+        // Always add the top container to the NORTH position
+        add(topContainer, BorderLayout.NORTH);
+        
+        // Handle tab-specific content
+        switch (tabName) {
+            case "Dashboard":
+                // Add header panel below navigation in the top container
+                JPanel headerPanel = createHeaderPanel(userName);
+                topContainer.add(headerPanel, BorderLayout.CENTER);
+                
+                // Create main content panel with two sections
+                JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+                contentPanel.setBackground(BACKGROUND_COLOR);
+                contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+                add(contentPanel, BorderLayout.CENTER);
+                
+                // Left panel - Transaction logging form
+                JPanel logPanel = createTransactionLogPanel();
+                contentPanel.add(logPanel);
+                
+                // Right panel - Transaction history
+                JPanel historyPanel = createTransactionHistoryPanel();
+                contentPanel.add(historyPanel);
+                break;
+                
+            case "Quiz":
+                // For Quiz, don't add a header panel
+                UserController userController = new UserController(userName, userEmail, 1000);
+                QuizController quizController = new QuizController(userController);
+                QuizUI quizUI = new QuizUI(quizController);
+                add(quizUI, BorderLayout.CENTER);
+                break;
+                
+            case "Character":
+            case "Boss Battle":
+            case "Quests":
+                // Add header panel below navigation in the top container
+                JPanel characterHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(characterHeaderPanel, BorderLayout.CENTER);
+                
+                // For now, show a placeholder message
+                JPanel placeholderPanel = new JPanel(new BorderLayout());
+                placeholderPanel.setBackground(BACKGROUND_COLOR);
+                placeholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+                
+                JLabel placeholderLabel = new JLabel("Coming soon: " + tabName + " feature");
+                placeholderLabel.setForeground(TEXT_COLOR);
+                placeholderLabel.setFont(new Font("Arial", Font.BOLD, 24));
+                placeholderLabel.setHorizontalAlignment(JLabel.CENTER);
+                
+                JLabel descriptionLabel = new JLabel("This feature is under development and will be available in a future update.");
+                descriptionLabel.setForeground(new Color(180, 180, 180));
+                descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                descriptionLabel.setHorizontalAlignment(JLabel.CENTER);
+                
+                JPanel textPanel = new JPanel();
+                textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+                textPanel.setBackground(BACKGROUND_COLOR);
+                textPanel.add(placeholderLabel);
+                textPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+                textPanel.add(descriptionLabel);
+                
+                placeholderPanel.add(textPanel, BorderLayout.CENTER);
+                add(placeholderPanel, BorderLayout.CENTER);
+                break;
+        }
+        
+        // Refresh the UI
+        revalidate();
+        repaint();
     }
     
     private JPanel createHeaderPanel(String userName) {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
-        headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
+        headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
         
         JLabel titleLabel = new JLabel("Level 5 Budget Warrior");
         titleLabel.setForeground(TEXT_COLOR);
@@ -1077,37 +1256,14 @@ public class CalendarUI extends JFrame {
         }
     }
 
+    /**
+     * @deprecated This method has been replaced by app.Main.main().
+     * Please use app.Main.main() as the main entry point for the application.
+     */
+    @Deprecated
     public static void main(String[] args) {
-        try {
-            // Set system look and feel
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
-            // Add custom styling to UI defaults
-            UIManager.put("OptionPane.background", new Color(40, 24, 69));
-            UIManager.put("Panel.background", new Color(40, 24, 69));
-            UIManager.put("OptionPane.messageForeground", Color.WHITE);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        // Update database schema if needed
-        try {
-            // Ensure the database is up to date
-            database.DatabaseUpdater.updateTransactionsTable();
-            System.out.println("Database schema check completed.");
-        } catch (Exception e) {
-            System.err.println("Failed to update database schema: " + e.getMessage());
-            e.printStackTrace();
-            
-            // Show error dialog to user
-            JOptionPane.showMessageDialog(null, 
-                "There was a problem connecting to the database. Some features may not work properly.\n" +
-                "Error: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
-        }
-        
-        // Launch login screen directly instead of CalendarUI
-        SwingUtilities.invokeLater(() -> new LoginScreen());
+        System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
+        // Forward to the new main method
+        app.Main.main(args);
     }
 }
