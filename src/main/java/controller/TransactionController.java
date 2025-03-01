@@ -15,19 +15,26 @@ public class TransactionController {
     }
 
     //REATE: Add Transaction
-    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
-        String query = "INSERT INTO transactions (description, amount, date, is_income) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+    public Transaction addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
+        String query = "INSERT INTO transactions (description, amount, date, is_income, category) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, description);
             stmt.setDouble(2, amount);
             stmt.setDate(3, Date.valueOf(date));
             stmt.setBoolean(4, isIncome);
+            stmt.setString(5, category);
             stmt.executeUpdate();
-            System.out.println("Transaction added successfully!");
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    Transaction transaction = new Transaction(description, amount, date, isIncome, category);
+                    transaction.setId(generatedKeys.getInt(1));
+                    return transaction;
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Failed to add transaction!");
         }
+        return null;
     }
 
     // READ: Fetch all transactions
@@ -42,7 +49,8 @@ public class TransactionController {
                         rs.getString("description"),
                         rs.getDouble("amount"),
                         rs.getDate("date").toLocalDate(),
-                        rs.getBoolean("is_income")
+                        rs.getBoolean("is_income"),
+                        rs.getString("category")
                 );
                 transactions.add(transaction);
             }

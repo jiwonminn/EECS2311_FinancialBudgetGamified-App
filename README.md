@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Financial Budget Gamified App
 
 A Java-based financial budgeting application with gamification features.
@@ -8,29 +7,30 @@ A Java-based financial budgeting application with gamification features.
 - Java JDK 18 or higher
 - Maven (for dependency management)
 - MySQL Server (8.0 or higher)
-- MySQL Workbench (for database management)
 
-## Database Setup with MySQL Workbench
+## Database Setup
 
 1. **Start MySQL Server**
    - Make sure your MySQL server is running
-   - On Windows: Check Services app or MySQL Notifier in system tray
-   - On Mac: Check Activity Monitor or system preferences
-   - On Linux: `sudo systemctl status mysql`
+   - On Windows: Check Services app or run `net start mysql`
+   - On Mac: `brew services start mysql` or `sudo mysql.server start`
+   - On Linux: `sudo systemctl start mysql`
 
-2. **Open MySQL Workbench**
-   - Launch MySQL Workbench application
-   - Connect to your MySQL server instance (typically localhost)
-   - Enter your root password if prompted
-
-3. **Create Database and Tables**
-   - In MySQL Workbench, click on the "Create a new schema" button (database icon with a + sign)
-   - Name it `financial_budget_gamified` and click Apply
-   - After creation, double-click on the new schema to make it the active schema
-   - Click on the "SQL Editor" button (SQL file icon) to open a new query tab
-   - Copy and paste the following SQL code:
+2. **Create Database and Tables**
+   - Open MySQL command line:
+     ```bash
+     mysql -u root -p
+     ```
+   - Enter your MySQL root password when prompted
+   - Run the following SQL commands:
 
      ```sql
+     -- Create database
+     CREATE DATABASE financial_budget_gamified;
+     
+     -- Use the database
+     USE financial_budget_gamified;
+     
      -- Create users table
      CREATE TABLE users (
          id INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,23 +57,15 @@ A Java-based financial budgeting application with gamification features.
      INSERT INTO users (name, email, initial_balance) VALUES ('Test User', 'test@example.com', 1000.00);
      ```
 
-   - Click the lightning bolt icon (or press Ctrl+Shift+Enter) to execute the entire script
-   - Verify tables were created by refreshing the schema (right-click on the schema and select "Refresh All")
+3. **Create Database User**
+   - Create a dedicated user for the application (safer than using root):
+     ```sql
+     CREATE USER 'fbg_user'@'localhost' IDENTIFIED BY 'fbg_password';
+     GRANT ALL PRIVILEGES ON financial_budget_gamified.* TO 'fbg_user'@'localhost';
+     FLUSH PRIVILEGES;
+     ```
 
-4. **Create Database User**
-   - In MySQL Workbench, go to the "Administration" tab
-   - Click "Users and Privileges"
-   - Click "Add Account"
-   - Set the following:
-     - Login Name: `fbg_user`
-     - Password: `fbg_password`
-     - Confirm Password: `fbg_password`
-   - Under "Schema Privileges" tab, click "Add Entry"
-   - Select "Selected schema" and choose `financial_budget_gamified`
-   - Check "ALL" privileges
-   - Click "Apply"
-
-5. **Configure Database Connection**
+4. **Configure Database Connection**
    - Locate the `DatabaseManager.java` file in your project
    - Ensure the connection details match your setup:
 
@@ -112,17 +104,18 @@ A Java-based financial budgeting application with gamification features.
 If you encounter database connection issues:
 
 1. **Verify MySQL is Running**
-   - Open MySQL Workbench and check if you can connect to your instance
-   - Try connecting with the `fbg_user` credentials
+   - Check if MySQL service is active
+   - Try connecting via command line: `mysql -u fbg_user -p`
 
 2. **Check Connection Parameters**
    - Verify the database name, username, and password in `DatabaseManager.java`
    - Default MySQL port is 3306 - make sure it's not changed
 
 3. **Common Connection Issues**
-   - Test the connection in MySQL Workbench with the same credentials
-   - Check if MySQL server allows remote connections
-   - Verify server hostname if not using localhost
+   - MySQL not running
+   - Incorrect database name, username, or password
+   - MySQL server not allowing connections (check `bind-address` in my.cnf/my.ini)
+   - Firewall blocking port 3306
 
 4. **Debug Connection String**
    - Try this connection URL format with explicit parameters:
@@ -140,9 +133,3 @@ The project uses the following main dependencies:
 ## Support
 
 For any issues or questions, please open an issue in the repository.
-=======
-# EECS2311_ProjectName
-ITR0: 
-- deadline: Jan 29, WED
-- First meeting with a customer on Jan 25th, 2025
->>>>>>> parent of 92c92e1 (Added initial UI)
