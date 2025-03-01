@@ -6,9 +6,11 @@ import model.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -16,6 +18,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.List;
+
+// Add JDatePicker imports
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
 
 public class CalendarUI extends JFrame {
     // Define colors
@@ -29,12 +37,12 @@ public class CalendarUI extends JFrame {
     private final Color FIELD_BORDER = new Color(70, 50, 110);
 
     private TransactionController transactionController;
-    private DatePicker datePicker;
+    private JDatePickerImpl datePicker;
     private JTextField descriptionField;
     private JTextField amountField;
     private JRadioButton incomeButton;
     private JRadioButton expenseButton;
-    private JTextArea transactionDisplay;
+    private JPanel transactionDisplayPanel;
     private JComboBox<String> categoryComboBox;
     private String userName;
     private String userEmail;
@@ -237,22 +245,10 @@ public class CalendarUI extends JFrame {
         logPanel.add(categoryLabel);
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        String[] categories = {
-            "Food & Dining", "Shopping", "Utilities", "Housing", 
-            "Entertainment", "Coffee", "Gifts", "Emergency Fund",
-            "Transport", "Education", "Health", "Other"
-        };
-        
-        categoryComboBox = new JComboBox<>(categories);
-        categoryComboBox.setBackground(FIELD_BACKGROUND);
-        categoryComboBox.setForeground(TEXT_COLOR);
-        categoryComboBox.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(FIELD_BORDER),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        categoryComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        categoryComboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        logPanel.add(categoryComboBox);
+        CategorySelector categorySelector = new CategorySelector();
+        categorySelector.setAlignmentX(Component.LEFT_ALIGNMENT);
+        categorySelector.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        logPanel.add(categorySelector);
         logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
         // Date
@@ -262,14 +258,63 @@ public class CalendarUI extends JFrame {
         logPanel.add(dateLabel);
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        // Custom Date Picker with a dropdown calendar
-        datePicker = new DatePicker();
+        // Create JDatePicker
+        UtilDateModel model = new UtilDateModel();
+        model.setValue(new Date()); // Default to today
+        Properties properties = new Properties();
+        properties.put("text.today", "Today");
+        properties.put("text.month", "Month");
+        properties.put("text.year", "Year");
+        
+        JDatePanelImpl datePanel = new JDatePanelImpl(model, properties);
+        datePanel.setBackground(PANEL_COLOR);
+        datePanel.setForeground(TEXT_COLOR);
+        
+        // Set UI properties for all components in the date panel
+        SwingUtilities.invokeLater(() -> {
+            Component[] components = datePanel.getComponents();
+            for (Component comp : components) {
+                setComponentColors(comp);
+                
+                // Apply custom styling for month navigation buttons
+                if (comp instanceof JButton) {
+                    JButton btn = (JButton) comp;
+                    btn.setBackground(new Color(40, 24, 69));
+                    btn.setForeground(TEXT_COLOR);
+                    btn.setBorderPainted(false);
+                    btn.setFocusPainted(false);
+                    btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                }
+                
+                // Apply custom styling for table
+                if (comp instanceof JComponent) {
+                    // For all components inside date panel
+                    customizeCalendarComponents((JComponent) comp);
+                }
+            }
+        });
+        
+        // Create the date picker
+        datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
         datePicker.setBackground(FIELD_BACKGROUND);
         datePicker.setForeground(TEXT_COLOR);
-        datePicker.setBorder(BorderFactory.createLineBorder(FIELD_BORDER));
-        datePicker.setAlignmentX(Component.LEFT_ALIGNMENT);
-        datePicker.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        logPanel.add(datePicker);
+        datePicker.getJFormattedTextField().setBackground(FIELD_BACKGROUND);
+        datePicker.getJFormattedTextField().setForeground(TEXT_COLOR);
+        datePicker.getJFormattedTextField().setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(FIELD_BORDER),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        datePicker.setTextEditable(true);
+        datePicker.setShowYearButtons(true);
+        
+        // Create a panel for the date picker to set size constraints
+        JPanel datePickerPanel = new JPanel(new BorderLayout());
+        datePickerPanel.setBackground(PANEL_COLOR);
+        datePickerPanel.add(datePicker, BorderLayout.CENTER);
+        datePickerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        datePickerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        
+        logPanel.add(datePickerPanel);
         logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
         // Description
@@ -292,17 +337,45 @@ public class CalendarUI extends JFrame {
         logPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
         // Submit Button
-        JButton submitButton = new JButton("Log Transaction");
-        submitButton.setBackground(ACCENT_COLOR);
+        JButton submitButton = new JButton("Log Transaction") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Create gradient from purple to blue
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(128, 90, 213),
+                    getWidth(), getHeight(), new Color(90, 140, 255)
+                );
+                
+                g2.setPaint(gradient);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                g2.setColor(TEXT_COLOR);
+                String text = getText();
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(text)) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2.drawString(text, x, y);
+                g2.dispose();
+            }
+        };
+        
         submitButton.setForeground(TEXT_COLOR);
         submitButton.setFocusPainted(false);
-        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        submitButton.setBorderPainted(false);
+        submitButton.setContentAreaFilled(false);
         submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Get the selected category from the CategorySelector
+                String selectedCategory = categorySelector.getSelectedCategory();
+                categoryComboBox = new JComboBox<>(new String[]{selectedCategory});
                 logTransaction();
             }
         });
@@ -313,42 +386,62 @@ public class CalendarUI extends JFrame {
     }
     
     private JPanel createTransactionHistoryPanel() {
-        JPanel historyPanel = new JPanel();
-        historyPanel.setLayout(new BoxLayout(historyPanel, BoxLayout.Y_AXIS));
+        JPanel historyPanel = new JPanel(new BorderLayout());
         historyPanel.setBackground(PANEL_COLOR);
         historyPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(ACCENT_COLOR, 1),
             new EmptyBorder(20, 20, 20, 20)
         ));
         
-        // Title
-        JLabel titleLabel = new JLabel("Recent Transactions");
-        titleLabel.setForeground(TEXT_COLOR);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        historyPanel.add(titleLabel);
-        
-        // Subtitle
-        JLabel subtitleLabel = new JLabel("Your latest financial activities");
-        subtitleLabel.setForeground(new Color(180, 180, 180));
-        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        historyPanel.add(subtitleLabel);
-        historyPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        // Header
+        JLabel headerLabel = new JLabel("Recent Transactions");
+        headerLabel.setForeground(TEXT_COLOR);
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        headerLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         
         // Transaction list
-        transactionDisplay = new JTextArea(10, 30);
-        transactionDisplay.setEditable(false);
-        transactionDisplay.setBackground(PANEL_COLOR);
-        transactionDisplay.setForeground(TEXT_COLOR);
-        transactionDisplay.setLineWrap(true);
-        transactionDisplay.setWrapStyleWord(true);
+        transactionDisplayPanel = new JPanel();
+        transactionDisplayPanel.setLayout(new BoxLayout(transactionDisplayPanel, BoxLayout.Y_AXIS));
+        transactionDisplayPanel.setBackground(PANEL_COLOR);
         
-        JScrollPane scrollPane = new JScrollPane(transactionDisplay);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        JScrollPane scrollPane = new JScrollPane(transactionDisplayPanel);
+        scrollPane.setBorder(null);
         scrollPane.setBackground(PANEL_COLOR);
-        scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
-        historyPanel.add(scrollPane);
+        scrollPane.getViewport().setBackground(PANEL_COLOR);
+        
+        // Customize scrollbar
+        scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = new Color(100, 80, 140);
+                this.trackColor = PANEL_COLOR;
+            }
+            
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+        });
+        
+        // Add components to panel
+        historyPanel.add(headerLabel, BorderLayout.NORTH);
+        historyPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Initially populate with transactions
+        updateTransactionDisplay();
         
         return historyPanel;
     }
@@ -373,13 +466,21 @@ public class CalendarUI extends JFrame {
                 return;
             }
             
-            Date selectedDate = datePicker.getDate();
+            // Get date from JDatePicker
+            Date selectedDate = (Date) datePicker.getModel().getValue();
+            if (selectedDate == null) {
+                selectedDate = new Date(); // Default to today if not selected
+            }
             LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            boolean isIncome = incomeButton.isSelected();
-            String category = (String) categoryComboBox.getSelectedItem();
             
-            // Add the transaction
-            transactionController.addTransaction(description, amount, date, isIncome);
+            boolean isIncome = incomeButton.isSelected();
+            
+            // Get the category from the CategorySelector
+            String category = categoryComboBox != null ? 
+                (String) categoryComboBox.getSelectedItem() : "Other";
+            
+            // Add the transaction with category
+            transactionController.addTransaction(description, amount, date, isIncome, category);
             
             // Update display
             updateTransactionDisplay();
@@ -402,373 +503,555 @@ public class CalendarUI extends JFrame {
     }
 
     private void updateTransactionDisplay() {
-        transactionDisplay.setText("");
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        if (transactionDisplayPanel != null) {
+            transactionDisplayPanel.removeAll();
+            
+            // Get transactions from controller
+            List<Transaction> transactions = transactionController.getTransactions();
+            
+            if (transactions.isEmpty()) {
+                // Show empty state
+                JLabel emptyLabel = new JLabel("No transactions to display");
+                emptyLabel.setForeground(TEXT_COLOR);
+                emptyLabel.setFont(new Font("Arial", Font.BOLD, 14));
+                emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                transactionDisplayPanel.add(emptyLabel);
+            } else {
+                // Add each transaction as a card
+                for (Transaction transaction : transactions) {
+                    JPanel card = createTransactionCard(transaction);
+                    transactionDisplayPanel.add(card);
+                    
+                    // Add spacing between cards
+                    transactionDisplayPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+                }
+            }
+            
+            // Make sure scrolling works properly
+            transactionDisplayPanel.revalidate();
+            transactionDisplayPanel.repaint();
+        }
+    }
+    
+    // Create a card for a transaction
+    private JPanel createTransactionCard(Transaction transaction) {
+        JPanel cardPanel = new JPanel(new BorderLayout(15, 0));
+        cardPanel.setBackground(PANEL_COLOR);
+        cardPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(70, 50, 110), 1, true),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
         
-        for (Transaction t : transactionController.getTransactions()) {
-            String dateStr = sdf.format(Date.from(t.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-            String type = t.isIncome() ? "Income" : "Expense";
-            String amount = String.format("$%.2f", t.getAmount());
+        // Category icon with color
+        JPanel categoryIcon = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw colored circle based on category
+                g2d.setColor(getCategoryColor(transaction.getCategory()));
+                g2d.fillOval(0, 0, 24, 24);
+                g2d.dispose();
+            }
             
-            StringBuilder sb = new StringBuilder();
-            sb.append(t.getDescription()).append("\n");
-            sb.append(dateStr).append(" • ").append(type).append("\n");
-            sb.append(amount).append("\n\n");
-            
-            transactionDisplay.append(sb.toString());
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(24, 24);
+            }
+        };
+        
+        // Panel for description and details
+        JPanel detailsPanel = new JPanel();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+        detailsPanel.setBackground(PANEL_COLOR);
+        
+        // Description
+        JLabel descLabel = new JLabel(transaction.getDescription());
+        descLabel.setForeground(TEXT_COLOR);
+        descLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Details (date, type, category)
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        String dateStr = sdf.format(Date.from(transaction.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        String details = dateStr + " • " + transaction.getType() + " • " + transaction.getCategory();
+        
+        JLabel detailsLabel = new JLabel(details);
+        detailsLabel.setForeground(new Color(180, 180, 180));
+        detailsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        detailsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        detailsPanel.add(descLabel);
+        detailsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        detailsPanel.add(detailsLabel);
+        
+        // Amount
+        JLabel amountLabel = new JLabel(String.format("$%.2f", transaction.getAmount()));
+        amountLabel.setForeground(transaction.isIncome() ? INCOME_COLOR : EXPENSE_COLOR);
+        amountLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        
+        // Add components to card
+        JPanel leftPanel = new JPanel(new BorderLayout(10, 0));
+        leftPanel.setBackground(PANEL_COLOR);
+        leftPanel.add(categoryIcon, BorderLayout.WEST);
+        leftPanel.add(detailsPanel, BorderLayout.CENTER);
+        
+        cardPanel.add(leftPanel, BorderLayout.CENTER);
+        cardPanel.add(amountLabel, BorderLayout.EAST);
+        
+        return cardPanel;
+    }
+    
+    // Get color for a category
+    private Color getCategoryColor(String category) {
+        switch (category) {
+            case "Food & Dining": return new Color(255, 87, 51); // Orange-red
+            case "Shopping": return new Color(52, 73, 94);      // Dark blue-gray
+            case "Utilities": return new Color(155, 89, 182);   // Purple
+            case "Housing": return new Color(52, 152, 219);     // Blue
+            case "Entertainment": return new Color(155, 89, 182); // Purple
+            case "Coffee": return new Color(121, 85, 72);       // Brown
+            case "Gifts": return new Color(231, 76, 60);        // Red
+            case "Emergency Fund": return new Color(41, 128, 185); // Blue
+            case "Transport": return new Color(52, 152, 219);   // Blue
+            case "Education": return new Color(241, 196, 15);   // Yellow
+            case "Health": return new Color(26, 188, 156);      // Teal
+            case "Salary": return new Color(46, 204, 113);      // Green
+            case "Food": return new Color(255, 87, 51);         // Orange-red
+            case "Bills": return new Color(231, 76, 60);        // Red
+            case "Rent": return new Color(22, 160, 133);        // Green
+            default: return new Color(149, 165, 166);           // Gray
+        }
+    }
+
+    // Add a helper method to set colors for components recursively
+    private void setComponentColors(Component comp) {
+        if (comp instanceof JPanel) {
+            comp.setBackground(PANEL_COLOR);
+            for (Component child : ((JPanel) comp).getComponents()) {
+                setComponentColors(child);
+            }
+        } else if (comp instanceof JButton) {
+            comp.setBackground(ACCENT_COLOR);
+            comp.setForeground(TEXT_COLOR);
+        } else if (comp instanceof JLabel) {
+            comp.setForeground(TEXT_COLOR);
+        } else if (comp instanceof JTextField) {
+            comp.setBackground(FIELD_BACKGROUND);
+            comp.setForeground(TEXT_COLOR);
+        } else if (comp instanceof JComboBox) {
+            comp.setBackground(FIELD_BACKGROUND);
+            comp.setForeground(TEXT_COLOR);
         }
     }
 
     /**
-     * Custom DatePicker component with a dropdown calendar
+     * Format dates for the JDatePicker
      */
-    private class DatePicker extends JPanel {
-        private JTextField dateField;
-        private JButton calendarButton;
-        private JDialog calendarDialog;
-        private Calendar selectedDate;
-        private SimpleDateFormat dateFormat;
+    private class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
+        private String datePattern = "MM/dd/yyyy";
+        private SimpleDateFormat dateFormatter = new SimpleDateFormat(datePattern);
         
-        public DatePicker() {
+        @Override
+        public Object stringToValue(String text) throws java.text.ParseException {
+            return dateFormatter.parse(text);
+        }
+        
+        @Override
+        public String valueToString(Object value) throws java.text.ParseException {
+            if (value != null) {
+                Calendar cal = (Calendar) value;
+                return dateFormatter.format(cal.getTime());
+            }
+            return "";
+        }
+    }
+
+    /**
+     * Custom CategorySelector component with dropdown
+     */
+    private class CategorySelector extends JPanel {
+        private JTextField categoryField;
+        private JDialog categoryDialog;
+        private String selectedCategory;
+        private final String[] categories = {
+            "Food & Dining", "Shopping", "Utilities", "Housing", 
+            "Entertainment", "Coffee", "Gifts", "Emergency Fund",
+            "Credit Card Debt", "Stock Portfolio", "Home Down Payment", 
+            "Transport", "Education", "Health", "Salary", "Other"
+        };
+        
+        // Map categories to their goal status
+        private final java.util.Map<String, Boolean> goalCategories = new java.util.HashMap<>();
+        
+        public CategorySelector() {
             setLayout(new BorderLayout());
             
-            // Initialize date and formatter
-            selectedDate = Calendar.getInstance();
-            dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.US);
+            // Set up goal categories
+            goalCategories.put("Emergency Fund", true);
+            goalCategories.put("Credit Card Debt", true);
+            goalCategories.put("Stock Portfolio", true);
+            goalCategories.put("Home Down Payment", true);
             
-            // Create text field to display the date
-            dateField = new JTextField();
-            dateField.setEditable(false);
-            dateField.setText(dateFormat.format(selectedDate.getTime()));
-            dateField.setBackground(FIELD_BACKGROUND);
-            dateField.setForeground(TEXT_COLOR);
-            dateField.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-            add(dateField, BorderLayout.CENTER);
+            // Default selected category
+            selectedCategory = "Food & Dining";
             
-            // Create button to show calendar
-            calendarButton = new JButton("\u25BC"); // Down triangle symbol
-            calendarButton.setBackground(FIELD_BACKGROUND);
-            calendarButton.setForeground(TEXT_COLOR);
-            calendarButton.setFocusPainted(false);
-            calendarButton.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-            calendarButton.addActionListener(e -> showCalendarDialog());
-            add(calendarButton, BorderLayout.EAST);
+            // Create category field
+            categoryField = new JTextField(selectedCategory);
+            categoryField.setEditable(false);
+            categoryField.setBackground(FIELD_BACKGROUND);
+            categoryField.setForeground(TEXT_COLOR);
+            categoryField.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            categoryField.setHorizontalAlignment(JTextField.CENTER);
+            
+            // Create dropdown button
+            JButton dropdownButton = new JButton("▼");
+            dropdownButton.setBackground(ACCENT_COLOR);
+            dropdownButton.setForeground(TEXT_COLOR);
+            dropdownButton.setFocusPainted(false);
+            dropdownButton.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+            
+            // Add action listener to show category dialog
+            dropdownButton.addActionListener(e -> showCategoryDialog());
+            
+            // Add components to this panel
+            add(categoryField, BorderLayout.CENTER);
+            add(dropdownButton, BorderLayout.EAST);
         }
         
-        public Date getDate() {
-            return selectedDate.getTime();
-        }
-        
-        private void showCalendarDialog() {
-            if (calendarDialog != null && calendarDialog.isVisible()) {
+        private void showCategoryDialog() {
+            if (categoryDialog != null && categoryDialog.isVisible()) {
+                categoryDialog.dispose();
                 return;
             }
             
             // Create dialog
-            calendarDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Select Date", true);
-            calendarDialog.setLayout(new BorderLayout());
-            calendarDialog.setSize(300, 350);
-            calendarDialog.setLocationRelativeTo(this);
+            categoryDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Select Category", true);
+            categoryDialog.setUndecorated(true);
             
-            // Main calendar panel (purple background)
-            JPanel mainPanel = new JPanel(new BorderLayout(0, 10));
-            mainPanel.setBackground(PANEL_COLOR);
-            mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            // Create main panel
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            mainPanel.setBorder(BorderFactory.createLineBorder(new Color(70, 50, 110), 1));
+            mainPanel.setBackground(new Color(24, 15, 41)); // darker background for the dialog
             
-            // Month and year header panel
-            JPanel headerPanel = new JPanel(new BorderLayout(5, 0));
-            headerPanel.setBackground(PANEL_COLOR);
-            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 15, 5));
+            // Title panel
+            JPanel titlePanel = new JPanel();
+            titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
+            titlePanel.setBackground(new Color(40, 24, 69));
+            titlePanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
             
-            // Previous month button (left arrow in white box)
-            JButton prevButton = new JButton("<");
-            styleNavigationButton(prevButton);
-            prevButton.addActionListener(e -> {
-                selectedDate.add(Calendar.MONTH, -1);
-                updateCalendarDialog();
-            });
+            JLabel titleLabel = new JLabel("Category");
+            titleLabel.setForeground(TEXT_COLOR);
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
             
-            // Next month button (right arrow in white box)
-            JButton nextButton = new JButton(">");
-            styleNavigationButton(nextButton);
-            nextButton.addActionListener(e -> {
-                selectedDate.add(Calendar.MONTH, 1);
-                updateCalendarDialog();
-            });
+            // Close button
+            JButton closeButton = new JButton("×");
+            closeButton.setForeground(TEXT_COLOR);
+            closeButton.setBackground(null);
+            closeButton.setBorder(null);
+            closeButton.setFocusPainted(false);
+            closeButton.setFont(new Font("Arial", Font.BOLD, 18));
+            closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            closeButton.addActionListener(e -> categoryDialog.dispose());
             
-            // Create center panel for month and year selection
-            JPanel monthYearPanel = new JPanel();
-            monthYearPanel.setLayout(new BoxLayout(monthYearPanel, BoxLayout.X_AXIS));
-            monthYearPanel.setBackground(PANEL_COLOR);
+            titlePanel.add(titleLabel);
+            titlePanel.add(Box.createHorizontalGlue());
+            titlePanel.add(closeButton);
             
-            // Create month dropdown
-            String[] months = {"January", "February", "March", "April", "May", "June", 
-                              "July", "August", "September", "October", "November", "December"};
-            JComboBox<String> monthComboBox = new JComboBox<>(months);
-            monthComboBox.setSelectedIndex(selectedDate.get(Calendar.MONTH));
-            monthComboBox.setBackground(Color.WHITE);
-            monthComboBox.setForeground(Color.BLACK);
-            monthComboBox.addActionListener(e -> {
-                selectedDate.set(Calendar.MONTH, monthComboBox.getSelectedIndex());
-                updateCalendarDialog();
-            });
+            // Add title panel
+            JPanel wrapTitlePanel = new JPanel(new BorderLayout());
+            wrapTitlePanel.setBackground(null);
+            wrapTitlePanel.add(titlePanel, BorderLayout.NORTH);
+            mainPanel.add(wrapTitlePanel);
             
-            // Create year dropdown (current year +/- 50 years)
-            int currentYear = selectedDate.get(Calendar.YEAR);
-            Integer[] years = new Integer[101];
-            for (int i = 0; i < years.length; i++) {
-                years[i] = currentYear - 50 + i;
-            }
-            JComboBox<Integer> yearComboBox = new JComboBox<>(years);
-            yearComboBox.setSelectedItem(currentYear);
-            yearComboBox.setBackground(Color.WHITE);
-            yearComboBox.setForeground(Color.BLACK);
-            yearComboBox.addActionListener(e -> {
-                selectedDate.set(Calendar.YEAR, (Integer) yearComboBox.getSelectedItem());
-                updateCalendarDialog();
-            });
+            // Grid panel for categories - using 3 columns instead of 4 to better match the screenshot
+            JPanel gridPanel = new JPanel(new GridLayout(0, 3, 10, 10));
+            gridPanel.setBackground(new Color(24, 15, 41));
+            gridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
             
-            // Add dropdowns to panel with some spacing
-            monthYearPanel.add(monthComboBox);
-            monthYearPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-            monthYearPanel.add(yearComboBox);
-            
-            headerPanel.add(prevButton, BorderLayout.WEST);
-            headerPanel.add(monthYearPanel, BorderLayout.CENTER);
-            headerPanel.add(nextButton, BorderLayout.EAST);
-            
-            mainPanel.add(headerPanel, BorderLayout.NORTH);
-            
-            // Days of week panel
-            JPanel daysPanel = new JPanel(new GridLayout(1, 7, 0, 0));
-            daysPanel.setBackground(PANEL_COLOR);
-            
-            String[] dayNames = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
-            for (String day : dayNames) {
-                JLabel dayLabel = new JLabel(day, SwingConstants.CENTER);
-                dayLabel.setForeground(TEXT_COLOR);
-                dayLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-                daysPanel.add(dayLabel);
+            // Add category options
+            for (String category : categories) {
+                JPanel categoryOption = createCategoryIconPanel(category, goalCategories.getOrDefault(category, false));
+                gridPanel.add(categoryOption);
             }
             
-            mainPanel.add(daysPanel, BorderLayout.CENTER);
-            
-            // Calendar days grid
-            JPanel datesPanel = new JPanel(new GridLayout(6, 7, 3, 3));
-            datesPanel.setBackground(PANEL_COLOR);
-            
-            mainPanel.add(datesPanel, BorderLayout.SOUTH);
-            
-            // Bottom action buttons panel
-            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-            bottomPanel.setBackground(PANEL_COLOR);
-            bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-            
-            // Today button
-            JButton todayButton = new JButton("Today");
-            styleActionButton(todayButton);
-            todayButton.addActionListener(e -> {
-                selectedDate = Calendar.getInstance();
-                updateDateField();
-                calendarDialog.dispose();
+            // Add grid to a scroll pane in case there are many categories
+            JScrollPane scrollPane = new JScrollPane(gridPanel);
+            scrollPane.setBackground(new Color(24, 15, 41));
+            scrollPane.setBorder(null);
+            // Set preferred size to control the dialog dimensions
+            scrollPane.setPreferredSize(new Dimension(400, 400));
+            // Disable horizontal scrollbar
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+                @Override
+                protected void configureScrollBarColors() {
+                    this.thumbColor = new Color(100, 80, 140);
+                    this.trackColor = new Color(24, 15, 41);
+                }
             });
             
-            // Cancel button
-            JButton cancelButton = new JButton("Cancel");
-            styleActionButton(cancelButton);
-            cancelButton.addActionListener(e -> calendarDialog.dispose());
+            mainPanel.add(scrollPane);
             
-            bottomPanel.add(todayButton);
-            bottomPanel.add(cancelButton);
+            // Set dialog properties
+            categoryDialog.getContentPane().add(mainPanel);
+            categoryDialog.pack();
+            // Ensure dialog has a fixed width that fits 3 columns
+            categoryDialog.setSize(400, 500);
             
-            // Add all panels to dialog
-            calendarDialog.add(mainPanel, BorderLayout.CENTER);
-            calendarDialog.add(bottomPanel, BorderLayout.SOUTH);
+            // Position dialog centered on screen
+            categoryDialog.setLocationRelativeTo(this);
             
-            // Fill days when the dialog is shown
-            updateCalendarDialog(datesPanel);
-            
-            calendarDialog.setVisible(true);
+            categoryDialog.setVisible(true);
         }
         
-        private void styleNavigationButton(JButton button) {
-            button.setPreferredSize(new Dimension(30, 30));
-            button.setBackground(Color.WHITE);
-            button.setForeground(Color.BLACK);
-            button.setFocusPainted(false);
-            button.setBorderPainted(true);
-            button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        }
-        
-        private void styleActionButton(JButton button) {
-            button.setPreferredSize(new Dimension(80, 30));
-            button.setBackground(Color.WHITE);
-            button.setForeground(Color.BLACK);
-            button.setFocusPainted(false);
-            button.setBorderPainted(true);
-            button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        }
-        
-        private void styleDayButton(JButton button, boolean isSelectedDay, boolean isToday) {
-            button.setPreferredSize(new Dimension(30, 25));
-            button.setBackground(isToday ? new Color(230, 230, 250) : Color.WHITE); // Light lavender for today
-            button.setForeground(Color.BLACK);
-            button.setFocusPainted(false);
-            button.setBorderPainted(true);
+        private JPanel createCategoryIconPanel(String category, boolean isGoal) {
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            panel.setBackground(new Color(40, 24, 69));
+            panel.setBorder(BorderFactory.createLineBorder(new Color(70, 50, 110), 1, true));
+            panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            panel.setPreferredSize(new Dimension(100, 110));
             
-            if (isSelectedDay) {
-                button.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 2));
-            } else {
-                button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
+            // Category icon
+            JPanel iconBackground = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    // Draw colored circle based on category
+                    g2d.setColor(getCategoryColor(category));
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                    
+                    // Draw icon
+                    Font iconFont = new Font("Dialog", Font.BOLD, 20);
+                    g2d.setFont(iconFont);
+                    g2d.setColor(Color.WHITE);
+                    String iconSymbol = getCategorySymbol(category);
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int textX = (getWidth() - fm.stringWidth(iconSymbol)) / 2;
+                    int textY = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                    g2d.drawString(iconSymbol, textX, textY);
+                    
+                    g2d.dispose();
+                }
+            };
+            
+            iconBackground.setPreferredSize(new Dimension(60, 60));
+            iconBackground.setMaximumSize(new Dimension(60, 60));
+            iconBackground.setMinimumSize(new Dimension(60, 60));
+            iconBackground.setBackground(new Color(40, 24, 69));
+            iconBackground.setAlignmentX(Component.CENTER_ALIGNMENT);
+            
+            // Category name
+            JLabel nameLabel = new JLabel(category);
+            nameLabel.setForeground(TEXT_COLOR);
+            nameLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            nameLabel.setHorizontalAlignment(JLabel.CENTER);
+            
+            // Goal label if applicable
+            JLabel goalLabel = null;
+            if (isGoal) {
+                goalLabel = new JLabel("Goal category");
+                goalLabel.setForeground(new Color(150, 150, 150));
+                goalLabel.setFont(new Font("Arial", Font.ITALIC, 10));
+                goalLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                goalLabel.setHorizontalAlignment(JLabel.CENTER);
+            }
+            
+            // Add spacing around components
+            JPanel iconPanel = new JPanel();
+            iconPanel.setLayout(new BoxLayout(iconPanel, BoxLayout.Y_AXIS));
+            iconPanel.setBackground(new Color(40, 24, 69));
+            iconPanel.add(Box.createVerticalStrut(5));
+            iconPanel.add(iconBackground);
+            iconPanel.add(Box.createVerticalStrut(5));
+            iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            
+            panel.add(Box.createVerticalStrut(5));
+            panel.add(iconPanel);
+            panel.add(nameLabel);
+            if (goalLabel != null) {
+                panel.add(Box.createRigidArea(new Dimension(0, 2)));
+                panel.add(goalLabel);
+            }
+            panel.add(Box.createVerticalStrut(5));
+            
+            // Add hover effect and click listener
+            panel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    panel.setBackground(new Color(70, 50, 110));
+                    iconBackground.setBackground(new Color(70, 50, 110));
+                    iconPanel.setBackground(new Color(70, 50, 110));
+                }
+                
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    panel.setBackground(new Color(40, 24, 69));
+                    iconBackground.setBackground(new Color(40, 24, 69));
+                    iconPanel.setBackground(new Color(40, 24, 69));
+                }
+                
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    selectedCategory = category;
+                    categoryField.setText(category);
+                    categoryDialog.dispose();
+                }
+            });
+            
+            return panel;
+        }
+        
+        private String getCategorySymbol(String category) {
+            switch (category) {
+                case "Food & Dining": return "🍽️";
+                case "Shopping": return "🛍️";
+                case "Utilities": return "⚡";
+                case "Housing": return "🏠";
+                case "Entertainment": return "🎮";
+                case "Coffee": return "☕";
+                case "Gifts": return "🎁";
+                case "Emergency Fund": return "🐷";
+                case "Credit Card Debt": return "💳";
+                case "Stock Portfolio": return "📈";
+                case "Home Down Payment": return "🏡";
+                case "Transport": return "🚗";
+                case "Education": return "🎓";
+                case "Health": return "⚕️";
+                case "Salary": return "💼";
+                default: return "•";
             }
         }
         
-        private void updateCalendarDialog(JPanel datesPanel) {
-            if (datesPanel != null) {
-                // Clear existing days
-                datesPanel.removeAll();
-                
-                // Get calendar for the selected month
-                Calendar cal = (Calendar) selectedDate.clone();
-                cal.set(Calendar.DAY_OF_MONTH, 1);
-                
-                // Determine the day of week for the first day of month
-                int firstDayOfMonth = cal.get(Calendar.DAY_OF_WEEK);
-                
-                // Add empty buttons for days before the first day of month
-                for (int i = 1; i < firstDayOfMonth; i++) {
-                    JButton emptyButton = new JButton();
-                    emptyButton.setEnabled(false);
-                    emptyButton.setOpaque(false);
-                    emptyButton.setContentAreaFilled(false);
-                    emptyButton.setBorderPainted(false);
-                    datesPanel.add(emptyButton);
-                }
-                
-                // Determine how many days in month - properly calculate for each month
-                int daysInMonth = 0;
-                int month = cal.get(Calendar.MONTH);
-                int year = cal.get(Calendar.YEAR);
-                
-                switch (month) {
-                    case Calendar.JANUARY:
-                    case Calendar.MARCH:
-                    case Calendar.MAY:
-                    case Calendar.JULY:
-                    case Calendar.AUGUST:
-                    case Calendar.OCTOBER:
-                    case Calendar.DECEMBER:
-                        daysInMonth = 31;
-                        break;
-                    case Calendar.APRIL:
-                    case Calendar.JUNE:
-                    case Calendar.SEPTEMBER:
-                    case Calendar.NOVEMBER:
-                        daysInMonth = 30;
-                        break;
-                    case Calendar.FEBRUARY:
-                        // Check for leap year
-                        boolean isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-                        daysInMonth = isLeapYear ? 29 : 28;
-                        break;
-                }
-                
-                // Get today for highlighting
-                Calendar today = Calendar.getInstance();
-                
-                // Add buttons for each day of the month
-                for (int day = 1; day <= daysInMonth; day++) {
-                    final int selectedDay = day;
-                    JButton dayButton = new JButton(String.valueOf(day));
-                    
-                    boolean isToday = cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                                     cal.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
-                                     day == today.get(Calendar.DAY_OF_MONTH);
-                                     
-                    boolean isSelectedDay = cal.get(Calendar.YEAR) == selectedDate.get(Calendar.YEAR) &&
-                                          cal.get(Calendar.MONTH) == selectedDate.get(Calendar.MONTH) &&
-                                          day == selectedDate.get(Calendar.DAY_OF_MONTH);
-                    
-                    styleDayButton(dayButton, isSelectedDay, isToday);
-                    
-                    dayButton.addActionListener(e -> {
-                        selectedDate.set(Calendar.DAY_OF_MONTH, selectedDay);
-                        updateDateField();
-                        calendarDialog.dispose();
-                    });
-                    
-                    datesPanel.add(dayButton);
-                }
-                
-                // Add empty buttons for remaining cells in the grid (if needed)
-                int remainingCells = 42 - (firstDayOfMonth - 1) - daysInMonth;
-                for (int i = 0; i < remainingCells; i++) {
-                    JButton emptyButton = new JButton();
-                    emptyButton.setEnabled(false);
-                    emptyButton.setOpaque(false);
-                    emptyButton.setContentAreaFilled(false);
-                    emptyButton.setBorderPainted(false);
-                    datesPanel.add(emptyButton);
-                }
-                
-                datesPanel.revalidate();
-                datesPanel.repaint();
-                
-                // Update month and year dropdowns if they exist
-                Container container = calendarDialog.getContentPane();
-                if (container.getComponentCount() > 0) {
-                    Component comp = container.getComponent(0);
-                    if (comp instanceof JPanel) {
-                        JPanel mainPanel = (JPanel) comp;
-                        if (mainPanel.getComponentCount() > 0) {
-                            Component headerComp = mainPanel.getComponent(0);
-                            if (headerComp instanceof JPanel) {
-                                JPanel headerPanel = (JPanel) headerComp;
-                                Component centerComp = ((BorderLayout)headerPanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                                if (centerComp instanceof JPanel) {
-                                    JPanel monthYearPanel = (JPanel) centerComp;
-                                    Component[] monthYearComps = monthYearPanel.getComponents();
-                                    for (Component c : monthYearComps) {
-                                        if (c instanceof JComboBox) {
-                                            JComboBox<?> comboBox = (JComboBox<?>) c;
-                                            if (comboBox.getItemCount() == 12) {
-                                                // Month combo box
-                                                comboBox.setSelectedIndex(month);
-                                            } else if (comboBox.getItemCount() > 12) {
-                                                // Year combo box
-                                                for (int i = 0; i < comboBox.getItemCount(); i++) {
-                                                    if (comboBox.getItemAt(i).equals(year)) {
-                                                        comboBox.setSelectedIndex(i);
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+        private ImageIcon getCategoryIcon(String category) {
+            // Create a buffered image for the icon
+            BufferedImage image = new BufferedImage(60, 60, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = image.createGraphics();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Draw background
+            g2.setColor(getCategoryColor(category));
+            g2.fillRoundRect(0, 0, 60, 60, 10, 10);
+            
+            // Draw symbol
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Dialog", Font.BOLD, 24));
+            String symbol = getCategorySymbol(category);
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (60 - fm.stringWidth(symbol)) / 2;
+            int y = ((60 - fm.getHeight()) / 2) + fm.getAscent();
+            g2.drawString(symbol, x, y);
+            
+            g2.dispose();
+            return new ImageIcon(image);
+        }
+        
+        private Color getCategoryColor(String category) {
+            switch (category) {
+                case "Food & Dining": return new Color(255, 87, 51); // Orange-red
+                case "Shopping": return new Color(186, 104, 200);    // Purple
+                case "Utilities": return new Color(255, 193, 7);     // Yellow/Gold
+                case "Housing": return new Color(33, 150, 243);      // Blue
+                case "Entertainment": return new Color(156, 39, 176); // Purple
+                case "Coffee": return new Color(121, 85, 72);        // Brown
+                case "Gifts": return new Color(244, 67, 54);         // Red
+                case "Emergency Fund": return new Color(33, 150, 243); // Blue
+                case "Credit Card Debt": return new Color(244, 67, 54); // Red
+                case "Stock Portfolio": return new Color(76, 175, 80); // Green
+                case "Home Down Payment": return new Color(103, 58, 183); // Deep Purple
+                case "Transport": return new Color(33, 150, 243);    // Blue
+                case "Education": return new Color(255, 235, 59);    // Yellow
+                case "Health": return new Color(0, 150, 136);        // Teal
+                case "Salary": return new Color(76, 175, 80);        // Green
+                default: return new Color(158, 158, 158);            // Gray
+            }
+        }
+        
+        public String getSelectedCategory() {
+            return selectedCategory;
+        }
+        
+        public void setSelectedCategory(String category) {
+            for (String validCategory : categories) {
+                if (validCategory.equals(category)) {
+                    selectedCategory = category;
+                    categoryField.setText(category);
+                    break;
                 }
             }
         }
         
-        private void updateDateField() {
-            dateField.setText(dateFormat.format(selectedDate.getTime()));
+        @Override
+        public void setBackground(Color bg) {
+            super.setBackground(bg);
+            if (categoryField != null) {
+                categoryField.setBackground(bg);
+            }
         }
+        
+        @Override
+        public void setForeground(Color fg) {
+            super.setForeground(fg);
+            if (categoryField != null) {
+                categoryField.setForeground(fg);
+            }
+        }
+    }
 
-        private void updateCalendarDialog() {
-            if (calendarDialog != null && calendarDialog.isVisible()) {
-                Component component = calendarDialog.getContentPane().getComponent(0);
-                if (component instanceof JPanel) {
-                    JPanel mainPanel = (JPanel) component;
-                    if (mainPanel.getComponentCount() > 2) {
-                        Component datesComponent = mainPanel.getComponent(2);
-                        if (datesComponent instanceof JPanel) {
-                            updateCalendarDialog((JPanel) datesComponent);
-                        }
+    // Add this helper method after the setComponentColors method
+    private void customizeCalendarComponents(JComponent comp) {
+        comp.setBackground(PANEL_COLOR);
+        comp.setForeground(TEXT_COLOR);
+        
+        // If it's a table (the calendar grid)
+        if (comp instanceof JTable) {
+            JTable table = (JTable) comp;
+            table.setBackground(PANEL_COLOR);
+            table.setForeground(TEXT_COLOR);
+            table.setGridColor(new Color(70, 50, 110));
+            table.setSelectionBackground(ACCENT_COLOR);
+            table.setSelectionForeground(TEXT_COLOR);
+            
+            // Set cell renderer to customize cell appearance
+            table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, 
+                        boolean isSelected, boolean hasFocus, int row, int column) {
+                    Component c = super.getTableCellRendererComponent(
+                            table, value, isSelected, hasFocus, row, column);
+                    
+                    if (c instanceof JComponent) {
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
+                    
+                    // Set background for today's date
+                    if (value != null && value.toString().equals(Integer.toString(LocalDate.now().getDayOfMonth()))
+                            && !isSelected) {
+                        c.setBackground(new Color(60, 35, 100));
+                    } else if (!isSelected) {
+                        c.setBackground(PANEL_COLOR);
+                    }
+                    
+                    // Set text alignment
+                    ((JLabel) c).setHorizontalAlignment(JLabel.CENTER);
+                    
+                    return c;
                 }
+            });
+        }
+        
+        // Apply to all child components
+        for (Component child : comp.getComponents()) {
+            if (child instanceof JComponent) {
+                customizeCalendarComponents((JComponent) child);
             }
         }
     }
@@ -784,6 +1067,23 @@ public class CalendarUI extends JFrame {
             UIManager.put("OptionPane.messageForeground", Color.WHITE);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        
+        // Update database schema if needed
+        try {
+            // Ensure the database is up to date
+            database.DatabaseUpdater.updateTransactionsTable();
+            System.out.println("Database schema check completed.");
+        } catch (Exception e) {
+            System.err.println("Failed to update database schema: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Show error dialog to user
+            JOptionPane.showMessageDialog(null, 
+                "There was a problem connecting to the database. Some features may not work properly.\n" +
+                "Error: " + e.getMessage(),
+                "Database Error",
+                JOptionPane.ERROR_MESSAGE);
         }
         
         // Launch login screen directly instead of CalendarUI

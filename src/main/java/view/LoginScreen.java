@@ -26,15 +26,26 @@ public class LoginScreen extends JFrame {
     
     public LoginScreen() {
         setTitle("Financial Budget Gamified - Login");
-        setSize(400, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // Set larger size and make responsive
+        setSize(1920, 1080);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         
-        // Main panel
+        // Create a wrapper panel with GridBagLayout for centering
+        JPanel wrapperPanel = new JPanel(new GridBagLayout());
+        wrapperPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Main content panel
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(PANEL_COLOR);
-        mainPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
+        
+        // Calculate responsive padding - scales with window size
+        int horizontalPadding = (int)(getWidth() * 0.02);
+        int verticalPadding = (int)(getHeight() * 0.03);
+        mainPanel.setBorder(new EmptyBorder(verticalPadding, horizontalPadding, verticalPadding, horizontalPadding));
         
         // Logo/Icon panel
         JPanel iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -54,37 +65,63 @@ public class LoginScreen extends JFrame {
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
+        // Input field panels with proper centering
+        JPanel inputsPanel = new JPanel();
+        inputsPanel.setLayout(new BoxLayout(inputsPanel, BoxLayout.Y_AXIS));
+        inputsPanel.setBackground(PANEL_COLOR);
+        inputsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Calculate responsive field width - 30% of window width but minimum 300px
+        int fieldWidth = Math.max(300, (int)(getWidth() * 0.3));
+        
         // Email field
         JLabel emailLabel = new JLabel("Email");
         emailLabel.setForeground(TEXT_COLOR);
-        emailLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         emailField = new JTextField();
         emailField.setBackground(FIELD_BACKGROUND);
         emailField.setForeground(TEXT_COLOR);
         emailField.setCaretColor(TEXT_COLOR);
+        emailField.setHorizontalAlignment(JTextField.CENTER); // Center text
         emailField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(FIELD_BORDER),
             BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
-        emailField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        emailField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        emailField.setMaximumSize(new Dimension(fieldWidth, 40));
+        emailField.setPreferredSize(new Dimension(fieldWidth, 40));
         
         // Password field
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setForeground(TEXT_COLOR);
-        passwordLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         passwordField = new JPasswordField();
         passwordField.setBackground(FIELD_BACKGROUND);
         passwordField.setForeground(TEXT_COLOR);
         passwordField.setCaretColor(TEXT_COLOR);
+        passwordField.setHorizontalAlignment(JTextField.CENTER); // Center text
         passwordField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(FIELD_BORDER),
             BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
-        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        passwordField.setMaximumSize(new Dimension(fieldWidth, 40));
+        passwordField.setPreferredSize(new Dimension(fieldWidth, 40));
+        
+        // Add centered input fields
+        JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        emailLabelPanel.setBackground(PANEL_COLOR);
+        emailLabelPanel.add(emailLabel);
+        
+        JPanel emailFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        emailFieldPanel.setBackground(PANEL_COLOR);
+        emailFieldPanel.add(emailField);
+        
+        JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        passwordLabelPanel.setBackground(PANEL_COLOR);
+        passwordLabelPanel.add(passwordLabel);
+        
+        JPanel passwordFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        passwordFieldPanel.setBackground(PANEL_COLOR);
+        passwordFieldPanel.add(passwordField);
         
         // Login button with gradient
         JButton loginButton = new JButton("Enter the Realm") {
@@ -113,7 +150,7 @@ public class LoginScreen extends JFrame {
             
             @Override
             public Dimension getPreferredSize() {
-                return new Dimension(super.getPreferredSize().width, 45);
+                return new Dimension(fieldWidth, 45);
             }
         };
         
@@ -121,15 +158,21 @@ public class LoginScreen extends JFrame {
         loginButton.setBorderPainted(false);
         loginButton.setFocusPainted(false);
         loginButton.setContentAreaFilled(false);
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        loginButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(PANEL_COLOR);
+        buttonPanel.add(loginButton);
         
         // Already have account text
         JLabel accountLabel = new JLabel("Already have an account? Resume your journey");
         accountLabel.setForeground(new Color(180, 180, 180));
         accountLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         accountLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JPanel accountPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        accountPanel.setBackground(PANEL_COLOR);
+        accountPanel.add(accountLabel);
         
         // Add components to main panel with spacing
         mainPanel.add(iconPanel);
@@ -138,17 +181,25 @@ public class LoginScreen extends JFrame {
         mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         mainPanel.add(subtitleLabel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 35)));
-        mainPanel.add(emailLabel);
+        mainPanel.add(emailLabelPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(emailField);
+        mainPanel.add(emailFieldPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(passwordLabel);
+        mainPanel.add(passwordLabelPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(passwordField);
+        mainPanel.add(passwordFieldPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-        mainPanel.add(loginButton);
+        mainPanel.add(buttonPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(accountLabel);
+        mainPanel.add(accountPanel);
+        
+        // Make the login panel responsive
+        Dimension loginPanelSize = new Dimension(fieldWidth + 100, 600);
+        mainPanel.setMinimumSize(loginPanelSize);
+        mainPanel.setPreferredSize(loginPanelSize);
+        
+        // Add the main panel to the centered wrapper
+        wrapperPanel.add(mainPanel);
         
         // Add action listener to login button
         loginButton.addActionListener(new ActionListener() {
@@ -179,8 +230,24 @@ public class LoginScreen extends JFrame {
             }
         });
         
-        setContentPane(mainPanel);
-        getContentPane().setBackground(PANEL_COLOR);
+        // Add window resize listener to adjust component sizes
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                int newFieldWidth = Math.max(300, (int)(getWidth() * 0.3));
+                emailField.setMaximumSize(new Dimension(newFieldWidth, 40));
+                emailField.setPreferredSize(new Dimension(newFieldWidth, 40));
+                passwordField.setMaximumSize(new Dimension(newFieldWidth, 40));
+                passwordField.setPreferredSize(new Dimension(newFieldWidth, 40));
+                loginButton.setPreferredSize(new Dimension(newFieldWidth, 45));
+                
+                // Force UI to update
+                revalidate();
+                repaint();
+            }
+        });
+        
+        setContentPane(wrapperPanel);
+        getContentPane().setBackground(BACKGROUND_COLOR);
         setVisible(true);
     }
     

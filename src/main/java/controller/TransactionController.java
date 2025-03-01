@@ -14,14 +14,20 @@ public class TransactionController {
         connection = DatabaseManager.getConnection();
     }
 
-    //REATE: Add Transaction
+    // ADD: Add Transaction without category (for backwards compatibility)
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
-        String query = "INSERT INTO transactions (description, amount, date, is_income) VALUES (?, ?, ?, ?)";
+        addTransaction(description, amount, date, isIncome, "Other");
+    }
+    
+    // ADD: Add Transaction with category
+    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
+        String query = "INSERT INTO transactions (description, amount, date, is_income, category) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, description);
             stmt.setDouble(2, amount);
             stmt.setDate(3, Date.valueOf(date));
             stmt.setBoolean(4, isIncome);
+            stmt.setString(5, category);
             stmt.executeUpdate();
             System.out.println("Transaction added successfully!");
         } catch (SQLException e) {
@@ -38,11 +44,21 @@ public class TransactionController {
              ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
+                String category = "Other";
+                try {
+                    category = rs.getString("category");
+                    if (category == null) category = "Other";
+                } catch (SQLException e) {
+                    // Column might not exist in older database versions
+                    category = "Other";
+                }
+                
                 Transaction transaction = new Transaction(
                         rs.getString("description"),
                         rs.getDouble("amount"),
                         rs.getDate("date").toLocalDate(),
-                        rs.getBoolean("is_income")
+                        rs.getBoolean("is_income"),
+                        category
                 );
                 transactions.add(transaction);
             }
