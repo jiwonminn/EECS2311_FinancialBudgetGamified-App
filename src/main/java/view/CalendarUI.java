@@ -542,17 +542,41 @@ public class CalendarUI extends JFrame {
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         
-        // Category icon with color
-        JPanel categoryIcon = new JPanel() {
+        // Create category icon based on transaction category or income status
+        JPanel typeIndicator = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Draw colored circle based on category
-                g2d.setColor(getCategoryColor(transaction.getCategory()));
-                g2d.fillOval(0, 0, 24, 24);
+                // Determine color and symbol based on transaction type and category
+                Color iconColor;
+                String iconSymbol;
+                
+                if (transaction.isIncome()) {
+                    // For income, always use green with a money symbol
+                    iconColor = INCOME_COLOR;
+                    iconSymbol = "💼"; // Briefcase for salary/income
+                } else {
+                    // For expenses, use the category color and symbol
+                    String category = transaction.getCategory();
+                    iconColor = getCategoryColor(category);
+                    iconSymbol = getCategorySymbol(category);
+                }
+                
+                // Draw rounded rectangle background
+                g2d.setColor(iconColor);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw the category symbol
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Dialog", Font.BOLD, 14));
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(iconSymbol)) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2d.drawString(iconSymbol, x, y);
+                
                 g2d.dispose();
             }
             
@@ -573,12 +597,15 @@ public class CalendarUI extends JFrame {
         descLabel.setFont(new Font("Arial", Font.BOLD, 14));
         descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Details (date, type, category)
+        // Format date as MM/DD/YYYY
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         String dateStr = sdf.format(Date.from(transaction.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        String details = dateStr + " • " + transaction.getType() + " • " + transaction.getCategory();
         
-        JLabel detailsLabel = new JLabel(details);
+        // Get transaction type and category
+        String typeCategory = transaction.isIncome() ? "Income" : transaction.getCategory();
+        
+        // Create details line with bullet point separator
+        JLabel detailsLabel = new JLabel(dateStr + " • " + typeCategory);
         detailsLabel.setForeground(new Color(180, 180, 180));
         detailsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         detailsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -587,15 +614,16 @@ public class CalendarUI extends JFrame {
         detailsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         detailsPanel.add(detailsLabel);
         
-        // Amount
+        // Amount - format with dollar sign and align right
         JLabel amountLabel = new JLabel(String.format("$%.2f", transaction.getAmount()));
         amountLabel.setForeground(transaction.isIncome() ? INCOME_COLOR : EXPENSE_COLOR);
         amountLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        amountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         
         // Add components to card
         JPanel leftPanel = new JPanel(new BorderLayout(10, 0));
         leftPanel.setBackground(PANEL_COLOR);
-        leftPanel.add(categoryIcon, BorderLayout.WEST);
+        leftPanel.add(typeIndicator, BorderLayout.WEST);
         leftPanel.add(detailsPanel, BorderLayout.CENTER);
         
         cardPanel.add(leftPanel, BorderLayout.CENTER);
@@ -623,6 +651,31 @@ public class CalendarUI extends JFrame {
             case "Bills": return new Color(231, 76, 60);        // Red
             case "Rent": return new Color(22, 160, 133);        // Green
             default: return new Color(149, 165, 166);           // Gray
+        }
+    }
+
+    // Add method to get category symbol
+    private String getCategorySymbol(String category) {
+        switch (category) {
+            case "Food & Dining": return "🍽️";
+            case "Shopping": return "🛍️";
+            case "Utilities": return "⚡";
+            case "Housing": return "🏠";
+            case "Entertainment": return "🎮";
+            case "Coffee": return "☕";
+            case "Gifts": return "🎁";
+            case "Emergency Fund": return "🐷";
+            case "Credit Card Debt": return "💳";
+            case "Stock Portfolio": return "📈";
+            case "Home Down Payment": return "🏡";
+            case "Transport": return "🚗";
+            case "Education": return "🎓";
+            case "Health": return "⚕️";
+            case "Salary": return "💼";
+            case "Food": return "🍔";
+            case "Bills": return "📄";
+            case "Rent": return "🏢";
+            default: return "•";
         }
     }
 
@@ -910,27 +963,6 @@ public class CalendarUI extends JFrame {
             return panel;
         }
         
-        private String getCategorySymbol(String category) {
-            switch (category) {
-                case "Food & Dining": return "🍽️";
-                case "Shopping": return "🛍️";
-                case "Utilities": return "⚡";
-                case "Housing": return "🏠";
-                case "Entertainment": return "🎮";
-                case "Coffee": return "☕";
-                case "Gifts": return "🎁";
-                case "Emergency Fund": return "🐷";
-                case "Credit Card Debt": return "💳";
-                case "Stock Portfolio": return "📈";
-                case "Home Down Payment": return "🏡";
-                case "Transport": return "🚗";
-                case "Education": return "🎓";
-                case "Health": return "⚕️";
-                case "Salary": return "💼";
-                default: return "•";
-            }
-        }
-        
         private ImageIcon getCategoryIcon(String category) {
             // Create a buffered image for the icon
             BufferedImage image = new BufferedImage(60, 60, BufferedImage.TYPE_INT_ARGB);
@@ -954,25 +986,14 @@ public class CalendarUI extends JFrame {
             return new ImageIcon(image);
         }
         
+        private String getCategorySymbol(String category) {
+            // Remove this duplicate method as we've moved it to the outer class
+            return CalendarUI.this.getCategorySymbol(category);
+        }
+        
         private Color getCategoryColor(String category) {
-            switch (category) {
-                case "Food & Dining": return new Color(255, 87, 51); // Orange-red
-                case "Shopping": return new Color(186, 104, 200);    // Purple
-                case "Utilities": return new Color(255, 193, 7);     // Yellow/Gold
-                case "Housing": return new Color(33, 150, 243);      // Blue
-                case "Entertainment": return new Color(156, 39, 176); // Purple
-                case "Coffee": return new Color(121, 85, 72);        // Brown
-                case "Gifts": return new Color(244, 67, 54);         // Red
-                case "Emergency Fund": return new Color(33, 150, 243); // Blue
-                case "Credit Card Debt": return new Color(244, 67, 54); // Red
-                case "Stock Portfolio": return new Color(76, 175, 80); // Green
-                case "Home Down Payment": return new Color(103, 58, 183); // Deep Purple
-                case "Transport": return new Color(33, 150, 243);    // Blue
-                case "Education": return new Color(255, 235, 59);    // Yellow
-                case "Health": return new Color(0, 150, 136);        // Teal
-                case "Salary": return new Color(76, 175, 80);        // Green
-                default: return new Color(158, 158, 158);            // Gray
-            }
+            // Use the outer class method instead
+            return CalendarUI.this.getCategoryColor(category);
         }
         
         public String getSelectedCategory() {
