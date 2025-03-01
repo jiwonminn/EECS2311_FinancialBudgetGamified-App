@@ -3,9 +3,6 @@ package view;
 import controller.TransactionController;
 import controller.UserController;
 import model.*;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.UtilDateModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +10,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerDateModel;
+import javax.swing.JSpinner.DateEditor;
 
 public class CalendarUI extends JFrame {
     private TransactionController transactionController;
-    private JDatePickerImpl datePicker;
+    private JSpinner dateSpinner;
     private JTextField descriptionField;
     private JTextField amountField;
     private JRadioButton incomeButton;
@@ -49,25 +50,30 @@ public class CalendarUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(6, 1));
 
-        // Date Picker Setup
-        UtilDateModel model = new UtilDateModel();
-        Properties p = new Properties();
-        p.put("text.today", "Today");
-        p.put("text.month", "Month");
-        p.put("text.year", "Year");
-        JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
-        datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-
-        add(new JLabel("Select Date:"));
-        add(datePicker);
+        // Date Picker Setup using JSpinner
+        Date today = new Date();
+        SpinnerDateModel dateModel = new SpinnerDateModel(today, null, null, Calendar.DAY_OF_MONTH);
+        dateSpinner = new JSpinner(dateModel);
+        DateEditor dateEditor = new DateEditor(dateSpinner, "yyyy-MM-dd");
+        dateSpinner.setEditor(dateEditor);
+        
+        // Create a panel for the date selection
+        JPanel datePanel = new JPanel(new BorderLayout());
+        datePanel.add(new JLabel("Select Date:"), BorderLayout.NORTH);
+        datePanel.add(dateSpinner, BorderLayout.CENTER);
+        add(datePanel);
 
         descriptionField = new JTextField();
-        add(new JLabel("Description:"));
-        add(descriptionField);
+        JPanel descPanel = new JPanel(new BorderLayout());
+        descPanel.add(new JLabel("Description:"), BorderLayout.NORTH);
+        descPanel.add(descriptionField, BorderLayout.CENTER);
+        add(descPanel);
 
         amountField = new JTextField();
-        add(new JLabel("Amount:"));
-        add(amountField);
+        JPanel amountPanel = new JPanel(new BorderLayout());
+        amountPanel.add(new JLabel("Amount:"), BorderLayout.NORTH);
+        amountPanel.add(amountField, BorderLayout.CENTER);
+        add(amountPanel);
 
         incomeButton = new JRadioButton("Income");
         expenseButton = new JRadioButton("Expense");
@@ -97,7 +103,7 @@ public class CalendarUI extends JFrame {
     }
 
     private void logTransaction() {
-        Date selectedDate = (Date) datePicker.getModel().getValue();
+        Date selectedDate = (Date) dateSpinner.getValue();
         LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         String description = descriptionField.getText();
         double amount = Double.parseDouble(amountField.getText());
@@ -115,6 +121,6 @@ public class CalendarUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        new CalendarUI();
+        SwingUtilities.invokeLater(() -> new CalendarUI());
     }
 }
