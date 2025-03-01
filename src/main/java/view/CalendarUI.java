@@ -118,8 +118,8 @@ public class CalendarUI extends JFrame {
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
-        // Create tabs as shown in the screenshot
-        String[] tabNames = {"Dashboard", "Character", "Boss Battle", "Quests", "Quiz"};
+        // Create tabs as requested: Dashboard, Analytics, Quiz, and Leaderboard
+        String[] tabNames = {"Dashboard", "Analytics", "Quiz", "Leaderboard"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
@@ -209,13 +209,9 @@ public class CalendarUI extends JFrame {
     private String getTabIcon(String tabName) {
         switch (tabName) {
             case "Dashboard": return "📊";
-            case "Character": return "👤";
-            case "Boss Battle": return "👾";
-            case "Quests": return "📝";
             case "Analytics": return "📈";
-            case "Investments": return "💰";
-            case "Achievements": return "🏆";
             case "Quiz": return "❓";
+            case "Leaderboard": return "🏆";
             default: return "•";
         }
     }
@@ -272,37 +268,66 @@ public class CalendarUI extends JFrame {
                 add(quizUI, BorderLayout.CENTER);
                 break;
                 
-            case "Character":
-            case "Boss Battle":
-            case "Quests":
+            case "Analytics":
                 // Add header panel below navigation in the top container
-                JPanel characterHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(characterHeaderPanel, BorderLayout.CENTER);
+                JPanel analyticsHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(analyticsHeaderPanel, BorderLayout.CENTER);
                 
                 // For now, show a placeholder message
-                JPanel placeholderPanel = new JPanel(new BorderLayout());
-                placeholderPanel.setBackground(BACKGROUND_COLOR);
-                placeholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+                JPanel analyticsPlaceholderPanel = new JPanel(new BorderLayout());
+                analyticsPlaceholderPanel.setBackground(BACKGROUND_COLOR);
+                analyticsPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
                 
-                JLabel placeholderLabel = new JLabel("Coming soon: " + tabName + " feature");
-                placeholderLabel.setForeground(TEXT_COLOR);
-                placeholderLabel.setFont(new Font("Arial", Font.BOLD, 24));
-                placeholderLabel.setHorizontalAlignment(JLabel.CENTER);
+                JLabel analyticsLabel = new JLabel("Analytics Dashboard");
+                analyticsLabel.setForeground(TEXT_COLOR);
+                analyticsLabel.setFont(new Font("Arial", Font.BOLD, 24));
+                analyticsLabel.setHorizontalAlignment(JLabel.CENTER);
                 
-                JLabel descriptionLabel = new JLabel("This feature is under development and will be available in a future update.");
-                descriptionLabel.setForeground(new Color(180, 180, 180));
-                descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                descriptionLabel.setHorizontalAlignment(JLabel.CENTER);
+                JLabel analyticsDescriptionLabel = new JLabel("View your spending patterns and financial insights.");
+                analyticsDescriptionLabel.setForeground(new Color(180, 180, 180));
+                analyticsDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                analyticsDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
                 
-                JPanel textPanel = new JPanel();
-                textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-                textPanel.setBackground(BACKGROUND_COLOR);
-                textPanel.add(placeholderLabel);
-                textPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-                textPanel.add(descriptionLabel);
+                JPanel analyticsTextPanel = new JPanel();
+                analyticsTextPanel.setLayout(new BoxLayout(analyticsTextPanel, BoxLayout.Y_AXIS));
+                analyticsTextPanel.setBackground(BACKGROUND_COLOR);
+                analyticsTextPanel.add(analyticsLabel);
+                analyticsTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+                analyticsTextPanel.add(analyticsDescriptionLabel);
                 
-                placeholderPanel.add(textPanel, BorderLayout.CENTER);
-                add(placeholderPanel, BorderLayout.CENTER);
+                analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
+                add(analyticsPlaceholderPanel, BorderLayout.CENTER);
+                break;
+                
+            case "Leaderboard":
+                // Add header panel below navigation in the top container
+                JPanel leaderboardHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(leaderboardHeaderPanel, BorderLayout.CENTER);
+                
+                // For now, show a placeholder message
+                JPanel leaderboardPlaceholderPanel = new JPanel(new BorderLayout());
+                leaderboardPlaceholderPanel.setBackground(BACKGROUND_COLOR);
+                leaderboardPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+                
+                JLabel leaderboardLabel = new JLabel("Leaderboard");
+                leaderboardLabel.setForeground(TEXT_COLOR);
+                leaderboardLabel.setFont(new Font("Arial", Font.BOLD, 24));
+                leaderboardLabel.setHorizontalAlignment(JLabel.CENTER);
+                
+                JLabel leaderboardDescriptionLabel = new JLabel("See how your progress compares with other users.");
+                leaderboardDescriptionLabel.setForeground(new Color(180, 180, 180));
+                leaderboardDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                leaderboardDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
+                
+                JPanel leaderboardTextPanel = new JPanel();
+                leaderboardTextPanel.setLayout(new BoxLayout(leaderboardTextPanel, BoxLayout.Y_AXIS));
+                leaderboardTextPanel.setBackground(BACKGROUND_COLOR);
+                leaderboardTextPanel.add(leaderboardLabel);
+                leaderboardTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+                leaderboardTextPanel.add(leaderboardDescriptionLabel);
+                
+                leaderboardPlaceholderPanel.add(leaderboardTextPanel, BorderLayout.CENTER);
+                add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
                 break;
         }
         
@@ -593,7 +618,7 @@ public class CalendarUI extends JFrame {
             @Override
             protected void configureScrollBarColors() {
                 this.thumbColor = new Color(100, 80, 140);
-                this.trackColor = PANEL_COLOR;
+                this.trackColor = new Color(24, 15, 41);
             }
             
             @Override
