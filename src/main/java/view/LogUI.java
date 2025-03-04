@@ -106,7 +106,7 @@ public class LogUI extends JPanel {
             }
         };
         
-        // Create and configure table
+        // Create and configure the table
         transactionTable = new JTable(tableModel);
         transactionTable.setBackground(PANEL_COLOR);
         transactionTable.setForeground(TEXT_COLOR);
