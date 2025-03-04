@@ -35,7 +35,7 @@ public class LogUI extends JPanel {
         setBackground(BACKGROUND_COLOR);
         setBorder(new EmptyBorder(20, 20, 20, 20));
         
-        // Add components
+        
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
         
