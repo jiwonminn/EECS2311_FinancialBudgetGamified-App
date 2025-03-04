@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:mysql://localhost:3306/budget_app?serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/financial_budget_gamified";
     private static final String USER = "root";  // Change this to your MySQL username
-    private static final String PASSWORD = "DerpfaceJr";  // Change this to your MySQL password
+    private static final String PASSWORD = "EECS2311Project";  // Change this to your MySQL password
     private static Connection connection = null;
 
     public static Connection getConnection() {
