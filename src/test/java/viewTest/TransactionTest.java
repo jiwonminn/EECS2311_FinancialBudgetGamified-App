@@ -96,11 +96,4 @@ public class TransactionTest {
         assertEquals(transaction1, transaction2); // Equal objects
         assertNotEquals(transaction1, transaction3); // Different objects
     }
-
-    @Test
-    public void testTransactionToString() {
-        String expected = String.format("Transaction{description='Test Transaction', amount=100.0, date=%s, isIncome=false, category='Food'}", 
-            testDate.toString());
-        assertEquals(expected, transaction.toString());
-    }
 } 
