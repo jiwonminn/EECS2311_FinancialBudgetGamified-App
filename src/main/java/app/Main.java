@@ -5,6 +5,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import database.DatabaseInitializer;
 import view.LoginScreen;
 import database.DatabaseUpdater;
 
@@ -22,6 +23,9 @@ public class Main {
      * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
+
+        DatabaseInitializer.initializeDatabase();
+
         try {
             // Set system look and feel
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -42,9 +46,9 @@ public class Main {
         } catch (Exception e) {
             System.err.println("Failed to update database schema: " + e.getMessage());
             e.printStackTrace();
-            
+
             // Show error dialog to user
-            JOptionPane.showMessageDialog(null, 
+            JOptionPane.showMessageDialog(null,
                 "There was a problem connecting to the database. Some features may not work properly.\n" +
                 "Error: " + e.getMessage(),
                 "Database Error",

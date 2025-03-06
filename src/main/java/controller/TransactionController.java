@@ -14,6 +14,35 @@ public class TransactionController {
         connection = DatabaseManager.getConnection();
     }
 
+    /**
+     * Adds a new transaction for the given user.
+     *
+     * @param userId      the user ID
+     * @param date        the date in ISO format (YYYY-MM-DD)
+     * @param description a description of the transaction
+     * @param category    the transaction category
+     * @param type        the transaction type (e.g., "income" or "expense")
+     * @param amount      the transaction amount
+     * @return true if the transaction was successfully added, false otherwise
+     */
+    public static boolean addTransaction(int userId, String date, String description, String category, String type, double amount) {
+        String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, java.sql.Date.valueOf(date));
+            pstmt.setString(3, description);
+            pstmt.setString(4, category);
+            pstmt.setString(5, type);
+            pstmt.setDouble(6, amount);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // ADD: Add Transaction without category (for backwards compatibility)
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
         addTransaction(description, amount, date, isIncome, "Other");
