@@ -3,15 +3,15 @@ package database;
 import java.sql.*;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:postgresql://localhost:5432/Projecttest";
-    private static final String USER = "khalifa";
-    private static final String PASSWORD = "";
+    private static final String URL = "jdbc:mysql://localhost:3306/ProjectTest";
+    private static final String USER = "root";
+    private static final String PASSWORD = "df118";
     private static Connection connection = null;
 
     public static Connection getConnection() {
         if (connection == null) {
             try {
-                Class.forName("org.postgresql.Driver");
+                Class.forName("com.mysql.cj.jdbc.Driver");
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
                 System.out.println("Connected to PostgreSQL database!");
             } catch (ClassNotFoundException e) {
