@@ -27,8 +27,6 @@ public class RegisterScreen extends JFrame {
         setSize(1920, 1080);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
-
-        // Set initial opacity to 0.5 for the fade-in effect
         setOpacity(0.5f);
 
         JPanel wrapperPanel = new JPanel(new GridBagLayout());
@@ -40,6 +38,20 @@ public class RegisterScreen extends JFrame {
         int horizontalPadding = (int)(getWidth() * 0.02);
         int verticalPadding = (int)(getHeight() * 0.03);
         mainPanel.setBorder(new EmptyBorder(verticalPadding, horizontalPadding, verticalPadding, horizontalPadding));
+
+        // --- Custom Exit Button Panel ---
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.setOpaque(false);
+        JButton exitButton = new JButton("X");
+        exitButton.setForeground(TEXT_COLOR);
+        exitButton.setFont(new Font("Arial", Font.BOLD, 18));
+        exitButton.setBorderPainted(false);
+        exitButton.setFocusPainted(false);
+        exitButton.setContentAreaFilled(false);
+        exitButton.addActionListener(e -> System.exit(0));
+        topPanel.add(exitButton);
+        mainPanel.add(topPanel);
+        // ----------------------------------
 
         // Logo/Icon panel
         JPanel iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -65,13 +77,11 @@ public class RegisterScreen extends JFrame {
         inputsPanel.setBackground(PANEL_COLOR);
         inputsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Responsive field width calculation
         int fieldWidth = Math.max(300, (int)(getWidth() * 0.3));
 
         // Email field
         JLabel emailLabel = new JLabel("Email");
         emailLabel.setForeground(TEXT_COLOR);
-
         emailField = new JTextField();
         emailField.setBackground(FIELD_BACKGROUND);
         emailField.setForeground(TEXT_COLOR);
@@ -83,11 +93,16 @@ public class RegisterScreen extends JFrame {
         ));
         emailField.setMaximumSize(new Dimension(fieldWidth, 40));
         emailField.setPreferredSize(new Dimension(fieldWidth, 40));
+        JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        emailLabelPanel.setBackground(PANEL_COLOR);
+        emailLabelPanel.add(emailLabel);
+        JPanel emailFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        emailFieldPanel.setBackground(PANEL_COLOR);
+        emailFieldPanel.add(emailField);
 
         // Password field
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setForeground(TEXT_COLOR);
-
         passwordField = new JPasswordField();
         passwordField.setBackground(FIELD_BACKGROUND);
         passwordField.setForeground(TEXT_COLOR);
@@ -99,20 +114,9 @@ public class RegisterScreen extends JFrame {
         ));
         passwordField.setMaximumSize(new Dimension(fieldWidth, 40));
         passwordField.setPreferredSize(new Dimension(fieldWidth, 40));
-
-        // Panels for labels and fields
-        JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        emailLabelPanel.setBackground(PANEL_COLOR);
-        emailLabelPanel.add(emailLabel);
-
-        JPanel emailFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        emailFieldPanel.setBackground(PANEL_COLOR);
-        emailFieldPanel.add(emailField);
-
         JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         passwordLabelPanel.setBackground(PANEL_COLOR);
         passwordLabelPanel.add(passwordLabel);
-
         JPanel passwordFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         passwordFieldPanel.setBackground(PANEL_COLOR);
         passwordFieldPanel.add(passwordField);
@@ -147,7 +151,6 @@ public class RegisterScreen extends JFrame {
         registerButton.setFocusPainted(false);
         registerButton.setContentAreaFilled(false);
         registerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(PANEL_COLOR);
         buttonPanel.add(registerButton);
@@ -158,7 +161,6 @@ public class RegisterScreen extends JFrame {
         loginLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         loginLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         loginLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        // Instead of immediate switch, call the fade-out method
         loginLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -169,7 +171,7 @@ public class RegisterScreen extends JFrame {
         loginPanel.setBackground(PANEL_COLOR);
         loginPanel.add(loginLabel);
 
-        // Add all components to main panel
+        // Add components to mainPanel with spacing
         mainPanel.add(iconPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(welcomeLabel);
@@ -188,7 +190,6 @@ public class RegisterScreen extends JFrame {
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(loginPanel);
 
-        // Set preferred size for responsiveness
         Dimension registerPanelSize = new Dimension(fieldWidth + 100, 600);
         mainPanel.setMinimumSize(registerPanelSize);
         mainPanel.setPreferredSize(registerPanelSize);
@@ -198,39 +199,31 @@ public class RegisterScreen extends JFrame {
         getContentPane().setBackground(BACKGROUND_COLOR);
 
         // Action listener for the register button
-        registerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String email = emailField.getText().trim();
-                String password = new String(passwordField.getPassword()).trim();
-
-                if (email.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(
-                            RegisterScreen.this,
-                            "Please enter both email and password",
-                            "Registration Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-
-                // Call the registration method from your controller
-                boolean registered = UserControllerWithDatabase.registerUser(email, password);
-                if (registered) {
-                    // Instead of an immediate pop-up, perform a smooth fade-out transition
-                    fadeOutAndSwitchToLogin();
-                } else {
-                    JOptionPane.showMessageDialog(
-                            RegisterScreen.this,
-                            "Registration failed. Please try again.",
-                            "Registration Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                }
+        registerButton.addActionListener(e -> {
+            String email = emailField.getText().trim();
+            String password = new String(passwordField.getPassword()).trim();
+            if (email.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        RegisterScreen.this,
+                        "Please enter both email and password",
+                        "Registration Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            boolean registered = UserControllerWithDatabase.registerUser(email, password);
+            if (registered) {
+                fadeOutAndSwitchToLogin();
+            } else {
+                JOptionPane.showMessageDialog(
+                        RegisterScreen.this,
+                        "Registration failed. Please try again.",
+                        "Registration Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         });
 
-        // Adjust field sizes on resize
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent evt) {
                 int newFieldWidth = Math.max(300, (int)(getWidth() * 0.3));
@@ -245,51 +238,42 @@ public class RegisterScreen extends JFrame {
         });
 
         setVisible(true);
-        // Start the fade-in transition from 0.5 to 1.0 gradually
         fadeIn(0.5f);
     }
 
-    // Fade-in method: gradually increases opacity from startOpacity to 1.0
+    // Fade-in: Gradually increase opacity from startOpacity to 1.0
     public void fadeIn(float startOpacity) {
         setOpacity(startOpacity);
         Timer timer = new Timer(50, null);
         final float[] opacityValue = {startOpacity};
-        timer.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                opacityValue[0] += 0.05f;
-                if (opacityValue[0] >= 1f) {
-                    opacityValue[0] = 1f;
-                    timer.stop();
-                }
-                setOpacity(opacityValue[0]);
+        timer.addActionListener(e -> {
+            opacityValue[0] += 0.05f;
+            if (opacityValue[0] >= 1f) {
+                opacityValue[0] = 1f;
+                timer.stop();
             }
+            setOpacity(opacityValue[0]);
         });
         timer.start();
     }
 
-    // Fade-out animation from full opacity to 0.5, then switch to LoginScreen
+    // Fade-out: Gradually decrease opacity to 0.5, then switch to LoginScreen
     private void fadeOutAndSwitchToLogin() {
         Timer timer = new Timer(50, null);
         final float[] opacityValue = {getOpacity()};
-        timer.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                opacityValue[0] -= 0.05f;
-                if (opacityValue[0] <= 0.5f) {
-                    opacityValue[0] = 0.5f;
-                    timer.stop();
-                    dispose();
-                    SwingUtilities.invokeLater(() -> {
-                        LoginScreen loginScreen = new LoginScreen();
-                        // LoginScreen's constructor will start its fade-in transition
-                    });
-                }
-                setOpacity(opacityValue[0]);
+        timer.addActionListener(e -> {
+            opacityValue[0] -= 0.05f;
+            if (opacityValue[0] <= 0.5f) {
+                opacityValue[0] = 0.5f;
+                timer.stop();
+                dispose();
+                SwingUtilities.invokeLater(() -> new LoginScreen());
             }
+            setOpacity(opacityValue[0]);
         });
         timer.start();
     }
 
-    // Reuse the shield icon drawing from LoginScreen
     private JLabel createShieldIcon() {
         JLabel iconLabel = new JLabel() {
             @Override
