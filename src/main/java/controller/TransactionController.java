@@ -110,4 +110,38 @@ public class TransactionController {
             System.out.println("Failed to delete transaction!");
         }
     }
+
+
+    /**
+     * Retrieves all transactions for the given user from the database.
+     *
+     * @param userId the user ID
+     * @return a List of Transaction objects
+     */
+    public static List<Transaction> getAllTransactions(int userId) {
+        List<Transaction> transactions = new ArrayList<>();
+        String query = "SELECT * FROM transactions WHERE user_id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Transaction t = new Transaction(
+                            rs.getInt("id"),
+                            userId,
+                            rs.getTimestamp("date"),
+                            rs.getString("description"),
+                            rs.getString("category"),
+                            rs.getString("type"),
+                            rs.getDouble("amount")
+                    );
+                    transactions.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactions;
+    }
+
 }
