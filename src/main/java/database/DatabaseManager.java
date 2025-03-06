@@ -13,9 +13,9 @@ public class DatabaseManager {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println("Connected to PostgreSQL database!");
+                System.out.println("Connected to mySQL database!");
             } catch (ClassNotFoundException e) {
-                System.out.println("PostgreSQL JDBC Driver not found!");
+                System.out.println("mySQL JDBC Driver not found!");
                 e.printStackTrace();
             } catch (SQLException e) {
                 System.out.println("Database connection failed!");
