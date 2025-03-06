@@ -1,13 +1,13 @@
 package view;
 
-import controller.UserController;
+import controller.UserControllerWithDatabase;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 
-public class LoginScreen extends JFrame {
+public class RegisterScreen extends JFrame {
     // Define colors
     private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
     private final Color PANEL_COLOR = new Color(40, 24, 69);
@@ -18,35 +18,27 @@ public class LoginScreen extends JFrame {
 
     private JTextField emailField;
     private JPasswordField passwordField;
-    private boolean isSubmitted = false;
-    private String userEmail;
-    private String userName;
 
-    public LoginScreen() {
-        // Remove window decorations to allow opacity control
+    public RegisterScreen() {
+        // Use undecorated to allow opacity control
         setUndecorated(true);
-        setTitle("Financial Budget Gamified - Login");
+        setTitle("Financial Budget Gamified - Register");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Set initial opacity to 0.5 for smooth fade-in transition
-        setOpacity(0.5f);
-
-        // Set larger size and make responsive
         setSize(1920, 1080);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
 
-        // Create a wrapper panel with GridBagLayout for centering
+        // Set initial opacity to 0.5 for the fade-in effect
+        setOpacity(0.5f);
+
         JPanel wrapperPanel = new JPanel(new GridBagLayout());
         wrapperPanel.setBackground(BACKGROUND_COLOR);
 
-        // Main content panel
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(PANEL_COLOR);
-
-        // Calculate responsive padding
-        int horizontalPadding = (int) (getWidth() * 0.02);
-        int verticalPadding = (int) (getHeight() * 0.03);
+        int horizontalPadding = (int)(getWidth() * 0.02);
+        int verticalPadding = (int)(getHeight() * 0.03);
         mainPanel.setBorder(new EmptyBorder(verticalPadding, horizontalPadding, verticalPadding, horizontalPadding));
 
         // Logo/Icon panel
@@ -56,25 +48,25 @@ public class LoginScreen extends JFrame {
         iconPanel.add(iconLabel);
 
         // Welcome text
-        JLabel welcomeLabel = new JLabel("Welcome Adventurer");
+        JLabel welcomeLabel = new JLabel("Register a New Account");
         welcomeLabel.setForeground(TEXT_COLOR);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
         welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Subtitle
-        JLabel subtitleLabel = new JLabel("Begin your financial quest");
+        JLabel subtitleLabel = new JLabel("Begin your financial journey");
         subtitleLabel.setForeground(new Color(180, 180, 180));
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Input field panels with proper centering
+        // Input fields panel
         JPanel inputsPanel = new JPanel();
         inputsPanel.setLayout(new BoxLayout(inputsPanel, BoxLayout.Y_AXIS));
         inputsPanel.setBackground(PANEL_COLOR);
         inputsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Calculate responsive field width - 30% of window width but minimum 300px
-        int fieldWidth = Math.max(300, (int) (getWidth() * 0.3));
+        // Responsive field width calculation
+        int fieldWidth = Math.max(300, (int)(getWidth() * 0.3));
 
         // Email field
         JLabel emailLabel = new JLabel("Email");
@@ -108,7 +100,7 @@ public class LoginScreen extends JFrame {
         passwordField.setMaximumSize(new Dimension(fieldWidth, 40));
         passwordField.setPreferredSize(new Dimension(fieldWidth, 40));
 
-        // Panels to center labels and fields
+        // Panels for labels and fields
         JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         emailLabelPanel.setBackground(PANEL_COLOR);
         emailLabelPanel.add(emailLabel);
@@ -125,8 +117,8 @@ public class LoginScreen extends JFrame {
         passwordFieldPanel.setBackground(PANEL_COLOR);
         passwordFieldPanel.add(passwordField);
 
-        // Login button with gradient
-        JButton loginButton = new JButton("Enter the Realm") {
+        // Register button with gradient style
+        JButton registerButton = new JButton("Create Account") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -150,44 +142,34 @@ public class LoginScreen extends JFrame {
                 return new Dimension(fieldWidth, 45);
             }
         };
-        loginButton.setForeground(TEXT_COLOR);
-        loginButton.setBorderPainted(false);
-        loginButton.setFocusPainted(false);
-        loginButton.setContentAreaFilled(false);
-        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        registerButton.setForeground(TEXT_COLOR);
+        registerButton.setBorderPainted(false);
+        registerButton.setFocusPainted(false);
+        registerButton.setContentAreaFilled(false);
+        registerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(PANEL_COLOR);
-        buttonPanel.add(loginButton);
+        buttonPanel.add(registerButton);
 
-        // Existing account info label
-        JLabel accountLabel = new JLabel("Already have an account? Resume your journey");
-        accountLabel.setForeground(new Color(180, 180, 180));
-        accountLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        accountLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JPanel accountPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        accountPanel.setBackground(PANEL_COLOR);
-        accountPanel.add(accountLabel);
-
-        // New Register Button Panel with smooth fade transition
-        JPanel registerSwitchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        registerSwitchPanel.setBackground(PANEL_COLOR);
-        JButton registerSwitchButton = new JButton("Register");
-        registerSwitchButton.setForeground(TEXT_COLOR);
-        registerSwitchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        registerSwitchButton.setBorderPainted(false);
-        registerSwitchButton.setFocusPainted(false);
-        registerSwitchButton.setContentAreaFilled(false);
-        registerSwitchButton.addActionListener(new ActionListener() {
+        // Clickable label to go back to LoginScreen with smooth fade transition
+        JLabel loginLabel = new JLabel("Already have an account? Login here");
+        loginLabel.setForeground(new Color(180, 180, 180));
+        loginLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        loginLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Instead of immediate switch, call the fade-out method
+        loginLabel.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                fadeOutAndSwitchToRegister();
+            public void mouseClicked(MouseEvent e) {
+                fadeOutAndSwitchToLogin();
             }
         });
-        registerSwitchPanel.add(registerSwitchButton);
+        JPanel loginPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        loginPanel.setBackground(PANEL_COLOR);
+        loginPanel.add(loginLabel);
 
-        // Add components to main panel with spacing
+        // Add all components to main panel
         mainPanel.add(iconPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(welcomeLabel);
@@ -204,87 +186,70 @@ public class LoginScreen extends JFrame {
         mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
         mainPanel.add(buttonPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(accountPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        mainPanel.add(registerSwitchPanel);
+        mainPanel.add(loginPanel);
 
         // Set preferred size for responsiveness
-        Dimension loginPanelSize = new Dimension(fieldWidth + 100, 600);
-        mainPanel.setMinimumSize(loginPanelSize);
-        mainPanel.setPreferredSize(loginPanelSize);
+        Dimension registerPanelSize = new Dimension(fieldWidth + 100, 600);
+        mainPanel.setMinimumSize(registerPanelSize);
+        mainPanel.setPreferredSize(registerPanelSize);
 
-        // Add the main panel to the centered wrapper
         wrapperPanel.add(mainPanel);
-
         setContentPane(wrapperPanel);
         getContentPane().setBackground(BACKGROUND_COLOR);
 
-        // Login button action: perform login and launch next screen (e.g., CalendarUI)
-        loginButton.addActionListener(new ActionListener() {
+        // Action listener for the register button
+        registerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String email = emailField.getText().trim();
                 String password = new String(passwordField.getPassword()).trim();
+
                 if (email.isEmpty() || password.isEmpty()) {
                     JOptionPane.showMessageDialog(
-                            LoginScreen.this,
+                            RegisterScreen.this,
                             "Please enter both email and password",
-                            "Login Error",
+                            "Registration Error",
                             JOptionPane.ERROR_MESSAGE
                     );
                     return;
                 }
-                // For now, extract username from email and proceed
-                userName = email.split("@")[0];
-                userEmail = email;
-                isSubmitted = true;
-                dispose();
-                SwingUtilities.invokeLater(() -> new CalendarUI(userName, userEmail));
+
+                // Call the registration method from your controller
+                boolean registered = UserControllerWithDatabase.registerUser(email, password);
+                if (registered) {
+                    // Instead of an immediate pop-up, perform a smooth fade-out transition
+                    fadeOutAndSwitchToLogin();
+                } else {
+                    JOptionPane.showMessageDialog(
+                            RegisterScreen.this,
+                            "Registration failed. Please try again.",
+                            "Registration Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
             }
         });
 
-        // Adjust field sizes on window resize
+        // Adjust field sizes on resize
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent evt) {
-                int newFieldWidth = Math.max(300, (int) (getWidth() * 0.3));
+                int newFieldWidth = Math.max(300, (int)(getWidth() * 0.3));
                 emailField.setMaximumSize(new Dimension(newFieldWidth, 40));
                 emailField.setPreferredSize(new Dimension(newFieldWidth, 40));
                 passwordField.setMaximumSize(new Dimension(newFieldWidth, 40));
                 passwordField.setPreferredSize(new Dimension(newFieldWidth, 40));
-                loginButton.setPreferredSize(new Dimension(newFieldWidth, 45));
+                registerButton.setPreferredSize(new Dimension(newFieldWidth, 45));
                 revalidate();
                 repaint();
             }
         });
 
         setVisible(true);
-        // Start fade-in transition: gradually increase opacity from 0.5 to 1.0
+        // Start the fade-in transition from 0.5 to 1.0 gradually
         fadeIn(0.5f);
     }
 
-    // Fade-out animation before switching to RegisterScreen
-    private void fadeOutAndSwitchToRegister() {
-        Timer timer = new Timer(50, null);
-        final float[] opacityValue = {getOpacity()};
-        timer.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                opacityValue[0] -= 0.05f;
-                if (opacityValue[0] <= 0.5f) {
-                    opacityValue[0] = 0.5f;
-                    timer.stop();
-                    dispose();
-                    SwingUtilities.invokeLater(() -> {
-                        RegisterScreen regScreen = new RegisterScreen();
-                        regScreen.fadeIn(0.5f);
-                    });
-                }
-                setOpacity(opacityValue[0]);
-            }
-        });
-        timer.start();
-    }
-
-    // Gradually increases the frame opacity from the start value to full opacity (1.0)
+    // Fade-in method: gradually increases opacity from startOpacity to 1.0
     public void fadeIn(float startOpacity) {
         setOpacity(startOpacity);
         Timer timer = new Timer(50, null);
@@ -302,6 +267,29 @@ public class LoginScreen extends JFrame {
         timer.start();
     }
 
+    // Fade-out animation from full opacity to 0.5, then switch to LoginScreen
+    private void fadeOutAndSwitchToLogin() {
+        Timer timer = new Timer(50, null);
+        final float[] opacityValue = {getOpacity()};
+        timer.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                opacityValue[0] -= 0.05f;
+                if (opacityValue[0] <= 0.5f) {
+                    opacityValue[0] = 0.5f;
+                    timer.stop();
+                    dispose();
+                    SwingUtilities.invokeLater(() -> {
+                        LoginScreen loginScreen = new LoginScreen();
+                        // LoginScreen's constructor will start its fade-in transition
+                    });
+                }
+                setOpacity(opacityValue[0]);
+            }
+        });
+        timer.start();
+    }
+
+    // Reuse the shield icon drawing from LoginScreen
     private JLabel createShieldIcon() {
         JLabel iconLabel = new JLabel() {
             @Override
@@ -327,27 +315,5 @@ public class LoginScreen extends JFrame {
             }
         };
         return iconLabel;
-    }
-
-    public boolean isSubmitted() {
-        return isSubmitted;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    /**
-     * @deprecated This method has been replaced by app.Main.main().
-     * Please use app.Main.main() as the main entry point for the application.
-     */
-    @Deprecated
-    public static void main(String[] args) {
-        System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
-        app.Main.main(args);
     }
 }
