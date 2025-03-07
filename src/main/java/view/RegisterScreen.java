@@ -213,6 +213,29 @@ public class RegisterScreen extends JFrame {
                 );
                 return;
             }
+
+            // Validate email format
+            if (!email.matches("^[\\w-.]+@[\\w-]+\\.[\\w]{2,}$")) {
+                JOptionPane.showMessageDialog(
+                        RegisterScreen.this,
+                        "Invalid email format",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Validate password length
+            if (password.length() < 3) {
+                JOptionPane.showMessageDialog(
+                        RegisterScreen.this,
+                        "Password must be at least 3 characters long",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
             int userId = UserControllerWithDatabase.registerUser(email, password);
             if (userId != -1) {
                 fadeOutAndSwitchToLogin();

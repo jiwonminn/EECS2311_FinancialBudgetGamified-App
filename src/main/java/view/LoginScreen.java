@@ -230,6 +230,29 @@ public class LoginScreen extends JFrame {
                 );
                 return;
             }
+
+            if (!email.matches("^[\\w-.]+@[\\w-]+\\.[\\w]{2,}$")) {
+                JOptionPane.showMessageDialog(
+                        LoginScreen.this,
+                        "Invalid email format",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Validate password length
+            if (password.length() < 3) {
+                JOptionPane.showMessageDialog(
+                        LoginScreen.this,
+                        "Password must be at least 3 characters long",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+
             int userId = controller.UserControllerWithDatabase.authenticateUser(email, password);
             if (userId == -1) {
                 JOptionPane.showMessageDialog(
