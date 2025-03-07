@@ -12,7 +12,7 @@ import javax.swing.table.DefaultTableModel;
 import database.DatabaseManager;
 
 public class TransactionLogUI extends JFrame{
-	  private static final String DATABASE_NAME = "budget_app";
+	 	private static final String DATABASE_NAME = "budget_app";
 	    private static final String TABLE_NAME = "transactions";
 	    private JTable table;
 	    private DefaultTableModel model;
@@ -65,9 +65,9 @@ public class TransactionLogUI extends JFrame{
 	    }
 
 	    private Connection getDatabaseConnection() throws SQLException {
-	        String url = "jdbc:mysql://127.0.0.1:3306/" + DATABASE_NAME + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-	        String user = "root";
-	        String password = "TheWarOf1812";
+	    	 String URL = "jdbc:postgresql://localhost:5432/Projecttest"; // change if needed
+	         String USER = "andychan";
+	         String PASSWORD = "";
 
 	        try {
 	            Class.forName("com.mysql.cj.jdbc.Driver");
@@ -76,7 +76,7 @@ public class TransactionLogUI extends JFrame{
 	            throw new SQLException("Driver not found", e);
 	        }
 
-	        return DriverManager.getConnection(url, user, password);
+	        return DriverManager.getConnection(URL, USER, PASSWORD);
 	    }
 
 	    public static void main(String[] args) {

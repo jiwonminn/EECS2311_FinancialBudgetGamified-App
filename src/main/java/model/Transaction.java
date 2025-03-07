@@ -3,9 +3,7 @@ package model;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
-import controller.TransactionController;
-
-public class Transaction extends TransactionController {
+public class Transaction {
     private int id;
     private int userId;
     private String description;
@@ -16,15 +14,12 @@ public class Transaction extends TransactionController {
 
     // Existing constructors for creating transactions manually
     public Transaction(String description, double amount, LocalDate date, boolean isIncome) {
-    	if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative!");
-    	}
-    	else if(description == null) {
-    		throw new IllegalArgumentException("Description can not be null");
-    	}
-    	else if(date == null) {
-    		throw new IllegalArgumentException("Date can not be null");
-    	}
+    	 if(amount < 0.00) {
+     		throw new IllegalArgumentException("Amount can not be negative!");
+     	}
+     	else if(description == null) {
+     		throw new IllegalArgumentException("Description can not be null");
+     	}
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -34,22 +29,17 @@ public class Transaction extends TransactionController {
 
     public Transaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
     	if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative!");
+    		throw new IllegalArgumentException("Amount can not be negative");
     	}
-    	if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative!");
+    	else if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
     	}
     	else if(description == null) {
-    		throw new IllegalArgumentException("Description can not be null");
-    	}
-    	else if(date == null) {
-    		throw new IllegalArgumentException("Date can not be null");
+    		throw new NullPointerException("Description can not be null");
     	}
     	else if(category == null) {
-    		throw new IllegalArgumentException("Category can not be null");
+    		throw new NullPointerException("Category can not be null");
     	}
-    	
-    	try
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -61,6 +51,18 @@ public class Transaction extends TransactionController {
     // It accepts an id, a userId, a Timestamp for the date, a description,
     // a category, a type as a String ("income" or "expense"), and the amount.
     public Transaction(int id, int userId, Timestamp timestamp, String description, String category, String type, double amount) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	else if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
+    	}
+    	else if(description == null) {
+    		throw new NullPointerException("Description can not be null");
+    	}
+    	else if(category == null) {
+    		throw new NullPointerException("Category can not be null");
+    	}
         this.id = id;
         this.userId = userId;
         this.description = description;

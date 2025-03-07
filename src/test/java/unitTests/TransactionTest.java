@@ -46,7 +46,7 @@ public class TransactionTest {
 
     @Test
     public void testNullValues() {
-        assertThrows(IllegalArgumentException.class,()->new Transaction(null, 100.0, null, false, null));
+        assertThrows(NullPointerException.class,()->new Transaction(null, 100.0, null, false, null));
     }
 
     @Test

@@ -2,6 +2,8 @@ package unitTests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.sql.SQLException;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,11 @@ import model.Transaction;
 import controller.TransactionController;
 
 class TransactionControllerTest extends TransactionController {
+		public TransactionControllerTest() throws SQLException {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
 		private Transaction transaction;
 	    private LocalDate testDate;
 	    

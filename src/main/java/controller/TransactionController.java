@@ -23,9 +23,6 @@ public class TransactionController {
     	else if(description == null) {
     		throw new IllegalArgumentException("Description can not be null");
     	}
-    	else if(date == null) {
-    		throw new IllegalArgumentException("Date can not be null");
-    	}
     }
     /**
      * Adds a new transaction for the given user.
@@ -71,9 +68,6 @@ public class TransactionController {
     	}
     	else if(description == null) {
     		throw new NullPointerException("Description can not be null");
-    	}
-    	else if(date == null) {
-    		throw new NullPointerException("Date can not be null");
     	}
     	else if(category == null) {
     		throw new NullPointerException("Category can not be null");
