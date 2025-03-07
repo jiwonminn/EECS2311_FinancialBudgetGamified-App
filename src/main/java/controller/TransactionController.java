@@ -44,9 +44,9 @@ public class TransactionController {
     }
 
     // ADD: Add Transaction without category (for backwards compatibility)
-    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
-        addTransaction(description, amount, date, isIncome, "Other");
-    }
+//    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
+//        addTransaction(description, amount, date, isIncome, "Other");
+//    }
     
     // ADD: Add Transaction with category
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
