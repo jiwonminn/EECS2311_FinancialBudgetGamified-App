@@ -57,6 +57,7 @@ public class CalendarUI extends JFrame {
         UserController userController = new UserController(userName, userEmail, 1000);
 
         transactionController = new TransactionController();
+        transactionController.setUserId(userId);
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -93,6 +94,7 @@ public class CalendarUI extends JFrame {
         UserController userController = new UserController(userName, userEmail, 1000);
 
         transactionController = new TransactionController();
+        transactionController.setUserId(userId);
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -522,13 +524,26 @@ public class CalendarUI extends JFrame {
         
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        // Create a custom category selector
-        CategorySelector categorySelector = new CategorySelector();
-        categorySelector.setBackground(FIELD_BACKGROUND);
-        categorySelector.setForeground(TEXT_COLOR);
-        categorySelector.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        categorySelector.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logPanel.add(categorySelector);
+        // Create category dropdown instead of CategorySelector
+        String[] categories = {"Housing", "Food", "Transportation", "Entertainment", "Healthcare", "Education", "Savings", "Income", "Other"};
+        categoryComboBox = new JComboBox<>(categories);
+        categoryComboBox.setBackground(FIELD_BACKGROUND);
+        categoryComboBox.setForeground(TEXT_COLOR);
+        categoryComboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        categoryComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Style the combo box
+        categoryComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setBackground(isSelected ? ACCENT_COLOR : FIELD_BACKGROUND);
+                setForeground(isSelected ? TEXT_COLOR : TEXT_COLOR);
+                return this;
+            }
+        });
+        
+        logPanel.add(categoryComboBox);
         
         logPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
@@ -651,8 +666,11 @@ public class CalendarUI extends JFrame {
             // Get transaction type
             boolean isIncome = incomeButton.isSelected();
             
-            // Get category
-            String category = categoryComboBox.getSelectedItem().toString();
+            // Get category safely
+            String category = "Other"; // Default category
+            if (categoryComboBox != null && categoryComboBox.getSelectedItem() != null) {
+                category = categoryComboBox.getSelectedItem().toString();
+            }
             
             // Add transaction
             transactionController.addTransaction(description, amount, date, isIncome, category);
@@ -662,6 +680,9 @@ public class CalendarUI extends JFrame {
             amountField.setText("");
             datePicker.setDate(new Date()); // Reset to today
             expenseButton.setSelected(true); // Reset to expense
+            if (categoryComboBox != null) {
+                categoryComboBox.setSelectedIndex(0); // Reset to first category
+            }
             
             // Update transaction display
             updateTransactionDisplay();

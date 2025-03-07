@@ -9,6 +9,7 @@ import java.util.List;
 
 public class TransactionController {
     private Connection connection;
+    private int userId = 1; // Default to 1 if not set explicitly
 
     public TransactionController() throws SQLException {
         connection = DatabaseManager.getConnection();
@@ -25,7 +26,7 @@ public class TransactionController {
      * @param amount      the transaction amount
      * @return true if the transaction was successfully added, false otherwise
      */
-    public static boolean addTransactionk(int userId, String date, String description, String category, String type, double amount) {
+    public static boolean addTransaction(int userId, String date, String description, String category, String type, double amount) {
         String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -48,15 +49,21 @@ public class TransactionController {
 //        addTransaction(description, amount, date, isIncome, "Other");
 //    }
     
+    // Set the user ID for transactions
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
     // ADD: Add Transaction with category
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
-        String query = "INSERT INTO transactions (description, amount, date, is_income, category) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO transactions (user_id, description, amount, date, type, category) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, description);
-            stmt.setDouble(2, amount);
-            stmt.setDate(3, Date.valueOf(date));
-            stmt.setBoolean(4, isIncome);
-            stmt.setString(5, category);
+            stmt.setInt(1, userId); // Use the stored userId
+            stmt.setString(2, description);
+            stmt.setDouble(3, amount);
+            stmt.setDate(4, Date.valueOf(date));
+            stmt.setString(5, isIncome ? "income" : "expense");
+            stmt.setString(6, category);
             stmt.executeUpdate();
             System.out.println("Transaction added successfully!");
         } catch (SQLException e) {
@@ -65,31 +72,38 @@ public class TransactionController {
         }
     }
 
-    // READ: Fetch all transactions
+    // READ: Fetch all transactions for the current user
     public List<Transaction> getTransactions() {
         List<Transaction> transactions = new ArrayList<>();
-        String query = "SELECT * FROM transactions ORDER BY date DESC";
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            while (rs.next()) {
-                String category = "Other";
-                try {
-                    category = rs.getString("category");
-                    if (category == null) category = "Other";
-                } catch (SQLException e) {
-                    // Column might not exist in older database versions
-                    category = "Other";
+        String query = "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String category = "Other";
+                    try {
+                        category = rs.getString("category");
+                        if (category == null) category = "Other";
+                    } catch (SQLException e) {
+                        // Column might not exist in older database versions
+                        category = "Other";
+                    }
+                    
+                    String type = rs.getString("type");
+                    boolean isIncome = type != null && type.equalsIgnoreCase("income");
+                    
+                    // Use the appropriate constructor based on the database schema
+                    Transaction transaction = new Transaction(
+                            rs.getInt("id"),
+                            userId,
+                            rs.getTimestamp("date"),
+                            rs.getString("description"),
+                            category,
+                            type,
+                            rs.getDouble("amount")
+                    );
+                    transactions.add(transaction);
                 }
-                
-                Transaction transaction = new Transaction(
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        rs.getBoolean("is_income"),
-                        category
-                );
-                transactions.add(transaction);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -111,8 +125,6 @@ public class TransactionController {
             return false;
         }
     }
-
-
 
     /**
      * Retrieves all transactions for the given user from the database.
@@ -186,5 +198,4 @@ public class TransactionController {
         
         return transactions;
     }
-
 }
