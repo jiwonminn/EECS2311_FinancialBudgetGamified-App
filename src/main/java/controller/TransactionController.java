@@ -18,7 +18,13 @@ public class TransactionController {
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
         addTransaction(description, amount, date, isIncome, "Other");
         if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative");
+    		throw new IllegalArgumentException("Amount can not be negative!");
+    	}
+    	else if(description == null) {
+    		throw new IllegalArgumentException("Description can not be null");
+    	}
+    	else if(date == null) {
+    		throw new IllegalArgumentException("Date can not be null");
     	}
     }
     
@@ -27,8 +33,17 @@ public class TransactionController {
     	if(amount < 0.00) {
     		throw new IllegalArgumentException("Amount can not be negative");
     	}
-    	if(description.length() <= 0) {
+    	else if(description.length() <= 0) {
     		throw new IllegalArgumentException("Description can not be empty");
+    	}
+    	else if(description == null) {
+    		throw new NullPointerException("Description can not be null");
+    	}
+    	else if(date == null) {
+    		throw new NullPointerException("Date can not be null");
+    	}
+    	else if(category == null) {
+    		throw new NullPointerException("Category can not be null");
     	}
         String query = "INSERT INTO transactions (description, amount, date, is_income, category) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {

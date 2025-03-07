@@ -2,7 +2,9 @@ package model;
 
 import java.time.LocalDate;
 
-public class Transaction {
+import controller.TransactionController;
+
+public class Transaction extends TransactionController {
     private String description;
     private double amount;
     private LocalDate date;
@@ -10,6 +12,15 @@ public class Transaction {
     private String category; // Added category field
 
     public Transaction(String description, double amount, LocalDate date, boolean isIncome) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative!");
+    	}
+    	else if(description == null) {
+    		throw new IllegalArgumentException("Description can not be null");
+    	}
+    	else if(date == null) {
+    		throw new IllegalArgumentException("Date can not be null");
+    	}
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -21,6 +32,18 @@ public class Transaction {
     public Transaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
     	if(amount < 0.00) {
     		throw new IllegalArgumentException("Amount can not be negative!");
+    	}
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative!");
+    	}
+    	else if(description == null) {
+    		throw new IllegalArgumentException("Description can not be null");
+    	}
+    	else if(date == null) {
+    		throw new IllegalArgumentException("Date can not be null");
+    	}
+    	else if(category == null) {
+    		throw new IllegalArgumentException("Category can not be null");
     	}
         this.description = description;
         this.amount = amount;

@@ -1,4 +1,4 @@
-package databaseTest;
+package integrationTests;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.After;

@@ -1,5 +1,6 @@
-package controllerTest;
+package unitTests;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,14 @@ class TransactionControllerTest extends TransactionController {
 	    	assertThrows(IllegalArgumentException.class, ()-> addTransaction("",10.00,LocalDate.now(),false,"Test"));
 	    	
 	    }
+	    
+	    @Test
+	    public void nullCases() {
+	    	assertThrows(NullPointerException.class,()-> addTransaction(null,100,null,false,"Test"));
+	    	
+	    }
+	    
+	    
 	    
 }
 
