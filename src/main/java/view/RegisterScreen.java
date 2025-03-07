@@ -1,6 +1,8 @@
 package view;
 
 import controller.UserControllerWithDatabase;
+import model.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -211,9 +213,12 @@ public class RegisterScreen extends JFrame {
                 );
                 return;
             }
-            boolean registered = UserControllerWithDatabase.registerUser(email, password);
-            if (registered) {
+            int userId = UserControllerWithDatabase.registerUser(email, password);
+            if (userId != -1) {
                 fadeOutAndSwitchToLogin();
+                // Create the User model with the generated id, username (could be derived), email, etc.
+                User newUser = new User(userId, email.split("@")[0], email, 0.0, 0);
+                // Proceed to login or show success message
             } else {
                 JOptionPane.showMessageDialog(
                         RegisterScreen.this,
@@ -222,6 +227,7 @@ public class RegisterScreen extends JFrame {
                         JOptionPane.ERROR_MESSAGE
                 );
             }
+
         });
 
         addComponentListener(new ComponentAdapter() {

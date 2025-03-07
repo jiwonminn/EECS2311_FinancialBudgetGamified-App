@@ -7,8 +7,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseInitializer {
-    public static void initializeDatabase() {
-        try (Connection conn = DatabaseManager.getConnection()) {
+    public static void initializeDatabase() throws SQLException {
+        Connection conn = DatabaseManager.getConnection();
+        if (conn == null) {
+            System.out.println("Failed to get DB connection!");
+            return;
+        }
+        try {
             createTables(conn);
         } catch (SQLException e) {
             e.printStackTrace();

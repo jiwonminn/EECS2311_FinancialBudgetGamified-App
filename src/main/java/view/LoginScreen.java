@@ -1,11 +1,14 @@
 package view;
 
 import controller.UserController;
+import controller.UserControllerWithDatabase;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
+import java.sql.SQLException;
 
 public class LoginScreen extends JFrame {
     // Define colors
@@ -227,11 +230,28 @@ public class LoginScreen extends JFrame {
                 );
                 return;
             }
-            userName = email.split("@")[0];
+            int userId = controller.UserControllerWithDatabase.authenticateUser(email, password);
+            if (userId == -1) {
+                JOptionPane.showMessageDialog(
+                        LoginScreen.this,
+                        "Invalid email or password",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            // If authenticated, create your User model (you might use the new constructor with id)
+            userName = email.split("@")[0]; // or use other logic to determine username
             userEmail = email;
             isSubmitted = true;
             dispose();
-            SwingUtilities.invokeLater(() -> new CalendarUI(userName, userEmail));
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    new CalendarUI(userId, userName, userEmail);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
         });
 
         addComponentListener(new ComponentAdapter() {
@@ -327,7 +347,7 @@ public class LoginScreen extends JFrame {
     }
 
     @Deprecated
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
         app.Main.main(args);
     }

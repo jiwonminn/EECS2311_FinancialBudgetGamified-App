@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -45,10 +46,12 @@ public class CalendarUI extends JFrame {
     private JRadioButton expenseButton;
     private JPanel transactionDisplayPanel;
     private JComboBox<String> categoryComboBox;
+    private int userId;
     private String userName;
     private String userEmail;
 
-    public CalendarUI(String userName, String userEmail) {
+    public CalendarUI(int userId, String userName, String userEmail) throws SQLException {
+        this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
         
@@ -74,7 +77,7 @@ public class CalendarUI extends JFrame {
     }
     
     // Add default constructor for backward compatibility
-    public CalendarUI() {
+    public CalendarUI() throws SQLException {
         // Show login screen first
         LoginScreen loginScreen = new LoginScreen();
         loginScreen.setVisible(true);
@@ -678,14 +681,17 @@ public class CalendarUI extends JFrame {
             LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             
             boolean isIncome = incomeButton.isSelected();
+            String incomeOrExpense = isIncome ? "Income" : "Expense";
             
             // Get the category from the CategorySelector
             String category = categoryComboBox != null ? 
                 (String) categoryComboBox.getSelectedItem() : "Other";
             
             // Add the transaction with category
-            transactionController.addTransaction(description, amount, date, isIncome, category);
-            
+//            transactionController.addTransaction(description, amount, date, isIncome, category);
+            transactionController.addTransactionk(userId, String.valueOf(date), description, category, incomeOrExpense, amount);
+
+
             // Update display
             updateTransactionDisplay();
             
@@ -711,7 +717,7 @@ public class CalendarUI extends JFrame {
             transactionDisplayPanel.removeAll();
             
             // Get transactions from controller
-            List<Transaction> transactions = transactionController.getTransactions();
+            List<Transaction> transactions = transactionController.getAllTransactions(userId);
             
             if (transactions.isEmpty()) {
                 // Show empty state
@@ -1286,7 +1292,7 @@ public class CalendarUI extends JFrame {
      * Please use app.Main.main() as the main entry point for the application.
      */
     @Deprecated
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
         // Forward to the new main method
         app.Main.main(args);

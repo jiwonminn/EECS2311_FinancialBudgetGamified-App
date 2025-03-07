@@ -10,7 +10,7 @@ import java.util.List;
 public class TransactionController {
     private Connection connection;
 
-    public TransactionController() {
+    public TransactionController() throws SQLException {
         connection = DatabaseManager.getConnection();
     }
 
@@ -25,7 +25,7 @@ public class TransactionController {
      * @param amount      the transaction amount
      * @return true if the transaction was successfully added, false otherwise
      */
-    public static boolean addTransaction(int userId, String date, String description, String category, String type, double amount) {
+    public static boolean addTransactionk(int userId, String date, String description, String category, String type, double amount) {
         String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -120,7 +120,7 @@ public class TransactionController {
      */
     public static List<Transaction> getAllTransactions(int userId) {
         List<Transaction> transactions = new ArrayList<>();
-        String query = "SELECT * FROM transactions WHERE user_id = ?";
+        String query = "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
