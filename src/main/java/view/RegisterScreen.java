@@ -200,6 +200,9 @@ public class RegisterScreen extends JFrame {
         setContentPane(wrapperPanel);
         getContentPane().setBackground(BACKGROUND_COLOR);
 
+        emailField.setToolTipText("Enter a valid email (e.g., user@example.com)");
+        passwordField.setToolTipText("Password must be at least 3 characters");
+
         // Action listener for the register button
         registerButton.addActionListener(e -> {
             String email = emailField.getText().trim();
@@ -218,7 +221,7 @@ public class RegisterScreen extends JFrame {
             if (!email.matches("^[\\w-.]+@[\\w-]+\\.[\\w]{2,}$")) {
                 JOptionPane.showMessageDialog(
                         RegisterScreen.this,
-                        "Invalid email format",
+                        "Invalid email format. For example, user@example.com",
                         "Input Error",
                         JOptionPane.ERROR_MESSAGE
                 );

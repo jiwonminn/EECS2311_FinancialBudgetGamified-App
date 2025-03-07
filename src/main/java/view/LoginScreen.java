@@ -217,6 +217,10 @@ public class LoginScreen extends JFrame {
         setContentPane(wrapperPanel);
         getContentPane().setBackground(BACKGROUND_COLOR);
 
+        // In your LoginScreen constructor, set tooltips:
+        emailField.setToolTipText("Enter a valid email (e.g., user@example.com)");
+        passwordField.setToolTipText("Password must be at least 3 characters");
+
         // Login button action
         loginButton.addActionListener(e -> {
             String email = emailField.getText().trim();
@@ -234,7 +238,7 @@ public class LoginScreen extends JFrame {
             if (!email.matches("^[\\w-.]+@[\\w-]+\\.[\\w]{2,}$")) {
                 JOptionPane.showMessageDialog(
                         LoginScreen.this,
-                        "Invalid email format",
+                        "Invalid email format. For example, user@example.com",
                         "Input Error",
                         JOptionPane.ERROR_MESSAGE
                 );
