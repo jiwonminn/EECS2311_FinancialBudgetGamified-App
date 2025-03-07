@@ -146,4 +146,45 @@ public class TransactionController {
         return transactions;
     }
 
+    /**
+     * Gets all transactions for a user with the specified category and within the date range
+     * @param userId The ID of the user
+     * @param category The category to filter by
+     * @param startDate The start date of the range
+     * @param endDate The end date of the range
+     * @return A list of matching transactions
+     */
+    public List<Transaction> getTransactionsByCategoryAndDateRange(int userId, String category, 
+                                                                  java.util.Date startDate, java.util.Date endDate) throws SQLException {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE user_id = ? AND category = ? AND date BETWEEN ? AND ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, category);
+            stmt.setDate(3, new java.sql.Date(startDate.getTime()));
+            stmt.setDate(4, new java.sql.Date(endDate.getTime()));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String description = rs.getString("description");
+                    double amount = rs.getDouble("amount");
+                    java.sql.Date date = rs.getDate("date");
+                    String type = rs.getString("type");
+                    String transCategory = rs.getString("category");
+                    
+                    LocalDate localDate = date.toLocalDate();
+                    boolean isIncome = type.equalsIgnoreCase("income");
+                    
+                    Transaction transaction = new Transaction(description, amount, localDate, isIncome, transCategory);
+                    transaction.setId(id);
+                    transactions.add(transaction);
+                }
+            }
+        }
+        
+        return transactions;
+    }
+
 }

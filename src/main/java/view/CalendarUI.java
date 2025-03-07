@@ -4,6 +4,8 @@ import controller.TransactionController;
 import controller.UserController;
 import controller.QuizController;
 import model.*;
+import view.GoalsUI;
+import view.CustomCalendarPicker;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,11 +23,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.List;
-
-// Add JDatePicker imports
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.UtilDateModel;
+import javax.swing.SpinnerDateModel;
 
 public class CalendarUI extends JFrame {
     // Define colors
@@ -39,7 +37,7 @@ public class CalendarUI extends JFrame {
     private final Color FIELD_BORDER = new Color(70, 50, 110);
 
     private TransactionController transactionController;
-    private JDatePickerImpl datePicker;
+    private CustomCalendarPicker datePicker;
     private JTextField descriptionField;
     private JTextField amountField;
     private JRadioButton incomeButton;
@@ -121,8 +119,8 @@ public class CalendarUI extends JFrame {
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
-        // Create tabs as requested: Dashboard, Analytics, Quiz, and Leaderboard
-        String[] tabNames = {"Dashboard", "Analytics", "Quiz", "Leaderboard"};
+        // Create tabs with Goals tab between Dashboard and Analytics
+        String[] tabNames = {"Dashboard", "Goals", "Analytics", "Quiz", "Leaderboard"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
@@ -211,11 +209,18 @@ public class CalendarUI extends JFrame {
      */
     private String getTabIcon(String tabName) {
         switch (tabName) {
-            case "Dashboard": return "📊";
-            case "Analytics": return "📈";
-            case "Quiz": return "❓";
-            case "Leaderboard": return "🏆";
-            default: return "•";
+            case "Dashboard":
+                return "📊";
+            case "Goals":
+                return "🎯";
+            case "Analytics":
+                return "📈";
+            case "Quiz":
+                return "❓";
+            case "Leaderboard":
+                return "🏆";
+            default:
+                return "•";
         }
     }
     
@@ -261,6 +266,16 @@ public class CalendarUI extends JFrame {
                 // Right panel - Transaction history
                 JPanel historyPanel = createTransactionHistoryPanel();
                 contentPanel.add(historyPanel);
+                break;
+                
+            case "Goals":
+                // Add header panel below navigation in the top container
+                JPanel goalsHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(goalsHeaderPanel, BorderLayout.CENTER);
+                
+                // Create and add the GoalsUI panel
+                GoalsUI goalsUI = new GoalsUI(userId);
+                add(goalsUI, BorderLayout.CENTER);
                 break;
                 
             case "Quiz":
@@ -377,142 +392,77 @@ public class CalendarUI extends JFrame {
         logPanel.setLayout(new BoxLayout(logPanel, BoxLayout.Y_AXIS));
         logPanel.setBackground(PANEL_COLOR);
         logPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT_COLOR, 1),
-            new EmptyBorder(20, 20, 20, 20)
+            BorderFactory.createLineBorder(new Color(PANEL_COLOR.getRed() + 15, PANEL_COLOR.getGreen() + 15, PANEL_COLOR.getBlue() + 15), 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
         
-        // Title
-        JLabel titleLabel = new JLabel("Log Your Quest Rewards");
-        titleLabel.setForeground(TEXT_COLOR);
+        // Panel title
+        JLabel titleLabel = new JLabel("Log a Transaction");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titleLabel.setForeground(TEXT_COLOR);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         logPanel.add(titleLabel);
         
-        // Subtitle
-        JLabel subtitleLabel = new JLabel("Track your income and expenses to gain experience");
-        subtitleLabel.setForeground(new Color(180, 180, 180));
-        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logPanel.add(subtitleLabel);
         logPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
-        // Transaction Type
-        JLabel typeLabel = new JLabel("Transaction Type");
-        typeLabel.setForeground(TEXT_COLOR);
-        typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logPanel.add(typeLabel);
+        // Description field
+        JLabel descriptionLabel = new JLabel("Description");
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        descriptionLabel.setForeground(TEXT_COLOR);
+        descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logPanel.add(descriptionLabel);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        radioPanel.setBackground(PANEL_COLOR);
-        radioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        descriptionField = new JTextField();
+        descriptionField.setBackground(FIELD_BACKGROUND);
+        descriptionField.setForeground(TEXT_COLOR);
+        descriptionField.setCaretColor(TEXT_COLOR);
+        descriptionField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(FIELD_BORDER),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        descriptionField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        descriptionField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logPanel.add(descriptionField);
         
-        expenseButton = new JRadioButton("Expense");
-        expenseButton.setForeground(EXPENSE_COLOR);
-        expenseButton.setBackground(PANEL_COLOR);
-        expenseButton.setSelected(true);
-        
-        incomeButton = new JRadioButton("Income");
-        incomeButton.setForeground(INCOME_COLOR);
-        incomeButton.setBackground(PANEL_COLOR);
-        
-        ButtonGroup group = new ButtonGroup();
-        group.add(expenseButton);
-        group.add(incomeButton);
-        
-        radioPanel.add(expenseButton);
-        radioPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        radioPanel.add(incomeButton);
-        logPanel.add(radioPanel);
         logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
-        // Amount
-        JLabel amountLabel = new JLabel("Amount");
+        // Amount field
+        JLabel amountLabel = new JLabel("Amount ($)");
+        amountLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         amountLabel.setForeground(TEXT_COLOR);
         amountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         logPanel.add(amountLabel);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
         amountField = new JTextField();
         amountField.setBackground(FIELD_BACKGROUND);
         amountField.setForeground(TEXT_COLOR);
+        amountField.setCaretColor(TEXT_COLOR);
         amountField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(FIELD_BORDER),
             BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
-        amountField.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        amountField.setAlignmentX(Component.LEFT_ALIGNMENT);
         logPanel.add(amountField);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
-        // Category (Dropdown)
-        JLabel categoryLabel = new JLabel("Category");
-        categoryLabel.setForeground(TEXT_COLOR);
-        categoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logPanel.add(categoryLabel);
-        logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        
-        CategorySelector categorySelector = new CategorySelector();
-        categorySelector.setAlignmentX(Component.LEFT_ALIGNMENT);
-        categorySelector.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        logPanel.add(categorySelector);
-        logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        
-        // Date
+        // Date field
         JLabel dateLabel = new JLabel("Date");
+        dateLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         dateLabel.setForeground(TEXT_COLOR);
         dateLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         logPanel.add(dateLabel);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        // Create JDatePicker
-        UtilDateModel model = new UtilDateModel();
-        model.setValue(new Date()); // Default to today
-        Properties properties = new Properties();
-        properties.put("text.today", "Today");
-        properties.put("text.month", "Month");
-        properties.put("text.year", "Year");
-        
-        JDatePanelImpl datePanel = new JDatePanelImpl(model, properties);
-        datePanel.setBackground(PANEL_COLOR);
-        datePanel.setForeground(TEXT_COLOR);
-        
-        // Set UI properties for all components in the date panel
-        SwingUtilities.invokeLater(() -> {
-            Component[] components = datePanel.getComponents();
-            for (Component comp : components) {
-                setComponentColors(comp);
-                
-                // Apply custom styling for month navigation buttons
-                if (comp instanceof JButton) {
-                    JButton btn = (JButton) comp;
-                    btn.setBackground(new Color(40, 24, 69));
-                    btn.setForeground(TEXT_COLOR);
-                    btn.setBorderPainted(false);
-                    btn.setFocusPainted(false);
-                    btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                }
-                
-                // Apply custom styling for table
-                if (comp instanceof JComponent) {
-                    // For all components inside date panel
-                    customizeCalendarComponents((JComponent) comp);
-                }
-            }
-        });
-        
-        // Create the date picker
-        datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-        datePicker.setBackground(FIELD_BACKGROUND);
-        datePicker.setForeground(TEXT_COLOR);
-        datePicker.getJFormattedTextField().setBackground(FIELD_BACKGROUND);
-        datePicker.getJFormattedTextField().setForeground(TEXT_COLOR);
-        datePicker.getJFormattedTextField().setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(FIELD_BORDER),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        datePicker.setTextEditable(true);
-        datePicker.setShowYearButtons(true);
+        // Create the custom calendar picker
+        datePicker = new CustomCalendarPicker();
+        datePicker.setBackground(PANEL_COLOR);
         
         // Create a panel for the date picker to set size constraints
         JPanel datePickerPanel = new JPanel(new BorderLayout());
@@ -520,74 +470,86 @@ public class CalendarUI extends JFrame {
         datePickerPanel.add(datePicker, BorderLayout.CENTER);
         datePickerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         datePickerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        
         logPanel.add(datePickerPanel);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
-        // Description
-        JLabel descLabel = new JLabel("Description");
-        descLabel.setForeground(TEXT_COLOR);
-        descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logPanel.add(descLabel);
+        // Transaction type (income/expense)
+        JLabel typeLabel = new JLabel("Transaction Type");
+        typeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        typeLabel.setForeground(TEXT_COLOR);
+        typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logPanel.add(typeLabel);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        descriptionField = new JTextField();
-        descriptionField.setBackground(FIELD_BACKGROUND);
-        descriptionField.setForeground(TEXT_COLOR);
-        descriptionField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(FIELD_BORDER),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        descriptionField.setAlignmentX(Component.LEFT_ALIGNMENT);
-        descriptionField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        logPanel.add(descriptionField);
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        radioPanel.setBackground(PANEL_COLOR);
+        radioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        radioPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        
+        incomeButton = new JRadioButton("Income");
+        incomeButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        incomeButton.setForeground(INCOME_COLOR);
+        incomeButton.setBackground(PANEL_COLOR);
+        incomeButton.setFocusPainted(false);
+        
+        expenseButton = new JRadioButton("Expense");
+        expenseButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        expenseButton.setForeground(EXPENSE_COLOR);
+        expenseButton.setBackground(PANEL_COLOR);
+        expenseButton.setFocusPainted(false);
+        expenseButton.setSelected(true); // Default to expense
+        
+        ButtonGroup typeGroup = new ButtonGroup();
+        typeGroup.add(incomeButton);
+        typeGroup.add(expenseButton);
+        
+        radioPanel.add(incomeButton);
+        radioPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        radioPanel.add(expenseButton);
+        
+        logPanel.add(radioPanel);
+        
+        logPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        
+        // Category selection
+        JLabel categoryLabel = new JLabel("Category");
+        categoryLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        categoryLabel.setForeground(TEXT_COLOR);
+        categoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logPanel.add(categoryLabel);
+        
+        logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        
+        // Create a custom category selector
+        CategorySelector categorySelector = new CategorySelector();
+        categorySelector.setBackground(FIELD_BACKGROUND);
+        categorySelector.setForeground(TEXT_COLOR);
+        categorySelector.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        categorySelector.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logPanel.add(categorySelector);
+        
         logPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
-        // Submit Button
-        JButton submitButton = new JButton("Log Transaction") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Create gradient from purple to blue
-                GradientPaint gradient = new GradientPaint(
-                    0, 0, new Color(128, 90, 213),
-                    getWidth(), getHeight(), new Color(90, 140, 255)
-                );
-                
-                g2.setPaint(gradient);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                
-                g2.setColor(TEXT_COLOR);
-                String text = getText();
-                FontMetrics fm = g2.getFontMetrics();
-                int x = (getWidth() - fm.stringWidth(text)) / 2;
-                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
-                g2.drawString(text, x, y);
-                g2.dispose();
-            }
-        };
+        // Log button
+        JButton logButton = new JButton("Log Transaction");
+        logButton.setBackground(ACCENT_COLOR);
+        logButton.setForeground(TEXT_COLOR);
+        logButton.setFocusPainted(false);
+        logButton.setBorderPainted(false);
+        logButton.setFont(new Font("Arial", Font.BOLD, 14));
+        logButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        submitButton.setForeground(TEXT_COLOR);
-        submitButton.setFocusPainted(false);
-        submitButton.setBorderPainted(false);
-        submitButton.setContentAreaFilled(false);
-        submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        
-        submitButton.addActionListener(new ActionListener() {
+        logButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Get the selected category from the CategorySelector
-                String selectedCategory = categorySelector.getSelectedCategory();
-                categoryComboBox = new JComboBox<>(new String[]{selectedCategory});
                 logTransaction();
             }
         });
         
-        logPanel.add(submitButton);
+        logPanel.add(logButton);
         
         return logPanel;
     }
@@ -655,60 +617,61 @@ public class CalendarUI extends JFrame {
 
     private void logTransaction() {
         try {
-            String description = descriptionField.getText();
-            if (description.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a description", "Input Error", JOptionPane.ERROR_MESSAGE);
+            // Validate inputs
+            String description = descriptionField.getText().trim();
+            if (description.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a description for the transaction.");
                 return;
             }
             
-            String amountText = amountField.getText();
-            if (amountText.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter an amount", "Input Error", JOptionPane.ERROR_MESSAGE);
+            String amountText = amountField.getText().trim();
+            if (amountText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter an amount for the transaction.");
                 return;
             }
             
-            double amount = Double.parseDouble(amountText);
-            if (amount <= 0) {
-                JOptionPane.showMessageDialog(this, "Amount must be greater than zero", "Input Error", JOptionPane.ERROR_MESSAGE);
+            double amount;
+            try {
+                amount = Double.parseDouble(amountText);
+                if (amount <= 0) {
+                    JOptionPane.showMessageDialog(this, "Please enter a positive amount.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid number for the amount.");
                 return;
             }
             
-            // Get date from JDatePicker
-            Date selectedDate = (Date) datePicker.getModel().getValue();
-            if (selectedDate == null) {
-                selectedDate = new Date(); // Default to today if not selected
-            }
+            // Get date from CustomCalendarPicker
+            Date selectedDate = datePicker.getDate();
+            
+            // Convert to LocalDate
             LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             
+            // Get transaction type
             boolean isIncome = incomeButton.isSelected();
-            String incomeOrExpense = isIncome ? "Income" : "Expense";
             
-            // Get the category from the CategorySelector
-            String category = categoryComboBox != null ? 
-                (String) categoryComboBox.getSelectedItem() : "Other";
+            // Get category
+            String category = categoryComboBox.getSelectedItem().toString();
             
-            // Add the transaction with category
-//            transactionController.addTransaction(description, amount, date, isIncome, category);
-            transactionController.addTransactionk(userId, String.valueOf(date), description, category, incomeOrExpense, amount);
-
-
-            // Update display
-            updateTransactionDisplay();
+            // Add transaction
+            transactionController.addTransaction(description, amount, date, isIncome, category);
             
-            // Clear fields
+            // Clear form
             descriptionField.setText("");
             amountField.setText("");
+            datePicker.setDate(new Date()); // Reset to today
+            expenseButton.setSelected(true); // Reset to expense
+            
+            // Update transaction display
+            updateTransactionDisplay();
             
             // Show success message
-            JOptionPane.showMessageDialog(this, 
-                "Transaction logged successfully!\nYou earned 10 XP!", 
-                "Success", 
-                JOptionPane.INFORMATION_MESSAGE);
-                
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid number for amount", "Input Error", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error logging transaction: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Transaction logged successfully!");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error logging transaction: " + e.getMessage());
         }
     }
 
