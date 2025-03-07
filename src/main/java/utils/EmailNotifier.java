@@ -1,8 +1,15 @@
 package utils;
 
 import java.util.Properties;
-import javax.mail.*;
-import javax.mail.internet.*;
+
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class EmailNotifier {
 
@@ -40,6 +47,42 @@ public class EmailNotifier {
         } catch (MessagingException e) {
             e.printStackTrace();
             System.out.println("Failed to send email.");
+        }
+    }
+    
+    /**
+     * Sends a custom email with the provided subject and message
+     * @param recipientEmail the recipient's email address
+     * @param username the recipient's username
+     * @param subject the email subject
+     * @param emailBody the email body text
+     */
+    public static void sendCustomEmail(String recipientEmail, String username, String subject, String emailBody) {
+        Properties properties = new Properties();
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
+        properties.put("mail.smtp.host", "smtp.gmail.com");
+        properties.put("mail.smtp.port", "587");
+
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(FROM_EMAIL, PASSWORD);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(FROM_EMAIL));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+            message.setSubject(subject);
+            message.setText(emailBody);
+
+            Transport.send(message);
+            System.out.println("Custom email sent successfully to " + recipientEmail);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.out.println("Failed to send custom email.");
         }
     }
 }

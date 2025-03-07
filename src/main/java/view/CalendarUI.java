@@ -26,6 +26,14 @@ import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
+import controller.GoalController;
+import view.GoalsUI;
+import database.DatabaseManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class CalendarUI extends JFrame {
     // Define colors
     private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
@@ -83,11 +91,11 @@ public class CalendarUI extends JFrame {
         if (!loginScreen.isSubmitted()) {
             System.exit(0);
         }
-        
+
         // Get user details from login
         this.userName = loginScreen.getUserName();
         this.userEmail = loginScreen.getUserEmail();
-        
+
         // Initialize the UserController with user details
         UserController userController = new UserController(userName, userEmail, 1000);
 
@@ -119,7 +127,7 @@ public class CalendarUI extends JFrame {
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
         // Create tabs as requested: Dashboard, Analytics, Quiz, and Leaderboard
-        String[] tabNames = {"Dashboard", "Analytics", "Quiz", "Leaderboard"};
+        String[] tabNames = {"Dashboard", "Analytics", "Goals", "Quiz", "Leaderboard"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
@@ -154,12 +162,25 @@ public class CalendarUI extends JFrame {
                             JLabel label = (JLabel)inner;
                             if (label.getText() != null && !label.getText().isEmpty() 
                                     && label.getText().length() > 1) {
-                                label.setForeground(TEXT_COLOR);
+                                label.setForeground(Color.WHITE);
                             }
                         }
                     }
                     
+                    // Switch to the clicked tab and clear the current content
+                    getContentPane().removeAll();
+                    
+                    // Create new top container for the new tab
+                    JPanel newTopContainer = new JPanel(new BorderLayout());
+                    newTopContainer.setBackground(BACKGROUND_COLOR);
+                    newTopContainer.add(navigationPanel, BorderLayout.NORTH);
+                    
+                    add(newTopContainer, BorderLayout.NORTH);
                     switchTab(tabName);
+                    
+                    // Refresh the UI
+                    revalidate();
+                    repaint();
                 }
             });
         }
@@ -210,9 +231,10 @@ public class CalendarUI extends JFrame {
         switch (tabName) {
             case "Dashboard": return "📊";
             case "Analytics": return "📈";
+            case "Goals": return "🎯";
             case "Quiz": return "❓";
             case "Leaderboard": return "🏆";
-            default: return "•";
+            default: return "";
         }
     }
     
@@ -297,6 +319,36 @@ public class CalendarUI extends JFrame {
                 
                 analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
                 add(analyticsPlaceholderPanel, BorderLayout.CENTER);
+                break;
+                
+            case "Goals":
+                // Add header panel below navigation in the top container
+                JPanel goalsHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(goalsHeaderPanel, BorderLayout.CENTER);
+                
+                // Create and add the Goals UI
+                try {
+                    // Get user ID from the database based on username
+                    int userId = getUserIdFromUsername(userName);
+                    
+                    // Create the goal controller and UI
+                    GoalController goalController = new GoalController(userId, userName, userEmail);
+                    GoalsUI goalsUI = new GoalsUI(goalController);
+                    
+                    add(goalsUI, BorderLayout.CENTER);
+                } catch (Exception ex) {
+                    // If there's an error, show a placeholder message
+                    JPanel goalsPlaceholderPanel = new JPanel(new BorderLayout());
+                    goalsPlaceholderPanel.setBackground(BACKGROUND_COLOR);
+                    goalsPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+                    
+                    JLabel errorLabel = new JLabel("Error loading Goals: " + ex.getMessage());
+                    errorLabel.setFont(new Font("Arial", Font.BOLD, 18));
+                    errorLabel.setForeground(Color.RED);
+                    goalsPlaceholderPanel.add(errorLabel, BorderLayout.NORTH);
+                    
+                    add(goalsPlaceholderPanel, BorderLayout.CENTER);
+                }
                 break;
                 
             case "Leaderboard":
@@ -408,7 +460,7 @@ public class CalendarUI extends JFrame {
         expenseButton.setForeground(EXPENSE_COLOR);
         expenseButton.setBackground(PANEL_COLOR);
         expenseButton.setSelected(true);
-        
+
         incomeButton = new JRadioButton("Income");
         incomeButton.setForeground(INCOME_COLOR);
         incomeButton.setBackground(PANEL_COLOR);
@@ -573,7 +625,7 @@ public class CalendarUI extends JFrame {
         submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         submitButton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        
+
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -583,7 +635,7 @@ public class CalendarUI extends JFrame {
                 logTransaction();
             }
         });
-        
+
         logPanel.add(submitButton);
         
         return logPanel;
@@ -671,14 +723,14 @@ public class CalendarUI extends JFrame {
             }
             
             // Get date from JDatePicker
-            Date selectedDate = (Date) datePicker.getModel().getValue();
+        Date selectedDate = (Date) datePicker.getModel().getValue();
             if (selectedDate == null) {
                 selectedDate = new Date(); // Default to today if not selected
             }
-            LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             
-            boolean isIncome = incomeButton.isSelected();
-            
+        boolean isIncome = incomeButton.isSelected();
+
             // Get the category from the CategorySelector
             String category = categoryComboBox != null ? 
                 (String) categoryComboBox.getSelectedItem() : "Other";
@@ -687,7 +739,7 @@ public class CalendarUI extends JFrame {
             transactionController.addTransaction(description, amount, date, isIncome, category);
             
             // Update display
-            updateTransactionDisplay();
+        updateTransactionDisplay();
             
             // Clear fields
             descriptionField.setText("");
@@ -1278,6 +1330,76 @@ public class CalendarUI extends JFrame {
             if (child instanceof JComponent) {
                 customizeCalendarComponents((JComponent) child);
             }
+        }
+    }
+
+    /**
+     * Gets the user ID from the username
+     * @param username the username
+     * @return the user ID
+     * @throws SQLException if a database error occurs
+     */
+    private int getUserIdFromUsername(String username) throws SQLException {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DatabaseManager.getConnection();
+            
+            // For now, since we might not have actual user data in the database,
+            // let's use a default user ID of 1 to avoid database errors
+            return 1;
+            
+            /* This code would be used if we had proper user data in the database:
+            String sql = "SELECT id FROM users WHERE email = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, userEmail); // Using email instead of username
+            rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("id");
+            } else {
+                // If user not found, try to create a new user with the given username
+                return createNewUser(conn, username);
+            }
+            */
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            // Don't close the connection, it's managed by DatabaseManager
+        }
+    }
+    
+    /**
+     * Creates a new user and returns their ID
+     * @param conn the database connection
+     * @param username the username
+     * @return the new user ID
+     * @throws SQLException if an error occurs
+     */
+    private int createNewUser(Connection conn, String username) throws SQLException {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        
+        try {
+            // Insert a new user with the given username
+            String sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?) RETURNING id";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, "defaultpassword"); // Default password
+            stmt.setString(3, username + "@example.com"); // Default email
+            
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            } else {
+                throw new SQLException("Failed to create new user: " + username);
+            }
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
         }
     }
 

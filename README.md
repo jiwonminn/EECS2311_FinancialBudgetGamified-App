@@ -2,6 +2,13 @@
 
 A Java application that gamifies financial budgeting to make managing personal finances more engaging and rewarding.
 
+## Prerequisites
+
+Before running the application, ensure you have the following installed:
+- Java Development Kit (JDK) 18 or higher
+- Maven
+- PostgreSQL 14 or higher
+
 ## Project Structure
 
 The application follows a Model-View-Controller (MVC) architecture:
@@ -10,27 +17,78 @@ The application follows a Model-View-Controller (MVC) architecture:
 - **View**: Contains UI components and screens
 - **Controller**: Contains business logic and connects models with views
 
-## Main Entry Point
+## Setup and Installation
 
-The main entry point for the application is the `app.Main` class. This class initializes the application, sets up the UI look and feel, updates the database schema if needed, and launches the login screen.
+### 1. Database Setup (Backend)
 
-## How to Run
+1. Install PostgreSQL if you haven't already:
+   - Windows: Download and install from [PostgreSQL Official Website](https://www.postgresql.org/download/windows/)
+   - Mac: `brew install postgresql`
+   - Linux: `sudo apt-get install postgresql`
 
-### Using Maven
+2. Start PostgreSQL Service:
+   - Windows: PostgreSQL service should start automatically
+   - Mac: `brew services start postgresql`
+   - Linux: `sudo service postgresql start`
 
-1. Make sure you have Maven installed
-2. Navigate to the project root directory
-3. Run the following command:
+3. Create the Database:
+   ```sql
+   psql -U postgres
+   CREATE DATABASE Projecttest;
+   CREATE USER root WITH PASSWORD '';
+   GRANT ALL PRIVILEGES ON DATABASE Projecttest TO root;
+   ```
 
-```
+4. Verify Database Connection:
+   ```sql
+   psql -U root -d Projecttest
+   ```
+
+### 2. Application Setup (Frontend)
+
+1. Clone the repository:
+   ```bash
+   git clone [repository-url]
+   cd EECS2311_FinancialBudgetGamified-App
+   ```
+
+2. Install dependencies using Maven:
+   ```bash
+   mvn clean install
+   ```
+
+## Running the Application
+
+### 1. Ensure Database is Running
+
+Before starting the application, make sure PostgreSQL is running:
+- Windows: Check Services app for "PostgreSQL"
+- Mac: `brew services list`
+- Linux: `sudo service postgresql status`
+
+### 2. Start the Application
+
+#### Using Maven
+```bash
 mvn clean package
-java -jar target/FBGApp-1.0-SNAPSHOT.jar
+java -jar target/EECS2311_FinancialBudgetGamified-App-1.0-SNAPSHOT.jar
 ```
 
-### Using an IDE
-
+#### Using an IDE
 1. Open the project in your IDE (Eclipse, IntelliJ IDEA, etc.)
 2. Run the `app.Main` class
+
+## Configuration
+
+### Database Configuration
+The database connection settings can be found in `src/main/resources/database.properties`. Default settings are:
+```properties
+db.url=jdbc:postgresql://localhost:5432/Projecttest
+db.user=root
+db.password=
+```
+
+Modify these settings if you're using different database credentials.
 
 ## Features
 
@@ -44,7 +102,7 @@ java -jar target/FBGApp-1.0-SNAPSHOT.jar
 
 - Java Mail API
 - JDatePicker
-- MySQL Connector/J
+- PostgreSQL JDBC Driver
 - JUnit 5 (for testing)
 
 ## Development
@@ -62,3 +120,22 @@ The `module-info.java` file defines the module structure, including required dep
 - `model`: Contains data models
 - `view`: Contains UI components
 - `database`: Contains database operations
+
+## Troubleshooting
+
+1. Database Connection Issues:
+   - Verify PostgreSQL is running
+   - Check database credentials in `database.properties`
+   - Ensure port 5432 is not blocked by firewall
+
+2. Application Startup Issues:
+   - Verify Java version (JDK 18+)
+   - Check Maven installation
+   - Review application logs for errors
+
+## Support
+
+For issues and support:
+1. Check the troubleshooting section
+2. Review project documentation
+3. Submit an issue on the project repository

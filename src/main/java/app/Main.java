@@ -1,12 +1,12 @@
 package app;
 
-import java.awt.Color;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import view.LoginScreen;
+import database.DatabaseManager;
 import database.DatabaseUpdater;
+import view.LoginScreen;
 
 /**
  * Main entry point for the Financial Budget Gamified Application.
@@ -22,36 +22,43 @@ public class Main {
      * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
+        // Set the look and feel to the system look and feel
         try {
-            // Set system look and feel
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
-            // Add custom styling to UI defaults
-            UIManager.put("OptionPane.background", new Color(40, 24, 69));
-            UIManager.put("Panel.background", new Color(40, 24, 69));
-            UIManager.put("OptionPane.messageForeground", Color.WHITE);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error setting look and feel: " + e.getMessage());
         }
         
-        // Update database schema if needed
+        // Initialize the database schema
         try {
-            // Ensure the database is up to date
-            DatabaseUpdater.updateTransactionsTable();
-            System.out.println("Database schema check completed.");
+            System.out.println("Initializing database...");
+            DatabaseUpdater.initializeDatabase();
+            System.out.println("Database initialization complete.");
         } catch (Exception e) {
-            System.err.println("Failed to update database schema: " + e.getMessage());
-            e.printStackTrace();
-            
-            // Show error dialog to user
+            System.err.println("Error initializing database: " + e.getMessage());
             JOptionPane.showMessageDialog(null, 
-                "There was a problem connecting to the database. Some features may not work properly.\n" +
-                "Error: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Database initialization failed: " + e.getMessage() + "\nThe application may not work correctly.",
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
         }
         
-        // Launch login screen
-        SwingUtilities.invokeLater(() -> new LoginScreen());
+        // Add a shutdown hook to close database connections properly
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Application shutting down. Closing database connections...");
+            DatabaseManager.closeConnection();
+        }));
+        
+        // Launch the login screen
+        SwingUtilities.invokeLater(() -> {
+            try {
+                LoginScreen loginScreen = new LoginScreen();
+                loginScreen.setVisible(true);
+            } catch (Exception e) {
+                System.err.println("Error launching application: " + e.getMessage());
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, 
+                        "Failed to start application: " + e.getMessage(), 
+                        "Application Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 } 
