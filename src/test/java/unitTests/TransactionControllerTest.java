@@ -1,10 +1,14 @@
 package unitTests;
 
 import static org.junit.Assert.assertEquals;
+
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.sql.Timestamp;
 import java.sql.SQLException;
 import java.time.LocalDate;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import model.Transaction;
@@ -18,6 +22,12 @@ class TransactionControllerTest extends TransactionController {
 
 		private Transaction transaction;
 	    private LocalDate testDate;
+	    private Timestamp controllerTestDate;
+	    
+	    @BeforeEach
+	    public void setTime() {
+	    	controllerTestDate.toLocalDateTime().toLocalDate();
+	    }
 	    
 
 	    @Test
@@ -39,6 +49,12 @@ class TransactionControllerTest extends TransactionController {
 	    @Test
 	    public void nullCases() {
 	    	assertThrows(NullPointerException.class,()-> addTransaction(null,100,null,false,"Test"));
+	    	
+	    }
+	    
+	    @Test
+	    public void deleteTransaction() {
+	    	Transaction transaction1 = new Transaction(1,1,controllerTestDate,"Test","Food","Expense",100);
 	    	
 	    }
 	    

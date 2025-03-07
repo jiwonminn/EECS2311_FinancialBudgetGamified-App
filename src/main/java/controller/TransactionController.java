@@ -27,6 +27,21 @@ public class TransactionController {
      * @return true if the transaction was successfully added, false otherwise
      */
     public static boolean addTransaction(int userId, String date, String description, String category, String type, double amount) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	if(description == null) {
+    		throw new NullPointerException("Description can not be null");
+    	}
+    	if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
+    	}
+    	if(type == null) {
+    		throw new NullPointerException("Type can not be null");
+    	}
+    	if(date == null) {
+    		throw new NullPointerException("Date can not be null");
+    	}
         String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -56,6 +71,21 @@ public class TransactionController {
 
     // ADD: Add Transaction with category
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	if(description == null) {
+    		throw new NullPointerException("Description can not be null");
+    	}
+    	if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
+    	}
+    	if(category == null) {
+    		throw new NullPointerException("Category can not be null");
+    	}
+    	if(date == null) {
+    		throw new NullPointerException("Date can not be null");
+    	}
         String query = "INSERT INTO transactions (user_id, description, amount, date, type, category) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, userId); // Use the stored userId
