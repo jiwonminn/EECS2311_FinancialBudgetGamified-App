@@ -1,16 +1,24 @@
 package model;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
+<<<<<<< HEAD
 import controller.TransactionController;
 
 public class Transaction extends TransactionController {
+=======
+public class Transaction {
+    private int id;
+    private int userId;
+>>>>>>> refs/heads/main
     private String description;
     private double amount;
     private LocalDate date;
     private boolean isIncome; // true = income, false = expense
-    private String category; // Added category field
+    private String category;  // Transaction category
 
+    // Existing constructors for creating transactions manually
     public Transaction(String description, double amount, LocalDate date, boolean isIncome) {
     	if(amount < 0.00) {
     		throw new IllegalArgumentException("Amount can not be negative!");
@@ -27,8 +35,7 @@ public class Transaction extends TransactionController {
         this.isIncome = isIncome;
         this.category = "Other"; // Default category
     }
-    
-    // Constructor with category
+
     public Transaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
     	if(amount < 0.00) {
     		throw new IllegalArgumentException("Amount can not be negative!");
@@ -52,6 +59,28 @@ public class Transaction extends TransactionController {
         this.category = category;
     }
 
+    // New constructor for database retrieval
+    // It accepts an id, a userId, a Timestamp for the date, a description,
+    // a category, a type as a String ("income" or "expense"), and the amount.
+    public Transaction(int id, int userId, Timestamp timestamp, String description, String category, String type, double amount) {
+        this.id = id;
+        this.userId = userId;
+        this.description = description;
+        this.amount = amount;
+        this.date = timestamp.toLocalDateTime().toLocalDate();
+        this.category = category;
+        this.isIncome = type.equalsIgnoreCase("income");
+    }
+
+    // Getters
+    public int getId() {
+        return id;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -67,15 +96,16 @@ public class Transaction extends TransactionController {
     public boolean isIncome() {
         return isIncome;
     }
-    
+
     public String getCategory() {
         return category;
     }
-    
+
     public void setCategory(String category) {
         this.category = category;
     }
 
+    // Returns "Income" or "Expense" based on isIncome
     public String getType() {
         return isIncome ? "Income" : "Expense";
     }

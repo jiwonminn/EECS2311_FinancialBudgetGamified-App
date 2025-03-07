@@ -10,10 +10,11 @@ import java.util.List;
 public class TransactionController {
     private Connection connection;
 
-    public TransactionController() {
+    public TransactionController() throws SQLException {
         connection = DatabaseManager.getConnection();
     }
 
+<<<<<<< HEAD
     // ADD: Add Transaction without category (for backwards compatibility)
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
         addTransaction(description, amount, date, isIncome, "Other");
@@ -26,7 +27,41 @@ public class TransactionController {
     	else if(date == null) {
     		throw new IllegalArgumentException("Date can not be null");
     	}
+=======
+    /**
+     * Adds a new transaction for the given user.
+     *
+     * @param userId      the user ID
+     * @param date        the date in ISO format (YYYY-MM-DD)
+     * @param description a description of the transaction
+     * @param category    the transaction category
+     * @param type        the transaction type (e.g., "income" or "expense")
+     * @param amount      the transaction amount
+     * @return true if the transaction was successfully added, false otherwise
+     */
+    public static boolean addTransactionk(int userId, String date, String description, String category, String type, double amount) {
+        String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, java.sql.Date.valueOf(date));
+            pstmt.setString(3, description);
+            pstmt.setString(4, category);
+            pstmt.setString(5, type);
+            pstmt.setDouble(6, amount);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+>>>>>>> refs/heads/main
     }
+
+    // ADD: Add Transaction without category (for backwards compatibility)
+//    public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
+//        addTransaction(description, amount, date, isIncome, "Other");
+//    }
     
     // ADD: Add Transaction with category
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
@@ -94,15 +129,51 @@ public class TransactionController {
     }
 
     // DELETE: Remove a transaction by ID
-    public void deleteTransaction(int id) {
+    public static boolean deleteTransaction(int transactionId) {
         String query = "DELETE FROM transactions WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
-            System.out.println("Transaction deleted successfully!");
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, transactionId);
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Failed to delete transaction!");
+            return false;
         }
     }
+
+
+
+    /**
+     * Retrieves all transactions for the given user from the database.
+     *
+     * @param userId the user ID
+     * @return a List of Transaction objects
+     */
+    public static List<Transaction> getAllTransactions(int userId) {
+        List<Transaction> transactions = new ArrayList<>();
+        String query = "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Transaction t = new Transaction(
+                            rs.getInt("id"),
+                            userId,
+                            rs.getTimestamp("date"),
+                            rs.getString("description"),
+                            rs.getString("category"),
+                            rs.getString("type"),
+                            rs.getDouble("amount")
+                    );
+                    transactions.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactions;
+    }
+
 }
