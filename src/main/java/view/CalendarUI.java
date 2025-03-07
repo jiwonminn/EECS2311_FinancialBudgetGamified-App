@@ -361,10 +361,22 @@ public class CalendarUI extends JFrame {
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
         
+        // Top section with user info and logout button
+        JPanel topSection = new JPanel(new BorderLayout());
+        topSection.setBackground(BACKGROUND_COLOR);
+        
         JLabel titleLabel = new JLabel("Level 5 Budget Warrior");
         titleLabel.setForeground(TEXT_COLOR);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
+        topSection.add(titleLabel, BorderLayout.WEST);
+        
+        // Add logout button
+        JButton logoutButton = new JButton("Logout");
+        styleButton(logoutButton);
+        logoutButton.addActionListener(e -> logout());
+        topSection.add(logoutButton, BorderLayout.EAST);
+        
+        headerPanel.add(topSection, BorderLayout.NORTH);
         
         // Progress bar panel
         JPanel progressPanel = new JPanel(new BorderLayout(10, 5));
@@ -387,6 +399,50 @@ public class CalendarUI extends JFrame {
         headerPanel.add(progressPanel, BorderLayout.CENTER);
         
         return headerPanel;
+    }
+    
+    /**
+     * Style a button to match the app's theme
+     */
+    private void styleButton(JButton button) {
+        button.setBackground(ACCENT_COLOR);
+        button.setForeground(TEXT_COLOR);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+    }
+    
+    /**
+     * Log out the current user and return to login screen
+     */
+    private void logout() {
+        int choice = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to log out?",
+            "Confirm Logout",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        if (choice == JOptionPane.YES_OPTION) {
+            // Dispose current window
+            this.dispose();
+            
+            // Show login screen
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    new LoginScreen();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null,
+                        "Error opening login screen: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        }
     }
     
     private JPanel createTransactionLogPanel() {
