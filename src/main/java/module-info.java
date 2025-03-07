@@ -3,6 +3,8 @@ module FBGApp {
     requires java.sql;
     requires jdatepicker;
     requires java.desktop;
+	requires org.jfree.jfreechart;
     exports view;
     exports app;
+    
 }
