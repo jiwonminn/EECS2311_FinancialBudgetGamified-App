@@ -14,7 +14,6 @@ public class TransactionController {
         connection = DatabaseManager.getConnection();
     }
 
-<<<<<<< HEAD
     // ADD: Add Transaction without category (for backwards compatibility)
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
         addTransaction(description, amount, date, isIncome, "Other");
@@ -27,7 +26,7 @@ public class TransactionController {
     	else if(date == null) {
     		throw new IllegalArgumentException("Date can not be null");
     	}
-=======
+    }
     /**
      * Adds a new transaction for the given user.
      *
@@ -55,7 +54,6 @@ public class TransactionController {
             e.printStackTrace();
             return false;
         }
->>>>>>> refs/heads/main
     }
 
     // ADD: Add Transaction without category (for backwards compatibility)

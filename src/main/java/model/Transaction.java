@@ -3,15 +3,11 @@ package model;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
-<<<<<<< HEAD
 import controller.TransactionController;
 
 public class Transaction extends TransactionController {
-=======
-public class Transaction {
     private int id;
     private int userId;
->>>>>>> refs/heads/main
     private String description;
     private double amount;
     private LocalDate date;
@@ -52,6 +48,8 @@ public class Transaction {
     	else if(category == null) {
     		throw new IllegalArgumentException("Category can not be null");
     	}
+    	
+    	try
         this.description = description;
         this.amount = amount;
         this.date = date;
