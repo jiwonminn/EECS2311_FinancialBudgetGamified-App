@@ -99,17 +99,19 @@ public class TransactionController {
     }
 
     // DELETE: Remove a transaction by ID
-    public void deleteTransaction(int id) {
+    public static boolean deleteTransaction(int transactionId) {
         String query = "DELETE FROM transactions WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
-            System.out.println("Transaction deleted successfully!");
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, transactionId);
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Failed to delete transaction!");
+            return false;
         }
     }
+
 
 
     /**

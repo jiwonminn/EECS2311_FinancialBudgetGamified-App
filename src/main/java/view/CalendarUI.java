@@ -748,10 +748,10 @@ public class CalendarUI extends JFrame {
         JPanel cardPanel = new JPanel(new BorderLayout(15, 0));
         cardPanel.setBackground(PANEL_COLOR);
         cardPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(70, 50, 110), 1, true),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                BorderFactory.createLineBorder(new Color(70, 50, 110), 1, true),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
-        
+
         // Create category icon based on transaction category or income status
         JPanel typeIndicator = new JPanel() {
             @Override
@@ -759,11 +759,10 @@ public class CalendarUI extends JFrame {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
+
                 // Determine color and symbol based on transaction type and category
                 Color iconColor;
                 String iconSymbol;
-                
                 if (transaction.isIncome()) {
                     // For income, always use green with a money symbol
                     iconColor = INCOME_COLOR;
@@ -774,11 +773,11 @@ public class CalendarUI extends JFrame {
                     iconColor = getCategoryColor(category);
                     iconSymbol = getCategorySymbol(category);
                 }
-                
+
                 // Draw rounded rectangle background
                 g2d.setColor(iconColor);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                
+
                 // Draw the category symbol
                 g2d.setColor(Color.WHITE);
                 g2d.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -786,62 +785,92 @@ public class CalendarUI extends JFrame {
                 int x = (getWidth() - fm.stringWidth(iconSymbol)) / 2;
                 int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
                 g2d.drawString(iconSymbol, x, y);
-                
                 g2d.dispose();
             }
-            
+
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(24, 24);
             }
         };
-        
+
         // Panel for description and details
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setBackground(PANEL_COLOR);
-        
+
         // Description
         JLabel descLabel = new JLabel(transaction.getDescription());
         descLabel.setForeground(TEXT_COLOR);
         descLabel.setFont(new Font("Arial", Font.BOLD, 14));
         descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         // Format date as MM/DD/YYYY
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         String dateStr = sdf.format(Date.from(transaction.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        
+
         // Get transaction type and category
         String typeCategory = transaction.isIncome() ? "Income" : transaction.getCategory();
-        
+
         // Create details line with bullet point separator
         JLabel detailsLabel = new JLabel(dateStr + " • " + typeCategory);
         detailsLabel.setForeground(new Color(180, 180, 180));
         detailsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         detailsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         detailsPanel.add(descLabel);
         detailsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         detailsPanel.add(detailsLabel);
-        
+
         // Amount - format with dollar sign and align right
         JLabel amountLabel = new JLabel(String.format("$%.2f", transaction.getAmount()));
         amountLabel.setForeground(transaction.isIncome() ? INCOME_COLOR : EXPENSE_COLOR);
         amountLabel.setFont(new Font("Arial", Font.BOLD, 16));
         amountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        
-        // Add components to card
+
+        // Create a Delete button
+        JButton deleteButton = new JButton("X");
+        deleteButton.setForeground(TEXT_COLOR);
+        deleteButton.setFont(new Font("Arial", Font.BOLD, 18));
+        deleteButton.setBorderPainted(false);
+        deleteButton.setFocusPainted(false);
+        deleteButton.setContentAreaFilled(false);
+        deleteButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int transactionId = transaction.getId();
+                boolean success = TransactionController.deleteTransaction(transactionId);
+                if (success) {
+                    // Update the UI to remove the deleted transaction
+                    updateTransactionDisplay();
+                } else {
+                    JOptionPane.showMessageDialog(cardPanel, "Failed to delete transaction", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Create a panel for the right side that contains both the amount and the delete button
+        JPanel eastPanel = new JPanel();
+        eastPanel.setLayout(new BoxLayout(eastPanel, BoxLayout.Y_AXIS));
+        eastPanel.setBackground(PANEL_COLOR);
+        eastPanel.add(amountLabel);
+        eastPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        eastPanel.add(deleteButton);
+
+        // Create left panel for the type indicator and details
         JPanel leftPanel = new JPanel(new BorderLayout(10, 0));
         leftPanel.setBackground(PANEL_COLOR);
         leftPanel.add(typeIndicator, BorderLayout.WEST);
         leftPanel.add(detailsPanel, BorderLayout.CENTER);
-        
+
         cardPanel.add(leftPanel, BorderLayout.CENTER);
-        cardPanel.add(amountLabel, BorderLayout.EAST);
-        
+        cardPanel.add(eastPanel, BorderLayout.EAST);
+
         return cardPanel;
     }
-    
+
+
     // Get color for a category
     private Color getCategoryColor(String category) {
         switch (category) {
