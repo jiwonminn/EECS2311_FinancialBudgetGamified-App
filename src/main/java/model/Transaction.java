@@ -19,6 +19,9 @@ public class Transaction {
     
     // Constructor with category
     public Transaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative!");
+    	}
         this.description = description;
         this.amount = amount;
         this.date = date;

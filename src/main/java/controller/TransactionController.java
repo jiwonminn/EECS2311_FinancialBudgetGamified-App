@@ -17,10 +17,19 @@ public class TransactionController {
     // ADD: Add Transaction without category (for backwards compatibility)
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome) {
         addTransaction(description, amount, date, isIncome, "Other");
+        if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
     }
     
     // ADD: Add Transaction with category
     public void addTransaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
+    	}
         String query = "INSERT INTO transactions (description, amount, date, is_income, category) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, description);

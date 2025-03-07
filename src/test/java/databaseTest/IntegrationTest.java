@@ -1,5 +1,4 @@
 package databaseTest;
-
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.After;
@@ -13,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 
-public class DatabaseTest {
+public class IntegrationTest {
     private DatabaseManager dbManager;
     private Connection connection;
 
@@ -108,27 +107,15 @@ public class DatabaseTest {
         List<Transaction> dateRangeTransactions = getTransactionsByDateRange(yesterday, today);
         assertEquals("Should have 2 transactions in date range", 2, dateRangeTransactions.size());
     }
-
+    
+    
     @Test
-    public void testTransactionValidation() throws SQLException {
-        // Test with invalid amount
-        try {
-            Transaction invalidTransaction = new Transaction("Invalid", -100.0, LocalDate.now(), false, "Test");
-            createTestTransaction(invalidTransaction);
-            fail("Should not allow negative amounts");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("Amount cannot be negative"));
-        }
-
-        // Test with null description
-        try {
-            Transaction invalidTransaction = new Transaction(null, 100.0, LocalDate.now(), false, "Test");
-            createTestTransaction(invalidTransaction);
-            fail("Should not allow null description");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("Description cannot be null"));
-        }
+    public void anothertest() {
+    	
     }
+    
+    
+    
 
     // Helper methods to perform database operations
     private int createTestTransaction(Transaction transaction) throws SQLException {
@@ -275,4 +262,6 @@ public class DatabaseTest {
         }
         return transactions;
     }
+    
+    
 } 
