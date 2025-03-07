@@ -194,41 +194,69 @@ public class LogUI extends JPanel {
     private void refreshTransactionData() {
         tableModel.setRowCount(0); // Clear existing data
         
-        List<Transaction> transactions = transactionController.getTransactions();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String searchText = searchField.getText().toLowerCase();
-        String filterType = (String) filterTypeComboBox.getSelectedItem();
-        
-        for (Transaction transaction : transactions) {
-            // Apply filters
-            if (!searchText.isEmpty() && 
-                !transaction.getDescription().toLowerCase().contains(searchText) &&
-                !transaction.getCategory().toLowerCase().contains(searchText)) {
-                continue;
+        try {
+            List<Transaction> transactions = transactionController.getTransactions();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String searchText = searchField.getText().toLowerCase();
+            String filterType = (String) filterTypeComboBox.getSelectedItem();
+            
+            for (Transaction transaction : transactions) {
+                // Apply filters
+                boolean matchesSearch = searchText.isEmpty() ||
+                    transaction.getDescription().toLowerCase().contains(searchText) ||
+                    transaction.getCategory().toLowerCase().contains(searchText);
+                
+                boolean matchesFilter = filterType.equals("All") ||
+                    (filterType.equals("Income") && transaction.isIncome()) ||
+                    (filterType.equals("Expense") && !transaction.isIncome());
+                
+                if (matchesSearch && matchesFilter) {
+                    // Format date
+                    String date = dateFormat.format(Date.from(
+                        transaction.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()
+                    ));
+                    
+                    // Format amount with currency symbol and 2 decimal places
+                    String amount = String.format("$%.2f", Math.abs(transaction.getAmount()));
+                    
+                    // Add row to table
+                    tableModel.addRow(new Object[]{
+                        date,
+                        transaction.getDescription(),
+                        transaction.getCategory(),
+                        transaction.isIncome() ? "Income" : "Expense",
+                        amount
+                    });
+                }
             }
             
-            if (!filterType.equals("All")) {
-                if (filterType.equals("Income") && !transaction.isIncome()) continue;
-                if (filterType.equals("Expense") && transaction.isIncome()) continue;
+            // Show message if no transactions are displayed
+            if (tableModel.getRowCount() == 0) {
+                if (!searchText.isEmpty() || !filterType.equals("All")) {
+                    showMessage("No transactions match the current filters.");
+                } else {
+                    showMessage("No transactions found. Add some transactions to get started!");
+                }
             }
             
-            // Format date
-            String date = dateFormat.format(Date.from(
-                transaction.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()
-            ));
-            
-            // Format amount
-            String amount = String.format("$%.2f", transaction.getAmount());
-            
-            // Add row to table
-            tableModel.addRow(new Object[]{
-                date,
-                transaction.getDescription(),
-                transaction.getCategory(),
-                transaction.isIncome() ? "Income" : "Expense",
-                amount
-            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Error loading transactions: " + e.getMessage());
         }
+    }
+    
+    private void showMessage(String message) {
+        JOptionPane.showMessageDialog(this,
+            message,
+            "Information",
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this,
+            message,
+            "Error",
+            JOptionPane.ERROR_MESSAGE);
     }
     
     public static LogUI getInstance() {

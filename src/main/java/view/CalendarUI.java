@@ -699,7 +699,7 @@ public class CalendarUI extends JFrame {
             
             // Add the transaction with category
 //            transactionController.addTransaction(description, amount, date, isIncome, category);
-            transactionController.addTransactionk(userId, String.valueOf(date), description, category, incomeOrExpense, amount);
+            transactionController.addTransaction(userId, String.valueOf(date), description, category, incomeOrExpense, amount);
 
 
             // Update display
