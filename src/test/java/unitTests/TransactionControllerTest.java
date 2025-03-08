@@ -1,12 +1,15 @@
 package unitTests;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Timestamp;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +29,11 @@ class TransactionControllerTest extends TransactionController {
 	    
 	    @BeforeEach
 	    public void setTime() {
-	    	controllerTestDate.toLocalDateTime().toLocalDate();
+	    	controllerTestDate = Timestamp.valueOf(LocalDateTime.now());
+	    }
+	    
+	    private Timestamp getCurrentTimestamp() {
+	        return new Timestamp(System.currentTimeMillis());
 	    }
 	    
 
@@ -52,10 +59,24 @@ class TransactionControllerTest extends TransactionController {
 	    	
 	    }
 	    
-	    @Test
-	    public void deleteTransaction() {
-	    	Transaction transaction1 = new Transaction(1,1,controllerTestDate,"Test","Food","Expense",100);
-	    	
+	    public void deleteTransaction() throws SQLException {
+	        // First add a transaction to delete
+	        String description = "Test Transaction";
+	        double amount = 100.0;
+	        LocalDate date = LocalDate.now();
+	        boolean isIncome = false;
+	        String category = "Food";
+	        
+	        addTransaction(description, amount, date, isIncome, category);
+	        
+	 
+	        List<Transaction> transactions = getTransactions();
+	        Transaction testTransaction = transactions.get(0);
+	        boolean result = TransactionController.deleteTransaction(testTransaction.getId());
+	        
+	        // Assert deletion was successful
+	        assertTrue(result);
+	        
 	    }
 	    
 	    
