@@ -1,5 +1,7 @@
 package utils;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.*;

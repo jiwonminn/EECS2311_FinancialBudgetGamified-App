@@ -13,7 +13,12 @@ public class AnalyticsController {
     private Connection connection;
 
     public AnalyticsController() {
-        connection = DatabaseManager.getConnection();
+        try {
+			connection = DatabaseManager.getConnection();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     // Fetch all transactions

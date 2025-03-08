@@ -6,7 +6,6 @@ import controller.QuizController;
 import model.*;
 import view.GoalsUI;
 import view.CustomCalendarPicker;
-import view.AnalyticsUI;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -325,11 +324,9 @@ public class CalendarUI extends JFrame {
                 // Create and add the AnalyticsUI panel
                 AnalyticsUI analyticsUI = new AnalyticsUI(userId);
                 add(analyticsUI, BorderLayout.CENTER);
-=======
                
               AnalyticsUI analyticsui = new AnalyticsUI();
               add(analyticsui,BorderLayout.CENTER);
->>>>>>> refs/remotes/origin/Peyton
                 break;
                 
             case "Leaderboard":
