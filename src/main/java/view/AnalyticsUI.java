@@ -9,48 +9,87 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class AnalyticsUI extends JFrame {
+public class AnalyticsUI extends JPanel {
     private AnalyticsController controller;
-
+    private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
+    private final Color PANEL_COLOR = new Color(40, 24, 69);
+    private final Color TEXT_COLOR = new Color(255, 255, 255);
+    private final Color ACCENT_COLOR = new Color(128, 90, 213);
+    private final Color CORRECT_COLOR = new Color(39, 174, 96);
+    private final Color INCORRECT_COLOR = new Color(215, 38, 61);
+    private final Color FIELD_BACKGROUND = new Color(50, 35, 80);
+    private final Color FIELD_BORDER = new Color(70, 50, 110);
+       
+    
     public AnalyticsUI() {
         controller = new AnalyticsController();
         initializeUI();
     }
 
     private void initializeUI() {
-        // Set up the JFrame
-        setTitle("Transaction Charts and Savings Tracker");
-        setSize(1200, 1000); // Increased size to accommodate more charts
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(3, 1)); // Four rows, one column
+    	 // Set up the main panel
+        setLayout(new BorderLayout());
+        setBackground(BACKGROUND_COLOR);
 
-        // Create charts
+        // Add header panel
+        JPanel analyticsPlaceholderPanel = new JPanel(new BorderLayout());
+        analyticsPlaceholderPanel.setBackground(BACKGROUND_COLOR);
+        analyticsPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        JLabel analyticsLabel = new JLabel("Analytics Dashboard");
+        analyticsLabel.setForeground(TEXT_COLOR);
+        analyticsLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        analyticsLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JLabel analyticsDescriptionLabel = new JLabel("View your spending patterns and financial insights.");
+        analyticsDescriptionLabel.setForeground(new Color(180, 180, 180));
+        analyticsDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        analyticsDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JPanel analyticsTextPanel = new JPanel();
+        analyticsTextPanel.setLayout(new BoxLayout(analyticsTextPanel, BoxLayout.Y_AXIS));
+        analyticsTextPanel.setBackground(BACKGROUND_COLOR);
+        analyticsTextPanel.add(analyticsLabel);
+        analyticsTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        analyticsTextPanel.add(analyticsDescriptionLabel);
+
+        analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
+        add(analyticsPlaceholderPanel, BorderLayout.NORTH);
+
+        // Create a panel for the charts
+        JPanel analyticsChartPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // 2 rows, 2 columns, with gaps
+        analyticsChartPanel.setBackground(BACKGROUND_COLOR);
+        analyticsChartPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        // Create and add charts to the panel
         JFreeChart barChart = createBarChart();
         JFreeChart pieChart = createPieChart();
         JFreeChart savingsChart = createSavingsChart();
         JFreeChart expensesByCategoryChart = createExpensesByCategoryChart();
 
-        // Add charts to the JFrame
-        add(new ChartPanel(barChart));
-        add(new ChartPanel(pieChart));
-        add(new ChartPanel(savingsChart));
-        add(new ChartPanel(expensesByCategoryChart));
+        analyticsChartPanel.add(new ChartPanel(barChart));
+        analyticsChartPanel.add(new ChartPanel(pieChart));
+        analyticsChartPanel.add(new ChartPanel(savingsChart));
+        analyticsChartPanel.add(new ChartPanel(expensesByCategoryChart));
 
-        // Add a label to display current savings
-        JLabel savingsLabel = new JLabel("Current Savings: $" + String.format("%.2f", controller.getCurrentSavings()));
-        savingsLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        savingsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        add(savingsLabel);
-
-        // Display the JFrame
-        setLocationRelativeTo(null); // Center the window
-        setVisible(true);
+        // Add the chart panel to the main panel
+        add(analyticsChartPanel, BorderLayout.CENTER);
+    
+//     // total savings add later
+//        JLabel savingsLabel = new JLabel("Current Savings: $" + String.format("%.2f", controller.getCurrentSavings()));
+//        savingsLabel.setFont(new Font("Arial", Font.BOLD, 16));
+//        savingsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+//        add(savingsLabel);
+    
+    
     }
 
     // Create a BarChart
@@ -154,8 +193,5 @@ public class AnalyticsUI extends JFrame {
                 false
         );
     }
-    public static void main(String[] args) {
-        // Run the application on the Event Dispatch Thread
-        SwingUtilities.invokeLater(() -> new AnalyticsUI());
-    }
+
 }

@@ -258,6 +258,7 @@ public class CalendarUI extends JFrame {
                 // Right panel - Transaction history
                 JPanel historyPanel = createTransactionHistoryPanel();
                 contentPanel.add(historyPanel);
+               
                 break;
                 
             case "Quiz":
@@ -269,34 +270,9 @@ public class CalendarUI extends JFrame {
                 break;
                 
             case "Analytics":
-                // Add header panel below navigation in the top container
-                JPanel analyticsHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(analyticsHeaderPanel, BorderLayout.CENTER);
-                
-                // For now, show a placeholder message
-                JPanel analyticsPlaceholderPanel = new JPanel(new BorderLayout());
-                analyticsPlaceholderPanel.setBackground(BACKGROUND_COLOR);
-                analyticsPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-                
-                JLabel analyticsLabel = new JLabel("Analytics Dashboard");
-                analyticsLabel.setForeground(TEXT_COLOR);
-                analyticsLabel.setFont(new Font("Arial", Font.BOLD, 24));
-                analyticsLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JLabel analyticsDescriptionLabel = new JLabel("View your spending patterns and financial insights.");
-                analyticsDescriptionLabel.setForeground(new Color(180, 180, 180));
-                analyticsDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                analyticsDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JPanel analyticsTextPanel = new JPanel();
-                analyticsTextPanel.setLayout(new BoxLayout(analyticsTextPanel, BoxLayout.Y_AXIS));
-                analyticsTextPanel.setBackground(BACKGROUND_COLOR);
-                analyticsTextPanel.add(analyticsLabel);
-                analyticsTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-                analyticsTextPanel.add(analyticsDescriptionLabel);
-                
-                analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
-                add(analyticsPlaceholderPanel, BorderLayout.CENTER);
+               
+              AnalyticsUI analyticsui = new AnalyticsUI();
+              add(analyticsui,BorderLayout.CENTER);
                 break;
                 
             case "Leaderboard":
