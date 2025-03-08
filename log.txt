@@ -57,3 +57,58 @@ February 14th, 2025
 --Lesson learned:
 ---Implemented environment variables for credentials
 ---Improved UI usability and validatoion techniques
+
+
+
+March 6st, 2025
+
+- Khalifa
+
+UI Enhancements:
+Registration & Login Screens:
+Added a “Register” button to the login screen and a corresponding registration screen that mirrors the login UI.
+Implemented smooth fade-in and fade-out transitions between the screens to provide a polished user experience.
+Custom Exit Button:
+Added a custom exit ("X") button on both screens to allow users to close the application gracefully.
+
+Database Integration & Functionality:
+User Registration & Authentication:
+Integrated database operations for registration and login using PostgreSQL.
+Modified the registerUser method to use Statement.RETURN_GENERATED_KEYS so that the generated user ID can be captured and stored in the User model.
+Updated the authenticateUser method to return the user’s ID (or -1 on failure), which allows the creation of a complete User model upon login.
+Database Initialization:
+Ensured that the database schema is set up by using a DatabaseInitializer that creates tables if they don’t exist.
+Confirmed that existing data is preserved and that the initializer runs at application startup.
+
+Transaction Model & Controller:
+Updated the Transaction model to include constructors for both manual creation and database retrieval.
+Modified the transactions controller to retrieve transactions from the database, returning them as a list ordered by date in descending order.
+User Model Update:
+Updated the User model to include an ID field and a full constructor so that user data retrieved from the database can be fully captured.
+
+
+
+
+March 7th, 2025
+
+- Khalifa
+User Interface Enhancements:
+Added a registration screen that mirrors the login UI.
+Integrated smooth fade-in and fade-out transitions between the login and registration pages.
+Added custom exit buttons to both screens to provide a consistent look and allow users to exit the application.
+Implemented tooltips and enhanced error messages on login and registration pages to guide the user on expected input formats (e.g., email format, password length).
+
+Database Integration and Improvements:
+Created a DatabaseInitializer to set up the schema (tables for users and transactions) at application startup.
+Refactored DatabaseManager to return a new connection for each operation, preventing the "connection has been closed" error.
+Modified the registration method (registerUser) to return the generated user ID by using Statement.RETURN_GENERATED_KEYS.
+Updated the login method (authenticateUser) to return the user’s ID (or -1 if authentication fails) for use in building a complete User model.
+
+Controller and Model Updates:
+Updated the Transaction model with a constructor to handle database retrieval (including conversion of SQL timestamps to LocalDate), and ensured that each transaction object carries its generated ID.
+Enhanced the Transaction controller to:
+Retrieve transactions in descending order by date.
+Delete a specific transaction using its unique ID.
+Updated the User model to include an ID field and a full constructor for database integration.
+Maven Dependency Update:
+Added the PostgreSQL JDBC dependency (org.postgresql:postgresql:42.7.5) to the pom.xml file to support PostgreSQL database connectivity.
