@@ -1,5 +1,4 @@
 package controller;
-import model.Analytics;
 import database.DatabaseManager;
 import model.Transaction;
 
@@ -10,17 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class AnalyticsController {
     private Connection connection;
 
     public AnalyticsController() {
-        try {
-			connection = DatabaseManager.getConnection();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        connection = DatabaseManager.getConnection();
     }
 
     // Fetch all transactions

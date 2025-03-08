@@ -6,6 +6,7 @@ import controller.QuizController;
 import model.*;
 import view.GoalsUI;
 import view.CustomCalendarPicker;
+import view.AnalyticsUI;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -270,6 +271,7 @@ public class CalendarUI extends JFrame {
                 // Right panel - Transaction history
                 JPanel historyPanel = createTransactionHistoryPanel();
                 contentPanel.add(historyPanel);
+               
                 break;
                 
             case "Goals":
@@ -291,7 +293,8 @@ public class CalendarUI extends JFrame {
                 break;
                 
             case "Analytics":
-                // Add header panel below navigation in the top container
+<<<<<<< HEAD
+               /* // Add header panel below navigation in the top container
                 JPanel analyticsHeaderPanel = createHeaderPanel(userName);
                 topContainer.add(analyticsHeaderPanel, BorderLayout.CENTER);
                 
@@ -318,7 +321,15 @@ public class CalendarUI extends JFrame {
                 analyticsTextPanel.add(analyticsDescriptionLabel);
                 
                 analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
-                add(analyticsPlaceholderPanel, BorderLayout.CENTER);
+                add(analyticsPlaceholderPanel, BorderLayout.CENTER);*/
+                // Create and add the AnalyticsUI panel
+                AnalyticsUI analyticsUI = new AnalyticsUI(userId);
+                add(analyticsUI, BorderLayout.CENTER);
+=======
+               
+              AnalyticsUI analyticsui = new AnalyticsUI();
+              add(analyticsui,BorderLayout.CENTER);
+>>>>>>> refs/remotes/origin/Peyton
                 break;
                 
             case "Leaderboard":

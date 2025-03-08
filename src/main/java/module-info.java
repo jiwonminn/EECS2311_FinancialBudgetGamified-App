@@ -7,9 +7,10 @@ module FBGApp {
     requires mysql.connector.j;
 	requires org.jfree.jfreechart;
 	requires org.apache.commons.csv;
+	requires org.jfree.jfreechart;
     exports view;
     exports app;
     //requires org.apache.commons.csv;
-    
-
+    requires org.jfree.jfreechart;
+    requires org.apache.commons.csv;
 }
