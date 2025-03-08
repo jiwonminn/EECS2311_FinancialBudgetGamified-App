@@ -349,6 +349,16 @@ public class CalendarUI extends JFrame {
                 leaderboardPlaceholderPanel.add(leaderboardTextPanel, BorderLayout.CENTER);
                 add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
                 break;
+                
+
+            case "Log":
+                // Add header panel below navigation in the top container
+                JPanel logHeaderPanel = createHeaderPanel(userName);
+                topContainer.add(logHeaderPanel, BorderLayout.CENTER);
+                
+                // Add the LogUI panel
+                add(LogUI.getInstance(), BorderLayout.CENTER);
+                break;
         }
         
         // Refresh the UI
