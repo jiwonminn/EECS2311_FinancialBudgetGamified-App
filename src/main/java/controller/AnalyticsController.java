@@ -1,6 +1,4 @@
 package controller;
-
-<<<<<<< HEAD
 import model.Analytics;
 import database.DatabaseManager;
 import java.time.LocalDate;
@@ -321,4 +319,3 @@ public class AnalyticsController {
         return expensesByCategory;
     }
 }
->>>>>>> refs/remotes/origin/Peyton
