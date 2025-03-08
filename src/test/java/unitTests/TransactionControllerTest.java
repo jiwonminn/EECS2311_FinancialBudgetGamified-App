@@ -2,6 +2,7 @@ package unitTests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,27 +60,12 @@ class TransactionControllerTest extends TransactionController {
 	    	
 	    }
 	    
-	    public void deleteTransaction() throws SQLException {
-	        // First add a transaction to delete
-	        String description = "Test Transaction";
-	        double amount = 100.0;
-	        LocalDate date = LocalDate.now();
-	        boolean isIncome = false;
-	        String category = "Food";
-	        
-	        addTransaction(description, amount, date, isIncome, category);
-	        
-	 
-	        List<Transaction> transactions = getTransactions();
-	        Transaction testTransaction = transactions.get(0);
-	        boolean result = TransactionController.deleteTransaction(testTransaction.getId());
-	        
-	        // Assert deletion was successful
+	    @Test
+	    public void transactionAdded() throws SQLException {
+	    	boolean result = addTransaction(1,"2025-02-03","Test","Food","Expense",10);
 	        assertTrue(result);
 	        
 	    }
-	    
-	    
 	    
 }
 
