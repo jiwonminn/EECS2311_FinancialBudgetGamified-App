@@ -121,8 +121,8 @@ public class CalendarUI extends JFrame {
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
-        // Create tabs with Goals tab between Dashboard and Analytics
-        String[] tabNames = {"Dashboard", "Goals", "Analytics", "Quiz", "Leaderboard"};
+        // Add Transaction Log tab between Leaderboard and Quiz
+        String[] tabNames = {"Dashboard", "Goals", "Analytics", "Quiz", "Leaderboard", "Transaction Log"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
@@ -221,8 +221,8 @@ public class CalendarUI extends JFrame {
                 return "❓";
             case "Leaderboard":
                 return "🏆";
-            case "Log": 
-            	return "📝";
+            case "Transaction Log":
+                return "📝";
             default:
                 return "•";
         }
@@ -352,14 +352,13 @@ public class CalendarUI extends JFrame {
                 add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
                 break;
                 
-
-            case "Log":
-                // Add header panel below navigation in the top container
+            case "Transaction Log":
                 JPanel logHeaderPanel = createHeaderPanel(userName);
                 topContainer.add(logHeaderPanel, BorderLayout.CENTER);
                 
-                // Add the LogUI panel
-                add(LogUI.getInstance(), BorderLayout.CENTER);
+                // Create and add the LogUI panel
+                LogUI logUI = LogUI.getInstance();
+                add(logUI, BorderLayout.CENTER);
                 break;
         }
         
