@@ -221,6 +221,8 @@ public class CalendarUI extends JFrame {
                 return "❓";
             case "Leaderboard":
                 return "🏆";
+            case "Log": 
+            	return "📝";
             default:
                 return "•";
         }
