@@ -59,11 +59,34 @@ February 14th, 2025
 ---Improved UI usability and validatoion techniques
 
 
+February 24th, 2025
+- We had a dicussion of additional user stories to work on and splitted up the work for ITR2
+- Progress bar UI for saving goal - Joshua
+- Reading CSV files - Jiwon
+- Database - Khalifa
+- Unit test - Andy
+- Visual graph representation of savings and log - Payton
 
-March 6st, 2025
+March 1st, 2025
+Joshua
+- Setup GUI for the software
+- Added icons to user category
+- Added Calendar selection for date input
+- Added basic Quiz sections
+- Connected Recent transactions to SQL
+- Time spent: 5 hours
+- Issue encountered:
+  - MySQL is currently hosted on local server
+  - Local server is required for software to start 
 
+March 3rd, 2025
+Andy
+- Started Unit Test cases for indiviual modules
+- Started working on Integration tests for the fake databas
+- Time spent was 1.5 hours
+
+March 6th, 2025
 - Khalifa
-
 UI Enhancements:
 Registration & Login Screens:
 Added a “Register” button to the login screen and a corresponding registration screen that mirrors the login UI.
@@ -87,6 +110,29 @@ User Model Update:
 Updated the User model to include an ID field and a full constructor so that user data retrieved from the database can be fully captured.
 
 
+Jiwon
+- Had an issue with database
+  - Felt the need of having the shared database as if someone committed, then it changes the database implementation setting. If we had a sharing one, we would have less chance of crashing database
+  - Took 4 hours to figure out why mySQL did not work properly and found that it was because my laptop did not have a port. Solved the issue by initializing the port. 
+  - Started to work on my part, which was about reading CSV files. Time spent about an hour.
+
+
+Peyton
+- Created new branch Peyton from main branch
+- Added analyticsController class to handle the analytics data
+- Added AnalyticsUI class to display the charts for the analytics
+- For charts bar chart of income vs expenses, pie chart of income vs expenses and expenses by category, line chart of savings over time
+- Changed savings over time and income vs expenses methods in AnalyticsUi to display time in chronological order 
+- Ui opens in a different window still have to add it to the analytics tab in app
+- Took around 4 hours to implement 
+
+
+Andy
+- Continued creating Integration tests for the database
+- Worked on implementing the transaction log from Iteration 1 to the new UI
+- Continued creating unit tests for the different modules and components that we already had 
+- Worked on fixing bugs that prevented the program from starting up
+- Time spent was around 3 hours
 
 
 March 7th, 2025
@@ -112,3 +158,38 @@ Delete a specific transaction using its unique ID.
 Updated the User model to include an ID field and a full constructor for database integration.
 Maven Dependency Update:
 Added the PostgreSQL JDBC dependency (org.postgresql:postgresql:42.7.5) to the pom.xml file to support PostgreSQL database connectivity.
+
+
+Peyton
+- changed AnalyticsUI to the display the charts on the app itself and formatted it correctly to fit the 4 charts
+- Pushed the changed from my branch to main by merge
+- Took around 2 hours to make the changes
+
+
+Joshua
+- Added Goals tab to the web 
+  - Currently not fully integrated to the dashboard, but set up with SQL.
+- Changed Calendar UI to make it fit the theme and bug fixes
+- Added Switch account feature for users to log out and swap between accounts
+- Added UMl diagram and architecture diagram
+- Work time around 3 hours.
+
+
+Jiwon
+- Added analytics tab; added AnalyticsUI, Analytics, AnalyticsController
+- Made a change in pom.xml as dependency related to CSV was necessary
+- Analytics will be displayed once you import a CSV file
+- Related tables will be displayed 
+- Not completely finished the part for interaction between the dashboard tab and analytics tab, if the user adds its transaction, the data will be reflected in the analytics tab
+- Time spent about 6 hours
+
+- After a long discussion, we wanted to focus on displaying the charts for now so we decided to add importing CSV file function later
+- Started to work on planning document and finalizing the log
+- Took me about 1.5 hours
+
+
+Andy
+- Added and fixed the transaction log to fit the new UI
+- Added more test cases to new features added over night
+- Wrote the wiki for Iteration 2
+- Time took around 3 hours
