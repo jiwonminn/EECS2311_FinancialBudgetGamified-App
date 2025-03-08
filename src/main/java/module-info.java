@@ -6,10 +6,10 @@ module FBGApp {
     requires java.desktop;
     requires mysql.connector.j;
 	requires org.jfree.jfreechart;
+	requires org.apache.commons.csv;
     exports view;
     exports app;
-    requires org.jfree.jfreechart;
-    requires org.apache.commons.csv;
+    //requires org.apache.commons.csv;
     
 
 }
