@@ -22,13 +22,13 @@ public class DatabaseInitializer {
 
     private static void createTables(Connection conn) throws SQLException {
         String createUsersTable = "CREATE TABLE IF NOT EXISTS users ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                + "id SERIAL PRIMARY KEY,"
                 + "email VARCHAR(100) UNIQUE NOT NULL,"
                 + "password VARCHAR(100) NOT NULL"
                 + ")";
 
         String createTransactionsTable = "CREATE TABLE IF NOT EXISTS transactions ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                + "id SERIAL PRIMARY KEY,"
                 + "user_id INT NOT NULL,"
                 + "date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                 + "description TEXT NOT NULL,"
@@ -39,13 +39,14 @@ public class DatabaseInitializer {
                 + ")";
 
         String createUserBudgetTable = "CREATE TABLE IF NOT EXISTS user_budget ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                + "id SERIAL PRIMARY KEY,"                           // Use SERIAL instead of INT AUTO_INCREMENT
                 + "user_id INT NOT NULL,"
-                + "total_budget DOUBLE NOT NULL DEFAULT 0.0,"
+                + "total_budget DOUBLE PRECISION NOT NULL DEFAULT 0.0,"  // Use DOUBLE PRECISION
                 + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
+                + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"   // Remove ON UPDATE clause; use a trigger if auto-update is required
                 + "FOREIGN KEY (user_id) REFERENCES users(id)"
                 + ")";
+
 
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createUsersTable);

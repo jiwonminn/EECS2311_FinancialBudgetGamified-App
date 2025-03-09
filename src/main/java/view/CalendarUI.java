@@ -292,7 +292,6 @@ public class CalendarUI extends JFrame {
                 break;
                 
             case "Analytics":
-<<<<<<< HEAD
                /* // Add header panel below navigation in the top container
                 JPanel analyticsHeaderPanel = createHeaderPanel(userName);
                 topContainer.add(analyticsHeaderPanel, BorderLayout.CENTER);
@@ -325,7 +324,7 @@ public class CalendarUI extends JFrame {
                 AnalyticsUI analyticsUI = new AnalyticsUI(userId);
                 add(analyticsUI, BorderLayout.CENTER);
                
-              AnalyticsUI analyticsui = new AnalyticsUI();
+              AnalyticsUI analyticsui = new AnalyticsUI(userId);
               add(analyticsui,BorderLayout.CENTER);
                 break;
                 

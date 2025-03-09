@@ -22,6 +22,7 @@ import java.util.TreeSet;
 
 public class AnalyticsUI extends JPanel {
     private AnalyticsController controller;
+    private int userId;
     private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
     private final Color PANEL_COLOR = new Color(40, 24, 69);
     private final Color TEXT_COLOR = new Color(255, 255, 255);
@@ -32,8 +33,9 @@ public class AnalyticsUI extends JPanel {
     private final Color FIELD_BORDER = new Color(70, 50, 110);
        
     
-    public AnalyticsUI() {
-        controller = new AnalyticsController();
+    public AnalyticsUI(int userId) {
+        this.userId = userId;
+        controller = new AnalyticsController(userId);
         initializeUI();
     }
 
