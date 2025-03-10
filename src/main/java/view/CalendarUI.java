@@ -3,9 +3,13 @@ package view;
 import controller.TransactionController;
 import controller.UserController;
 import controller.QuizController;
+import controller.GoalController;
+import controller.CategoryManager;
+import controller.CategoryManager.CategoryChangeListener;
 import model.*;
 import view.GoalsUI;
 import view.CustomCalendarPicker;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,8 +28,11 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.List;
 import javax.swing.SpinnerDateModel;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.time.format.DateTimeFormatter;
 
-public class CalendarUI extends JFrame {
+public class CalendarUI extends JFrame implements CategoryChangeListener {
     // Define colors
     private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
     private final Color PANEL_COLOR = new Color(40, 24, 69);
@@ -37,6 +44,8 @@ public class CalendarUI extends JFrame {
     private final Color FIELD_BORDER = new Color(70, 50, 110);
 
     private TransactionController transactionController;
+    private GoalController goalController;
+    private CategoryManager categoryManager;
     private CustomCalendarPicker datePicker;
     private JTextField descriptionField;
     private JTextField amountField;
@@ -58,6 +67,14 @@ public class CalendarUI extends JFrame {
 
         transactionController = new TransactionController();
         transactionController.setUserId(userId);
+        
+        // Initialize GoalController
+        goalController = new GoalController();
+        
+        // Initialize CategoryManager and register as listener
+        categoryManager = CategoryManager.getInstance();
+        categoryManager.addListener(this);
+        
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -279,7 +296,7 @@ public class CalendarUI extends JFrame {
                 topContainer.add(goalsHeaderPanel, BorderLayout.CENTER);
                 
                 // Create and add the GoalsUI panel
-                GoalsUI goalsUI = new GoalsUI(userId);
+                GoalsUI goalsUI = new GoalsUI(userId, userName, userEmail);
                 add(goalsUI, BorderLayout.CENTER);
                 break;
                 
@@ -598,9 +615,9 @@ public class CalendarUI extends JFrame {
         
         logPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        // Create category dropdown instead of CategorySelector
-        String[] categories = {"Housing", "Food", "Transportation", "Entertainment", "Healthcare", "Education", "Savings", "Income", "Other"};
-        categoryComboBox = new JComboBox<>(categories);
+        // Create category dropdown using CategoryManager instead of hardcoded categories
+        List<String> categories = categoryManager.getAllCategories();
+        categoryComboBox = new JComboBox<>(categories.toArray(new String[0]));
         categoryComboBox.setBackground(FIELD_BACKGROUND);
         categoryComboBox.setForeground(TEXT_COLOR);
         categoryComboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -612,7 +629,7 @@ public class CalendarUI extends JFrame {
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 setBackground(isSelected ? ACCENT_COLOR : FIELD_BACKGROUND);
-                setForeground(isSelected ? TEXT_COLOR : TEXT_COLOR);
+                setForeground(TEXT_COLOR);
                 return this;
             }
         });
@@ -706,22 +723,17 @@ public class CalendarUI extends JFrame {
 
     private void logTransaction() {
         try {
-            // Validate inputs
+            // Get description
             String description = descriptionField.getText().trim();
             if (description.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a description for the transaction.");
+                JOptionPane.showMessageDialog(this, "Please enter a description.");
                 return;
             }
             
-            String amountText = amountField.getText().trim();
-            if (amountText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter an amount for the transaction.");
-                return;
-            }
-            
+            // Get amount
             double amount;
             try {
-                amount = Double.parseDouble(amountText);
+                amount = Double.parseDouble(amountField.getText().trim());
                 if (amount <= 0) {
                     JOptionPane.showMessageDialog(this, "Please enter a positive amount.");
                     return;
@@ -749,24 +761,43 @@ public class CalendarUI extends JFrame {
             // Add transaction
             transactionController.addTransaction(description, amount, date, isIncome, category);
             
-            // Clear form
-            descriptionField.setText("");
-            amountField.setText("");
-            datePicker.setDate(new Date()); // Reset to today
-            expenseButton.setSelected(true); // Reset to expense
-            if (categoryComboBox != null) {
-                categoryComboBox.setSelectedIndex(0); // Reset to first category
-            }
+            // Update goals related to this category
+            updateRelatedGoals(category);
             
-            // Update transaction display
-            updateTransactionDisplay();
-            
-            // Show success message
+            // Show confirmation
             JOptionPane.showMessageDialog(this, "Transaction logged successfully!");
             
+            // Reset fields
+            descriptionField.setText("");
+            amountField.setText("");
+            
+            // Refresh transaction display
+            updateTransactionDisplay();
+            
         } catch (Exception e) {
-            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error logging transaction: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Updates any goals related to the given transaction category
+     */
+    private void updateRelatedGoals(String category) {
+        try {
+            // Get all active goals for the user
+            List<Goal> activeGoals = goalController.getActiveGoalsByUserId(userId);
+            
+            // Update progress for goals matching this category or "All Categories"
+            for (Goal goal : activeGoals) {
+                if (goal.getCategory().equalsIgnoreCase(category) || 
+                    goal.getCategory().equalsIgnoreCase("All Categories")) {
+                    goalController.updateGoalProgress(goal.getId());
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error updating goals: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -1370,6 +1401,139 @@ public class CalendarUI extends JFrame {
         for (Component child : comp.getComponents()) {
             if (child instanceof JComponent) {
                 customizeCalendarComponents((JComponent) child);
+            }
+        }
+    }
+
+    private void handleCsvImport() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
+        fileChooser.setFileFilter(filter);
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            try (BufferedReader br = new BufferedReader(new FileReader(fileChooser.getSelectedFile()))) {
+                String line;
+                boolean firstLine = true;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                int importCount = 0;
+                // Keep track of categories for goal updates
+                java.util.Set<String> affectedCategories = new java.util.HashSet<>();
+
+                while ((line = br.readLine()) != null) {
+                    if (firstLine) {
+                        firstLine = false;
+                        continue; // Skip header row
+                    }
+
+                    String[] values = line.split(",");
+                    if (values.length >= 5) {
+                        // Remove any quotes and trim whitespace
+                        String dateStr = values[0].trim().replace("\"", "").replace("'", "");
+                        String description = values[1].trim().replace("\"", "").replace("'", "");
+                        String expense = values[2].trim().replace("\"", "").replace("'", "");
+                        String income = values[3].trim().replace("\"", "").replace("'", "");
+                        // Try to get category if available (column 6)
+                        String category = "Uncategorized";
+                        if (values.length > 5 && values[5] != null && !values[5].trim().isEmpty()) {
+                            category = values[5].trim().replace("\"", "").replace("'", "");
+                        }
+                        
+                        // Add the category to the set of affected categories
+                        affectedCategories.add(category);
+
+                        try {
+                            LocalDate date = LocalDate.parse(dateStr, formatter);
+                            // Convert LocalDate to String for the addTransaction method
+                            String formattedDate = date.format(formatter);
+
+                            if (!expense.isEmpty()) {
+                                // Add expense transaction
+                                double expenseAmount = Double.parseDouble(expense);
+                                TransactionController.addTransaction(
+                                    userId, 
+                                    formattedDate,
+                                    description,
+                                    category,
+                                    "expense",
+                                    expenseAmount
+                                );
+                                importCount++;
+                            } else if (!income.isEmpty()) {
+                                // Add income transaction
+                                double incomeAmount = Double.parseDouble(income);
+                                TransactionController.addTransaction(
+                                    userId, 
+                                    formattedDate,
+                                    description,
+                                    category,
+                                    "income", 
+                                    incomeAmount
+                                );
+                                importCount++;
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Error parsing date: " + dateStr);
+                            continue; // Skip this row and continue with next
+                        }
+                    }
+                }
+                
+                // Update all affected goals
+                for (String category : affectedCategories) {
+                    updateRelatedGoals(category);
+                }
+                // Also update "All Categories" goals
+                updateRelatedGoals("All Categories");
+
+                // Show success message
+                JOptionPane.showMessageDialog(this,
+                        importCount + " transactions imported successfully!" +
+                        (affectedCategories.size() > 0 ? "\nRelated goals have been updated." : ""),
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Refresh transaction display
+                updateTransactionDisplay();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Error importing CSV file: " + ex.getMessage() +
+                                "\n\nExpected CSV format:" +
+                                "\ndate,description,expense,income,balance,category" +
+                                "\n\nWhere:" +
+                                "\n- date should be in YYYY-MM-DD format" +
+                                "\n- expense column should be empty for income transactions" +
+                                "\n- income column should be empty for expense transactions" +
+                                "\n- category is optional (will use 'Uncategorized' if missing)" +
+                                "\n\nExample:" +
+                                "\n2023-05-01,Salary,,3000.00,3000.00,Income" +
+                                "\n2023-05-02,Groceries,150.25,,2849.75,Food",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    @Override
+    public void onCategoriesChanged(List<String> categories) {
+        // Update the category dropdown with the new list of categories
+        if (categoryComboBox != null) {
+            // Save the current selection if any
+            String currentSelection = null;
+            if (categoryComboBox.getSelectedItem() != null) {
+                currentSelection = categoryComboBox.getSelectedItem().toString();
+            }
+            
+            // Update the dropdown with new categories
+            categoryComboBox.removeAllItems();
+            for (String category : categories) {
+                categoryComboBox.addItem(category);
+            }
+            
+            // Restore previous selection if it still exists
+            if (currentSelection != null && categories.contains(currentSelection)) {
+                categoryComboBox.setSelectedItem(currentSelection);
             }
         }
     }
