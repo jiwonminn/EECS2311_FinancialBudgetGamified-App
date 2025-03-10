@@ -86,6 +86,6 @@ public class TransactionTest {
     public void testTransactionEquality() {
         Transaction transaction1 = new Transaction("Same", 100.0, testDate, false, "Food");
         
-        assertEquals(100.0,transaction1.getAmount(), "The amount is not the same");
+        assertEquals(String.valueOf(100.0),transaction1.getAmount(), "The amount is not the same");
     }
 }

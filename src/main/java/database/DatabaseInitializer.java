@@ -34,19 +34,18 @@ public class DatabaseInitializer {
                 + "description TEXT NOT NULL,"
                 + "category VARCHAR(50) NOT NULL,"
                 + "type VARCHAR(50) NOT NULL,"
-                + "amount DOUBLE NOT NULL,"
+                + "amount DOUBLE PRECISION NOT NULL,"    // Changed from DOUBLE to DOUBLE PRECISION
                 + "FOREIGN KEY (user_id) REFERENCES users(id)"
                 + ")";
 
         String createUserBudgetTable = "CREATE TABLE IF NOT EXISTS user_budget ("
-                + "id SERIAL PRIMARY KEY,"                           // Use SERIAL instead of INT AUTO_INCREMENT
+                + "id SERIAL PRIMARY KEY,"
                 + "user_id INT NOT NULL,"
-                + "total_budget DOUBLE PRECISION NOT NULL DEFAULT 0.0,"  // Use DOUBLE PRECISION
+                + "total_budget DOUBLE PRECISION NOT NULL DEFAULT 0.0,"
                 + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"   // Remove ON UPDATE clause; use a trigger if auto-update is required
+                + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                 + "FOREIGN KEY (user_id) REFERENCES users(id)"
                 + ")";
-
 
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createUsersTable);
@@ -60,4 +59,5 @@ public class DatabaseInitializer {
             stmt.execute(insertDefaultBudgets);
         }
     }
+
 }
