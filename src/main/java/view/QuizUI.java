@@ -40,7 +40,6 @@ public class QuizUI extends JPanel {
     private JLabel resultLabel;
     private JLabel explanationLabel;
     private JLabel scoreLabel;
-    private JComboBox<String> categoryComboBox;
     private CardLayout cardLayout;
     
     private int selectedAnswerIndex = -1;
@@ -131,52 +130,14 @@ public class QuizUI extends JPanel {
         descLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Category dropdown
-        JPanel dropdownPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        dropdownPanel.setBackground(BACKGROUND_COLOR);
-        
-        List<String> categories = new ArrayList<>();
-        categories.add("All Categories");
-        categories.addAll(quizController.getCategories());
-        
-        categoryComboBox = new JComboBox<>(categories.toArray(new String[0]));
-        categoryComboBox.setBackground(FIELD_BACKGROUND);
-        categoryComboBox.setForeground(TEXT_COLOR);
-        categoryComboBox.setPreferredSize(new Dimension(250, 40));
-        categoryComboBox.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(FIELD_BORDER),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
-        
-        dropdownPanel.add(categoryComboBox);
-        
-        // Start button
-        JButton startButton = createGradientButton("Start Quiz");
-        startButton.addActionListener(e -> {
-            String selectedCategory = categoryComboBox.getSelectedItem().toString();
-            if ("All Categories".equals(selectedCategory)) {
-                quizController.filterByCategory(null);
-            } else {
-                quizController.filterByCategory(selectedCategory);
-            }
-            quizController.startNewQuiz();
-            updateQuestionPanel();
-            cardLayout.show(contentPanel, "QUESTION");
-        });
+        // Create category cards grid
+        JPanel categoriesGrid = createCategoryCardsGrid();
         
         // Add components with spacing
         panel.add(Box.createVerticalGlue());
         panel.add(titleLabel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(descLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 30)));
-        panel.add(dropdownPanel);
-        panel.add(Box.createRigidArea(new Dimension(0, 30)));
-        panel.add(startButton);
-        panel.add(Box.createVerticalGlue());
-        
-        // Create category cards grid
-        JPanel categoriesGrid = createCategoryCardsGrid();
         panel.add(Box.createRigidArea(new Dimension(0, 30)));
         panel.add(categoriesGrid);
         panel.add(Box.createVerticalGlue());
@@ -192,32 +153,31 @@ public class QuizUI extends JPanel {
         gridPanel.setBackground(BACKGROUND_COLOR);
         gridPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Add category cards
+        // Add "All Categories" card first
+        JPanel allCategoriesCard = createCategoryCard("All Categories");
+        gridPanel.add(allCategoriesCard);
+        
+        // Add individual category cards
         List<String> categories = quizController.getCategories();
         for (String category : categories) {
             JPanel card = createCategoryCard(category);
             gridPanel.add(card);
         }
         
-        // Wrap grid in a panel for sizing
-        JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        wrapperPanel.setBackground(BACKGROUND_COLOR);
-        wrapperPanel.add(gridPanel);
-        
-        return wrapperPanel;
+        return gridPanel;
     }
     
     /**
-     * Creates a clickable category card.
+     * Creates a card for a quiz category.
      */
     private JPanel createCategoryCard(String category) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(PANEL_COLOR);
-        card.setBorder(BorderFactory.createLineBorder(FIELD_BORDER, 1));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Icon panel with category icon
+        // Icon panel with circle background
         JPanel iconPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -225,22 +185,11 @@ public class QuizUI extends JPanel {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                int size = Math.min(getWidth(), getHeight()) - 20;
-                int x = (getWidth() - size) / 2;
-                int y = (getHeight() - size) / 2;
-                
                 // Draw circle background
-                g2d.setColor(getCategoryColor(category));
-                g2d.fillOval(x, y, size, size);
-                
-                // Draw icon text
-                g2d.setColor(Color.WHITE);
-                g2d.setFont(new Font("Arial", Font.BOLD, 24));
-                String iconText = getCategoryIcon(category);
-                FontMetrics fm = g2d.getFontMetrics();
-                int textX = (getWidth() - fm.stringWidth(iconText)) / 2;
-                int textY = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
-                g2d.drawString(iconText, textX, textY);
+                Color iconColor = "All Categories".equals(category) ? ACCENT_COLOR : getCategoryColor(category);
+                g2d.setColor(iconColor);
+                int size = Math.min(getWidth(), getHeight()) - 20;
+                g2d.fillOval((getWidth() - size) / 2, (getHeight() - size) / 2, size, size);
                 
                 g2d.dispose();
             }
@@ -250,9 +199,16 @@ public class QuizUI extends JPanel {
                 return new Dimension(80, 80);
             }
         };
+        iconPanel.setOpaque(false);
         iconPanel.setBackground(PANEL_COLOR);
-        iconPanel.setMaximumSize(new Dimension(80, 80));
         iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Icon text
+        JLabel iconLabel = new JLabel(getCategoryIcon(category));
+        iconLabel.setForeground(Color.WHITE);
+        iconLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconPanel.add(iconLabel);
         
         // Category name
         JLabel nameLabel = new JLabel(category);
@@ -261,8 +217,9 @@ public class QuizUI extends JPanel {
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Questions count
-        int questionCount = countQuestionsInCategory(category);
-        JLabel countLabel = new JLabel(questionCount + " questions");
+        String countText = "All Categories".equals(category) ? 
+            "All questions" : countQuestionsInCategory(category) + " questions";
+        JLabel countLabel = new JLabel(countText);
         countLabel.setForeground(new Color(180, 180, 180));
         countLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         countLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -280,8 +237,11 @@ public class QuizUI extends JPanel {
         card.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                categoryComboBox.setSelectedItem(category);
-                quizController.filterByCategory(category);
+                if ("All Categories".equals(category)) {
+                    quizController.filterByCategory(null);
+                } else {
+                    quizController.filterByCategory(category);
+                }
                 quizController.startNewQuiz();
                 updateQuestionPanel();
                 cardLayout.show(contentPanel, "QUESTION");
@@ -309,10 +269,12 @@ public class QuizUI extends JPanel {
     private String getCategoryIcon(String category) {
         switch (category) {
             case "Budgeting": return "$";
-            case "Saving": return "💰";
-            case "Investing": return "📈";
-            case "Credit": return "💳";
-            case "Taxes": return "📊";
+            case "Saving": return "$";
+            case "Investing": return "^";
+            case "Credit": return "C";
+            case "Taxes": return "T";
+            case "Financial Planning": return "FP";
+            case "All Categories": return "*";
             default: return "?";
         }
     }
@@ -327,6 +289,8 @@ public class QuizUI extends JPanel {
             case "Investing": return new Color(155, 89, 182);
             case "Credit": return new Color(231, 76, 60);
             case "Taxes": return new Color(241, 196, 15);
+            case "Financial Planning": return new Color(52, 152, 219);
+            case "All Categories": return ACCENT_COLOR;
             default: return ACCENT_COLOR;
         }
     }
