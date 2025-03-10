@@ -16,10 +16,11 @@ import controller.TransactionController;
 import model.Transaction;
 import database.DatabaseManager;
 
+
 class IntegrationTest {
     private TransactionController transactionController;
     private AnalyticsController analyticsController;
-    private static final int TEST_USER_ID = 1;
+    private static final int TEST_USER_ID = 1; //user Id
     private static final LocalDate TEST_DATE = LocalDate.now();
     
     @BeforeEach
