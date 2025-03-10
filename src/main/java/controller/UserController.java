@@ -16,6 +16,10 @@ public class UserController {
     public void updateBalance(double amount) {
         user.updateBalance(amount);
     }
+    
+    public int getPoints() {
+        return user.getPoints();
+    }
 
     public String getUserInfo() {
         return "User: " + user.getUsername() + ", Email: "+ user.getEmail()+ ", Balance: " + user.getBalance() + ", Points: " + user.getPoints();

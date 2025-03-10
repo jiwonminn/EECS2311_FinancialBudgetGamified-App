@@ -235,25 +235,20 @@ public class QuizController {
      * @param category The category to filter by, or null for all categories
      */
     public void filterByCategory(String category) {
-        Quiz filteredQuiz = new Quiz();
-        
         if (category == null || category.isEmpty()) {
-            // Reset to all questions
-            this.quiz.reset();
+            // Reset to all questions by creating a new quiz and reloading default questions
+            this.quiz = new Quiz();
+            loadDefaultQuestions();
             return;
         }
         
+        Quiz filteredQuiz = new Quiz();
         // Add only questions from the selected category
         for (QuizQuestion question : this.quiz.getQuestions()) {
             if (question.getCategory().equals(category)) {
                 filteredQuiz.addQuestion(question);
             }
         }
-        
-        // Only update if we have matching questions
-        if (filteredQuiz.getQuestionCount() > 0) {
-            this.quiz = filteredQuiz;
-            this.quiz.shuffleQuestions();
-        }
+        this.quiz = filteredQuiz;
     }
 }

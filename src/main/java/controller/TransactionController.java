@@ -27,6 +27,21 @@ public class TransactionController {
      * @return true if the transaction was successfully added, false otherwise
      */
     public static boolean addTransaction(int userId, String date, String description, String category, String type, double amount) {
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	if(description == null) {
+    		throw new NullPointerException("Description can not be null");
+    	}
+    	if(description.length() <= 0) {
+    		throw new IllegalArgumentException("Description can not be empty");
+    	}
+    	if(type == null) {
+    		throw new NullPointerException("Type can not be null");
+    	}
+    	if(date == null) {
+    		throw new NullPointerException("Date can not be null");
+    	}
         String query = "INSERT INTO transactions (user_id, date, description, category, type, amount) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {

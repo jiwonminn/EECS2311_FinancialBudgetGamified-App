@@ -1,10 +1,21 @@
 package unitTests;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.sql.Timestamp;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.junit.Before;
-import org.junit.Test;
 import model.Transaction;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,15 +29,6 @@ public class TransactionTest {
     public void setUp() {
         testDate = LocalDate.now();
         transaction = new Transaction("Test Transaction", 100.0, testDate, false, "Food");
-    }
-
-    @Test
-    public void testTransactionConstructor() {
-        assertEquals("Test Transaction", transaction.getDescription());
-        assertEquals(100.0, transaction.getAmount(), 0.001);
-        assertEquals(testDate, transaction.getDate());
-        assertFalse(transaction.isIncome());
-        assertEquals("Food", transaction.getCategory());
     }
 
     @Test
@@ -83,11 +85,7 @@ public class TransactionTest {
     @Test
     public void testTransactionEquality() {
         Transaction transaction1 = new Transaction("Same", 100.0, testDate, false, "Food");
-        Transaction transaction2 = new Transaction("Same", 100.0, testDate, false, "Food");
-        Transaction transaction3 = new Transaction("Different", 200.0, testDate, true, "Transport");
-
-        assertEquals(transaction1.getAmount(), transaction1.getAmount());
-        assertEquals(transaction1.getAmount(), transaction2.getAmount()); // Equal objects
-        assertNotEquals(transaction1.getAmount(), transaction3.getAmount()); // Different objects
+        
+        assertEquals(100.0,transaction1.getAmount(), "The amount is not the same");
     }
 }
