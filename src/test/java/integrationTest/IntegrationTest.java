@@ -184,4 +184,56 @@ class IntegrationTest {
         Map<String, Double> expensesByCategory = analyticsController.getExpensesByCategory();
         assertEquals(1500.0, expensesByCategory.get("Shopping"), 0.01, "Shopping expenses should be 1500.0");
     }
+    
+    @Test
+    void testNegativeAmounts() throws SQLException {
+    	
+        // Test negative income
+        assertThrows(IllegalArgumentException.class, ()-> TransactionController.addTransaction(
+                TEST_USER_ID,
+                TEST_DATE.toString(),
+                "Negative Expense",
+                "Shopping",
+                "Expense",
+                -1000.0));
+
+       //Negative
+        assertThrows(IllegalArgumentException.class, ()-> TransactionController.addTransaction(
+                TEST_USER_ID,
+                TEST_DATE.toString(),
+                "Negative Expense",
+                "Shopping",
+                "Expense",
+                -500.0));
+
+        // Add valid transactions to verify negative amounts didn't affect totals
+        assertTrue(TransactionController.addTransaction(
+            TEST_USER_ID,
+            TEST_DATE.toString(),
+            "Valid Income",
+            "Income",
+            "Income",
+            1000.0
+        ), "Valid income should be added successfully");
+
+        assertTrue(TransactionController.addTransaction(
+            TEST_USER_ID,
+            TEST_DATE.toString(),
+            "Valid Expense",
+            "Shopping",
+            "Expense",
+            500.0
+        ), "Valid expense should be added successfully");
+
+        // Verify totals only include valid transactions
+        double totalIncome = analyticsController.getTotalIncome();
+        assertEquals(1000.0, totalIncome, 0.01, "Total income should only include valid positive amounts");
+
+        double totalExpense = analyticsController.getTotalExpense();
+        assertEquals(500.0, totalExpense, 0.01, "Total expense should only include valid positive amounts");
+
+        // Verify transaction count
+        List<Transaction> transactions = analyticsController.getTransactions();
+        assertEquals(2, transactions.size(), "Should only have the valid transactions");
+    }
 } 
