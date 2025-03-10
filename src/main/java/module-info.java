@@ -6,6 +6,7 @@ module FBGApp {
     requires java.desktop;
 	requires org.jfree.jfreechart;
 	requires org.apache.commons.csv;
+    requires org.postgresql.jdbc;
     exports view;
     exports app;
     //requires org.apache.commons.csv;

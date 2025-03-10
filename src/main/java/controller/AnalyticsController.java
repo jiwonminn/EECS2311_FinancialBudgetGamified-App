@@ -150,4 +150,26 @@ public class AnalyticsController {
         }
         return expensesByCategory;
     }
+
+    // Add this new method to handle CSV imports
+    public void addTransaction(LocalDate date, double amount, String description, String type, String category) {
+        String query = "INSERT INTO transactions (user_id, date, amount, description, type, category) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, Date.valueOf(date));
+            pstmt.setDouble(3, amount);
+            pstmt.setString(4, description);
+            pstmt.setString(5, type);
+            pstmt.setString(6, category);
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Failed to add transaction!");
+        }
+    }
 }

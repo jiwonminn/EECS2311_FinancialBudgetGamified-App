@@ -19,6 +19,10 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.time.format.DateTimeFormatter;
 
 public class AnalyticsUI extends JPanel {
     private AnalyticsController controller;
@@ -31,8 +35,12 @@ public class AnalyticsUI extends JPanel {
     private final Color INCORRECT_COLOR = new Color(215, 38, 61);
     private final Color FIELD_BACKGROUND = new Color(50, 35, 80);
     private final Color FIELD_BORDER = new Color(70, 50, 110);
-       
-    
+
+    private ChartPanel barChartPanel;
+    private ChartPanel pieChartPanel;
+    private ChartPanel savingsChartPanel;
+    private ChartPanel expensesCategoryChartPanel;
+
     public AnalyticsUI(int userId) {
         this.userId = userId;
         controller = new AnalyticsController(userId);
@@ -40,7 +48,7 @@ public class AnalyticsUI extends JPanel {
     }
 
     private void initializeUI() {
-    	 // Set up the main panel
+        // Set up the main panel
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
 
@@ -69,37 +77,54 @@ public class AnalyticsUI extends JPanel {
         analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
         add(analyticsPlaceholderPanel, BorderLayout.NORTH);
 
+        // Add import button panel above the charts
+        JPanel importPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        importPanel.setBackground(BACKGROUND_COLOR);
+        importPanel.setBorder(new EmptyBorder(0, 20, 10, 20));
+
+        JButton importButton = new JButton("Import CSV");
+        importButton.setBackground(ACCENT_COLOR);
+        importButton.setForeground(TEXT_COLOR);
+        importButton.setFocusPainted(false);
+        importButton.setOpaque(true);
+        importButton.setBorderPainted(false);
+        importButton.addActionListener(e -> handleCsvImport());
+
+        importPanel.add(importButton);
+        add(importPanel, BorderLayout.NORTH);
+
         // Create a panel for the charts
-        JPanel analyticsChartPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // 2 rows, 2 columns, with gaps
+        JPanel analyticsChartPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         analyticsChartPanel.setBackground(BACKGROUND_COLOR);
         analyticsChartPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Create and add charts to the panel
-        JFreeChart barChart = createBarChart();
-        JFreeChart pieChart = createPieChart();
-        JFreeChart savingsChart = createSavingsChart();
-        JFreeChart expensesByCategoryChart = createExpensesByCategoryChart();
+        // Create and store chart panels
+        barChartPanel = new ChartPanel(createBarChart());
+        pieChartPanel = new ChartPanel(createPieChart());
+        savingsChartPanel = new ChartPanel(createSavingsChart());
+        expensesCategoryChartPanel = new ChartPanel(createExpensesByCategoryChart());
 
-        analyticsChartPanel.add(new ChartPanel(barChart));
-        analyticsChartPanel.add(new ChartPanel(pieChart));
-        analyticsChartPanel.add(new ChartPanel(savingsChart));
-        analyticsChartPanel.add(new ChartPanel(expensesByCategoryChart));
+        // Add charts to the panel
+        analyticsChartPanel.add(barChartPanel);
+        analyticsChartPanel.add(pieChartPanel);
+        analyticsChartPanel.add(savingsChartPanel);
+        analyticsChartPanel.add(expensesCategoryChartPanel);
 
         // Add the chart panel to the main panel
         add(analyticsChartPanel, BorderLayout.CENTER);
-    
+
 //     // total savings add later
 //        JLabel savingsLabel = new JLabel("Current Savings: $" + String.format("%.2f", controller.getCurrentSavings()));
 //        savingsLabel.setFont(new Font("Arial", Font.BOLD, 16));
 //        savingsLabel.setHorizontalAlignment(SwingConstants.CENTER);
 //        add(savingsLabel);
-    
-    
+
+
     }
 
     // Create a BarChart
     private JFreeChart createBarChart() {
-    	// Create dataset
+        // Create dataset
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         // Get income and expense data
@@ -152,7 +177,7 @@ public class AnalyticsUI extends JPanel {
 
     // Create a LineChart for savings over time
     private JFreeChart createSavingsChart() {
-    	// Create dataset
+        // Create dataset
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         // Get savings data
@@ -197,6 +222,83 @@ public class AnalyticsUI extends JPanel {
                 true,
                 false
         );
+    }
+
+    private void handleCsvImport() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
+        fileChooser.setFileFilter(filter);
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            try (BufferedReader br = new BufferedReader(new FileReader(fileChooser.getSelectedFile()))) {
+                String line;
+                boolean firstLine = true;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+                while ((line = br.readLine()) != null) {
+                    if (firstLine) {
+                        firstLine = false;
+                        continue; // Skip header row
+                    }
+
+                    String[] values = line.split(",");
+                    if (values.length >= 5) {
+                        // Remove any quotes and trim whitespace
+                        String dateStr = values[0].trim().replace("\"", "").replace("'", "");
+                        String description = values[1].trim().replace("\"", "").replace("'", "");
+                        String expense = values[2].trim().replace("\"", "").replace("'", "");
+                        String income = values[3].trim().replace("\"", "").replace("'", "");
+
+                        try {
+                            LocalDate date = LocalDate.parse(dateStr, formatter);
+
+                            if (!expense.isEmpty()) {
+                                // Add expense transaction
+                                controller.addTransaction(date, Double.parseDouble(expense),
+                                        description, "expense", "Uncategorized");
+                            } else if (!income.isEmpty()) {
+                                // Add income transaction
+                                controller.addTransaction(date, Double.parseDouble(income),
+                                        description, "income", "Uncategorized");
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Error parsing date: " + dateStr);
+                            continue; // Skip this row and continue with next
+                        }
+                    }
+                }
+
+                // Show success message
+                JOptionPane.showMessageDialog(this,
+                        "CSV file imported successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Refresh the charts
+                refreshCharts();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Error importing CSV file: " + ex.getMessage() +
+                                "\nMake sure your CSV format is: date,description,expense,income,balance" +
+                                "\nDate should be in YYYY-MM-DD format",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void refreshCharts() {
+        // Update each chart with new data
+        barChartPanel.setChart(createBarChart());
+        pieChartPanel.setChart(createPieChart());
+        savingsChartPanel.setChart(createSavingsChart());
+        expensesCategoryChartPanel.setChart(createExpensesByCategoryChart());
+
+        // Refresh the display
+        revalidate();
+        repaint();
     }
 
 }
