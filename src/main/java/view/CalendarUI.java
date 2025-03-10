@@ -136,6 +136,16 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
      * Creates the top navigation panel with tabs.
      */
     private JPanel createNavigationPanel() {
+        return createNavigationPanel("Dashboard"); // Default to Dashboard if not specified
+    }
+    
+    /**
+     * Creates the top navigation panel with tabs and highlights the current tab.
+     * 
+     * @param currentTab The name of the current tab to highlight
+     * @return The navigation panel
+     */
+    private JPanel createNavigationPanel(String currentTab) {
         // Create a panel with FlowLayout centered, with proper spacing
         JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
@@ -145,7 +155,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         String[] tabNames = {"Dashboard", "Goals", "Analytics", "Quiz", "Leaderboard", "Transaction Log"};
         
         for (String tabName : tabNames) {
-            boolean isSelected = tabName.equals("Dashboard"); // Default to Dashboard selected
+            boolean isSelected = tabName.equals(currentTab); // Set selected based on current tab
             JPanel tabPanel = createTabPanel(tabName, isSelected);
             navigationPanel.add(tabPanel);
             
@@ -255,8 +265,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         System.out.println("Switching to tab: " + tabName);
         getContentPane().removeAll();
 
-        // Create navigation panel
-        JPanel navigationPanel = createNavigationPanel();
+        // Create navigation panel with the current tab highlighted
+        JPanel navigationPanel = createNavigationPanel(tabName);
 
         // Create a top container panel that will hold both the balance and navigation
         JPanel topContainer = new JPanel(new BorderLayout());
@@ -312,40 +322,9 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 break;
                 
             case "Analytics":
-               /* // Add header panel below navigation in the top container
-                JPanel analyticsHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(analyticsHeaderPanel, BorderLayout.CENTER);
-                
-                // For now, show a placeholder message
-                JPanel analyticsPlaceholderPanel = new JPanel(new BorderLayout());
-                analyticsPlaceholderPanel.setBackground(BACKGROUND_COLOR);
-                analyticsPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-                
-                JLabel analyticsLabel = new JLabel("Analytics Dashboard");
-                analyticsLabel.setForeground(TEXT_COLOR);
-                analyticsLabel.setFont(new Font("Arial", Font.BOLD, 24));
-                analyticsLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JLabel analyticsDescriptionLabel = new JLabel("View your spending patterns and financial insights.");
-                analyticsDescriptionLabel.setForeground(new Color(180, 180, 180));
-                analyticsDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                analyticsDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JPanel analyticsTextPanel = new JPanel();
-                analyticsTextPanel.setLayout(new BoxLayout(analyticsTextPanel, BoxLayout.Y_AXIS));
-                analyticsTextPanel.setBackground(BACKGROUND_COLOR);
-                analyticsTextPanel.add(analyticsLabel);
-                analyticsTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-                analyticsTextPanel.add(analyticsDescriptionLabel);
-                
-                analyticsPlaceholderPanel.add(analyticsTextPanel, BorderLayout.CENTER);
-                add(analyticsPlaceholderPanel, BorderLayout.CENTER);*/
-                // Create and add the AnalyticsUI panel
+                // Analytics tab
                 AnalyticsUI analyticsUI = new AnalyticsUI(userId);
                 add(analyticsUI, BorderLayout.CENTER);
-               
-              AnalyticsUI analyticsui = new AnalyticsUI(userId);
-              add(analyticsui,BorderLayout.CENTER);
                 break;
                 
             case "Leaderboard":
