@@ -18,12 +18,18 @@ import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.HorizontalAlignment;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.chart.labels.CategoryItemLabelGenerator;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.TextAnchor;
+import org.jfree.ui.TextAnchor;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -206,11 +212,25 @@ public class AnalyticsUI extends JPanel {
         renderer.setSeriesPaint(0, CORRECT_COLOR);  // Income - green
         renderer.setSeriesPaint(1, INCORRECT_COLOR); // Expenses - red
         
+        // Improve bar spacing
+        renderer.setItemMargin(0.3);  // Increase space between bars in a category
+        
         // Add dollar value labels on top of the bars
         renderer.setDefaultItemLabelGenerator(new org.jfree.chart.labels.StandardCategoryItemLabelGenerator(
                 "${2}", new DecimalFormat("0.00")));
         renderer.setDefaultItemLabelsVisible(true);
         renderer.setDefaultItemLabelPaint(TEXT_COLOR);
+        
+        // Adjust the range axis to provide more room for labels
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        rangeAxis.setUpperMargin(0.25);  // Add more space at the top for labels
+        
+        // Improve zero value display
+        rangeAxis.setNumberFormatOverride(new DecimalFormat("$#,##0.00"));
+        
+        // Adjust category axis
+        CategoryAxis domainAxis = plot.getDomainAxis();
+        domainAxis.setCategoryMargin(0.4);  // More space between categories
         
         return chart;
     }
