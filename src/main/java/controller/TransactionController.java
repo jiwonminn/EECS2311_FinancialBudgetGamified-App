@@ -1,16 +1,11 @@
 package controller;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import database.DatabaseManager;
+import model.Transaction;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
-import database.DatabaseManager;
-import model.Transaction;
 
 public class TransactionController {
     private Connection connection;
@@ -202,38 +197,5 @@ public class TransactionController {
         }
         
         return transactions;
-    }
-
-    /**
-     * Calculate the account balance (sum of income minus sum of expenses)
-     * @return the account balance
-     */
-    public double getAccountBalance() {
-        double totalIncome = 0.0;
-        double totalExpense = 0.0;
-        
-        String query = "SELECT type, SUM(amount) as total FROM transactions WHERE user_id = ? GROUP BY type";
-        
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, userId);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    String type = rs.getString("type");
-                    double amount = rs.getDouble("total");
-                    
-                    if (type != null && type.equalsIgnoreCase("income")) {
-                        totalIncome += amount;
-                    } else {
-                        totalExpense += amount;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Failed to calculate account balance!");
-        }
-        
-        return totalIncome - totalExpense;
     }
 }
