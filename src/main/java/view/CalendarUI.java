@@ -1,12 +1,9 @@
 package view;
 
-import controller.TransactionController;
-import controller.UserController;
-import controller.QuizController;
-import controller.GoalController;
-import controller.CategoryManager;
+import controller.*;
 import controller.CategoryManager.CategoryChangeListener;
 import model.*;
+import utils.EmailNotifier;
 import view.GoalsUI;
 import view.CustomCalendarPicker;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -56,39 +53,43 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
     private int userId;
     private String userName;
     private String userEmail;
+    private double userBalance; // New field to store the user's balance
+    private JLabel balanceLabel;
+
 
     public CalendarUI(int userId, String userName, String userEmail) throws SQLException {
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
-        
-        // Initialize the UserController with user details
-        UserController userController = new UserController(userName, userEmail, 1000);
 
+        // Get the user balance from the database
+        this.userBalance = BudgetController.getCurrentBalance(userId);
+
+        // Initialize the UserController with user details
+        UserController userController = new UserController(userName, userEmail, userBalance);
         transactionController = new TransactionController();
         transactionController.setUserId(userId);
-        
+
         // Initialize GoalController
         goalController = new GoalController();
-        
+
         // Initialize CategoryManager and register as listener
         categoryManager = CategoryManager.getInstance();
         categoryManager.addListener(this);
-        
+
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         // Use a BorderLayout for the main frame
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
-        
+
         // Initialize the UI with the Dashboard tab
         switchTab("Dashboard");
-        
+
         // Center the window on screen
         setLocationRelativeTo(null);
-        
         setVisible(true);
     }
     
@@ -115,6 +116,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        createBalancePanel();
         
         // Use a BorderLayout for the main frame
         setLayout(new BorderLayout());
@@ -250,23 +253,23 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
      */
     private void switchTab(String tabName) {
         System.out.println("Switching to tab: " + tabName);
-        
-        // Reset the content pane
         getContentPane().removeAll();
-        
+
         // Create navigation panel
         JPanel navigationPanel = createNavigationPanel();
-        
-        // Create a container panel for the top section that will hold both navigation and header
+
+        // Create a top container panel that will hold both the balance and navigation
         JPanel topContainer = new JPanel(new BorderLayout());
         topContainer.setBackground(BACKGROUND_COLOR);
-        
-        // Add navigation panel to the top of the container
-        topContainer.add(navigationPanel, BorderLayout.NORTH);
-        
-        // Always add the top container to the NORTH position
+
+        // Add the balance panel at the top
+        topContainer.add(createBalancePanel(), BorderLayout.NORTH);
+
+        // Add the navigation panel below the balance panel
+        topContainer.add(navigationPanel, BorderLayout.SOUTH);
+
         add(topContainer, BorderLayout.NORTH);
-        
+
         // Handle tab-specific content
         switch (tabName) {
             case "Dashboard":
@@ -435,7 +438,36 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         
         return headerPanel;
     }
-    
+
+    /**
+     * Creates a balance panel to display the user's current balance.
+     */
+    private JPanel createBalancePanel() {
+        JPanel balancePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        balancePanel.setBackground(BACKGROUND_COLOR);
+        // Instead of creating a local label, assign it to the class field
+        balanceLabel = new JLabel("Balance: $" + String.format("%.2f", userBalance));
+        if (userBalance >= 0) {
+            balanceLabel.setForeground(INCOME_COLOR);
+        } else {
+            balanceLabel.setForeground(EXPENSE_COLOR);
+        }
+        balanceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        balancePanel.add(balanceLabel);
+        return balancePanel;
+    }
+
+    public void updateBalanceDisplay() {
+        // Fetch updated balance from database via BudgetController
+        userBalance = BudgetController.getCurrentBalance(userId);
+        balanceLabel.setText("Balance: $" + String.format("%.2f", userBalance));
+        if (userBalance >= 0) {
+            balanceLabel.setForeground(INCOME_COLOR);
+        } else {
+            balanceLabel.setForeground(EXPENSE_COLOR);
+        }
+    }
+
     /**
      * Style a button to match the app's theme
      */
@@ -717,6 +749,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         
         // Initially populate with transactions
         updateTransactionDisplay();
+        updateBalanceDisplay();
         
         return historyPanel;
     }
@@ -760,6 +793,9 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
             
             // Add transaction
             transactionController.addTransaction(description, amount, date, isIncome, category);
+
+            // update user balance
+            updateBalanceDisplay();
             
             // Update goals related to this category
             updateRelatedGoals(category);
@@ -773,6 +809,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
             
             // Refresh transaction display
             updateTransactionDisplay();
+            updateBalanceDisplay();
             
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error logging transaction: " + e.getMessage());
@@ -804,7 +841,9 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
     private void updateTransactionDisplay() {
         if (transactionDisplayPanel != null) {
             transactionDisplayPanel.removeAll();
-            
+
+
+
             // Get transactions from controller
             List<Transaction> transactions = transactionController.getAllTransactions(userId);
             
@@ -825,7 +864,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                     transactionDisplayPanel.add(Box.createRigidArea(new Dimension(0, 10)));
                 }
             }
-            
+            // update user balance
+            updateBalanceDisplay();
             // Make sure scrolling works properly
             transactionDisplayPanel.revalidate();
             transactionDisplayPanel.repaint();
@@ -933,6 +973,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 if (success) {
                     // Update the UI to remove the deleted transaction
                     updateTransactionDisplay();
+                    updateBalanceDisplay();
                 } else {
                     JOptionPane.showMessageDialog(cardPanel, "Failed to delete transaction", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1495,6 +1536,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
 
                 // Refresh transaction display
                 updateTransactionDisplay();
+                updateBalanceDisplay();
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
