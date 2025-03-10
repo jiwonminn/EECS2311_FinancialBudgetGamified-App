@@ -45,6 +45,7 @@ public class TransactionController {
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Failed to add transaction: " + e.getMessage());
             return false;
         }
     }
@@ -73,7 +74,7 @@ public class TransactionController {
             System.out.println("Transaction added successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Failed to add transaction!");
+            System.out.println("Failed to add transaction: " + e.getMessage());
         }
     }
 
