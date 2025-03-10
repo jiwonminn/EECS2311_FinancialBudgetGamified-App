@@ -47,6 +47,7 @@ public class CalendarUI extends JFrame {
     private int userId;
     private String userName;
     private String userEmail;
+    private String currentTab = "Dashboard"; // Track current tab
 
     public CalendarUI(int userId, String userName, String userEmail) throws SQLException {
         this.userId = userId;
@@ -232,19 +233,18 @@ public class CalendarUI extends JFrame {
      * Switches to the selected tab.
      */
     private void switchTab(String tabName) {
-        System.out.println("Switching to tab: " + tabName);
+        // Set current tab
+        this.currentTab = tabName;
         
-        // Reset the content pane
+        // Remove any existing content
         getContentPane().removeAll();
         
-        // Create navigation panel
-        JPanel navigationPanel = createNavigationPanel();
-        
-        // Create a container panel for the top section that will hold both navigation and header
+        // Create a container for the top section
         JPanel topContainer = new JPanel(new BorderLayout());
-        topContainer.setBackground(BACKGROUND_COLOR);
+        topContainer.setBackground(new Color(18, 12, 31)); // Darker background for top
         
-        // Add navigation panel to the top of the container
+        // Create and add navigation panel
+        JPanel navigationPanel = createNavigationPanel();
         topContainer.add(navigationPanel, BorderLayout.NORTH);
         
         // Always add the top container to the NORTH position
@@ -255,6 +255,7 @@ public class CalendarUI extends JFrame {
             case "Dashboard":
                 // Add header panel below navigation in the top container
                 JPanel headerPanel = createHeaderPanel(userName);
+                headerPanel.setName("headerPanel"); // Set name for lookup
                 topContainer.add(headerPanel, BorderLayout.CENTER);
                 
                 // Create main content panel with two sections
@@ -375,7 +376,7 @@ public class CalendarUI extends JFrame {
     }
     
     private JPanel createHeaderPanel(String userName) {
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        JPanel headerPanel = new JPanel(new BorderLayout(0, 10));
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
         
@@ -396,6 +397,35 @@ public class CalendarUI extends JFrame {
         
         headerPanel.add(topSection, BorderLayout.NORTH);
         
+        // Account balance panel
+        JPanel balancePanel = new JPanel(new BorderLayout(10, 5));
+        balancePanel.setName("balancePanel"); // Set name for lookup
+        balancePanel.setBackground(PANEL_COLOR);
+        balancePanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(60, 44, 89), 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        
+        JLabel balanceLabel = new JLabel("Account Balance");
+        balanceLabel.setForeground(TEXT_COLOR);
+        balanceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        balancePanel.add(balanceLabel, BorderLayout.WEST);
+        
+        // Calculate and display account balance
+        double balance = 0.0;
+        try {
+            balance = transactionController.getAccountBalance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        JLabel balanceValueLabel = new JLabel(String.format("$%.2f", balance));
+        balanceValueLabel.setForeground(balance >= 0 ? INCOME_COLOR : EXPENSE_COLOR);
+        balanceValueLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        balancePanel.add(balanceValueLabel, BorderLayout.EAST);
+        
+        headerPanel.add(balancePanel, BorderLayout.CENTER);
+        
         // Progress bar panel
         JPanel progressPanel = new JPanel(new BorderLayout(10, 5));
         progressPanel.setBackground(BACKGROUND_COLOR);
@@ -414,7 +444,7 @@ public class CalendarUI extends JFrame {
         progressBar.setBackground(PANEL_COLOR);
         progressPanel.add(progressBar, BorderLayout.SOUTH);
         
-        headerPanel.add(progressPanel, BorderLayout.CENTER);
+        headerPanel.add(progressPanel, BorderLayout.SOUTH);
         
         return headerPanel;
     }
@@ -704,70 +734,65 @@ public class CalendarUI extends JFrame {
         return historyPanel;
     }
 
+    /**
+     * Log a transaction with the entered details
+     */
     private void logTransaction() {
-        try {
-            // Validate inputs
-            String description = descriptionField.getText().trim();
-            if (description.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a description for the transaction.");
-                return;
-            }
-            
-            String amountText = amountField.getText().trim();
-            if (amountText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter an amount for the transaction.");
-                return;
-            }
-            
-            double amount;
-            try {
-                amount = Double.parseDouble(amountText);
-                if (amount <= 0) {
-                    JOptionPane.showMessageDialog(this, "Please enter a positive amount.");
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid number for the amount.");
-                return;
-            }
-            
-            // Get date from CustomCalendarPicker
-            Date selectedDate = datePicker.getDate();
-            
-            // Convert to LocalDate
-            LocalDate date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            
-            // Get transaction type
-            boolean isIncome = incomeButton.isSelected();
-            
-            // Get category safely
-            String category = "Other"; // Default category
-            if (categoryComboBox != null && categoryComboBox.getSelectedItem() != null) {
-                category = categoryComboBox.getSelectedItem().toString();
-            }
-            
-            // Add transaction
-            transactionController.addTransaction(description, amount, date, isIncome, category);
-            
-            // Clear form
-            descriptionField.setText("");
-            amountField.setText("");
-            datePicker.setDate(new Date()); // Reset to today
-            expenseButton.setSelected(true); // Reset to expense
-            if (categoryComboBox != null) {
-                categoryComboBox.setSelectedIndex(0); // Reset to first category
-            }
-            
-            // Update transaction display
-            updateTransactionDisplay();
-            
-            // Show success message
-            JOptionPane.showMessageDialog(this, "Transaction logged successfully!");
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error logging transaction: " + e.getMessage());
+        // Validate inputs
+        if (descriptionField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a description.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        double amount;
+        try {
+            amount = Double.parseDouble(amountField.getText().trim());
+            if (amount <= 0) {
+                JOptionPane.showMessageDialog(this, "Amount must be greater than zero.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid amount.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Get selected date
+        Date selectedDate = datePicker.getDate();
+        LocalDate localDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        
+        // Get transaction type (income/expense)
+        boolean isIncome = incomeButton.isSelected();
+        
+        // Get category
+        String category = "Other";
+        if (categoryComboBox != null && categoryComboBox.getSelectedItem() != null) {
+            category = categoryComboBox.getSelectedItem().toString();
+        }
+        
+        // Add the transaction
+        transactionController.addTransaction(
+            descriptionField.getText().trim(),
+            amount,
+            localDate,
+            isIncome,
+            category
+        );
+        
+        // Reset the form
+        descriptionField.setText("");
+        amountField.setText("");
+        expenseButton.setSelected(true); // Reset to expense
+        
+        // Reset category
+        if (categoryComboBox != null) {
+            categoryComboBox.setSelectedIndex(0);
+        }
+        
+        // Update the transaction display
+        updateTransactionDisplay();
+        
+        // Refresh the account balance
+        refreshAccountBalance();
     }
 
     private void updateTransactionDisplay() {
@@ -1372,6 +1397,50 @@ public class CalendarUI extends JFrame {
                 customizeCalendarComponents((JComponent) child);
             }
         }
+    }
+
+    /**
+     * Refreshes the account balance display in the header panel
+     */
+    private void refreshAccountBalance() {
+        // Only refresh if we're on the Dashboard tab
+        if (!getCurrentTab().equals("Dashboard")) {
+            return;
+        }
+        
+        // Find the balance value label in the header panel
+        for (Component comp : getContentPane().getComponents()) {
+            if (comp instanceof JPanel && comp.getName() != null && comp.getName().equals("headerPanel")) {
+                JPanel headerPanel = (JPanel) comp;
+                for (Component headerComp : headerPanel.getComponents()) {
+                    if (headerComp instanceof JPanel && headerComp.getName() != null && headerComp.getName().equals("balancePanel")) {
+                        JPanel balancePanel = (JPanel) headerComp;
+                        for (Component balanceComp : balancePanel.getComponents()) {
+                            if (balanceComp instanceof JLabel && ((JLabel) balanceComp).getText().startsWith("$")) {
+                                double balance = 0.0;
+                                try {
+                                    balance = transactionController.getAccountBalance();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                
+                                JLabel balanceLabel = (JLabel) balanceComp;
+                                balanceLabel.setText(String.format("$%.2f", balance));
+                                balanceLabel.setForeground(balance >= 0 ? INCOME_COLOR : EXPENSE_COLOR);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Gets the name of the currently active tab
+     */
+    private String getCurrentTab() {
+        return currentTab;
     }
 
     /**

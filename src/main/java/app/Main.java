@@ -2,13 +2,13 @@ package app;
 
 import java.awt.Color;
 import java.sql.SQLException;
+
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import database.DatabaseInitializer;
 import view.LoginScreen;
-import controller.GoalController;
 //import database.DatabaseUpdater;
 
 /**
