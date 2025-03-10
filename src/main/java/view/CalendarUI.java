@@ -364,7 +364,7 @@ public class CalendarUI extends JFrame {
                 topContainer.add(logHeaderPanel, BorderLayout.CENTER);
                 
                 // Create and add the LogUI panel
-                LogUI logUI = LogUI.getInstance();
+                LogUI logUI =  new LogUI(userId);
                 add(logUI, BorderLayout.CENTER);
                 break;
         }
