@@ -20,9 +20,6 @@ public class Transaction {
     	if(description == null) {
     		throw new NullPointerException("Description can not be null");
     	}
-    	if(description.length() <= 0) {
-    		throw new IllegalArgumentException("Description can not be empty");
-    	}
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -31,14 +28,8 @@ public class Transaction {
     }
 
     public Transaction(String description, double amount, LocalDate date, boolean isIncome, String category) {
-    	if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative");
-    	}
     	if(description == null) {
     		throw new NullPointerException("Description can not be null");
-    	}
-    	if(description.length() <= 0) {
-    		throw new IllegalArgumentException("Description can not be empty");
     	}
     	if(category == null) {
     		throw new NullPointerException("Category can not be null");
@@ -54,19 +45,15 @@ public class Transaction {
     // It accepts an id, a userId, a Timestamp for the date, a description,
     // a category, a type as a String ("income" or "expense"), and the amount.
     public Transaction(int id, int userId, Timestamp timestamp, String description, String category, String type, double amount) {
-    	if(amount < 0.00) {
-    		throw new IllegalArgumentException("Amount can not be negative");
-    	}
     	if(description == null) {
     		throw new NullPointerException("Description can not be null");
-    	}
-    	if(description.length() <= 0) {
-    		throw new IllegalArgumentException("Description can not be empty");
     	}
     	if(category == null) {
     		throw new NullPointerException("Category can not be null");
     	}
-    	
+    	if(type == null) {
+    		throw new NullPointerException("type can not be null");
+    	}
         this.id = id;
         this.userId = userId;
         this.description = description;
