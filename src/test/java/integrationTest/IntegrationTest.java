@@ -19,7 +19,7 @@ import database.DatabaseManager;
 class IntegrationTest {
     private TransactionController transactionController;
     private AnalyticsController analyticsController;
-    private static final int TEST_USER_ID = 999; // Use a specific test user ID
+    private static final int TEST_USER_ID = 1;
     private static final LocalDate TEST_DATE = LocalDate.now();
     
     @BeforeEach
@@ -29,56 +29,14 @@ class IntegrationTest {
         transactionController.setUserId(TEST_USER_ID);
         analyticsController = new AnalyticsController(TEST_USER_ID);
         
-        // Print table structure for debugging
-        printTableStructure();
-        
         // Clean up any existing test data
         cleanupTestData();
-        
-        // Create test user
-        createTestUser();
     }
     
     @AfterEach
     void tearDown() throws SQLException {
         // Clean up test data after each test
         cleanupTestData();
-        // Remove test user
-        removeTestUser();
-    }
-    
-    private void createTestUser() throws SQLException {
-        // First, check if the user exists
-        try (var conn = DatabaseManager.getConnection();
-             var checkStmt = conn.prepareStatement("SELECT id FROM users WHERE id = ?")) {
-            checkStmt.setInt(1, TEST_USER_ID);
-            try (var rs = checkStmt.executeQuery()) {
-                if (!rs.next()) {
-                    // User doesn't exist, create with required information
-                    try (var insertStmt = conn.prepareStatement(
-                        "INSERT INTO users (id, username, email, balance) VALUES (?, ?, ?, ?)"
-                    )) {
-                        insertStmt.setInt(1, TEST_USER_ID);
-                        insertStmt.setString(2, "testuser");
-                        insertStmt.setString(3, "test@example.com");
-                        insertStmt.setDouble(4, 0.0);
-                        insertStmt.executeUpdate();
-                    }
-                }
-            }
-        }
-    }
-    
-    private void removeTestUser() throws SQLException {
-        // First remove all transactions
-        cleanupTestData();
-        
-        // Then remove the user
-        try (var conn = DatabaseManager.getConnection();
-             var stmt = conn.prepareStatement("DELETE FROM users WHERE id = ?")) {
-            stmt.setInt(1, TEST_USER_ID);
-            stmt.executeUpdate();
-        }
     }
     
     private void cleanupTestData() throws SQLException {
@@ -87,20 +45,6 @@ class IntegrationTest {
              var stmt = conn.prepareStatement("DELETE FROM transactions WHERE user_id = ?")) {
             stmt.setInt(1, TEST_USER_ID);
             stmt.executeUpdate();
-        }
-    }
-    
-    private void printTableStructure() throws SQLException {
-        try (var conn = DatabaseManager.getConnection();
-             var stmt = conn.prepareStatement(
-                 "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users'"
-             );
-             var rs = stmt.executeQuery()) {
-            
-            System.out.println("Users table structure:");
-            while (rs.next()) {
-                System.out.println(rs.getString("column_name") + ": " + rs.getString("data_type"));
-            }
         }
     }
     
