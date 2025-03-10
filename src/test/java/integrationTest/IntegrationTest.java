@@ -20,10 +20,10 @@ public class IntegrationTest {
     public void setUp() throws SQLException {
         // Get database connection
         connection = DatabaseManager.getConnection();
-        
+
         // Create test table
         createTestTable();
-        
+
         // Clear any existing data
         clearTestData();
     }
@@ -107,15 +107,15 @@ public class IntegrationTest {
         List<Transaction> dateRangeTransactions = getTransactionsByDateRange(yesterday, today);
         assertEquals("Should have 2 transactions in date range", 2, dateRangeTransactions.size());
     }
-    
-    
+
+
     @Test
     public void anothertest() {
-    	
+
     }
-    
-    
-    
+
+
+
 
     // Helper methods to perform database operations
     private int createTestTransaction(Transaction transaction) throws SQLException {
@@ -123,7 +123,7 @@ public class IntegrationTest {
             INSERT INTO transactions (description, amount, date, is_income, category)
             VALUES (?, ?, ?, ?, ?)
         """;
-        
+
         try (var pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, transaction.getDescription());
             pstmt.setDouble(2, transaction.getAmount());
@@ -148,10 +148,10 @@ public class IntegrationTest {
 
     private Transaction getTestTransaction(int id) throws SQLException {
         String sql = "SELECT * FROM transactions WHERE id = ?";
-        
+
         try (var pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
-            
+
             try (var rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return new Transaction(
@@ -170,11 +170,11 @@ public class IntegrationTest {
 
     private boolean updateTestTransaction(int id, Transaction transaction) throws SQLException {
         String sql = """
-            UPDATE transactions 
+            UPDATE transactions
             SET description = ?, amount = ?, date = ?, is_income = ?, category = ?
             WHERE id = ?
         """;
-        
+
         try (var pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, transaction.getDescription());
             pstmt.setDouble(2, transaction.getAmount());
@@ -190,7 +190,7 @@ public class IntegrationTest {
 
     private boolean deleteTestTransaction(int id) throws SQLException {
         String sql = "DELETE FROM transactions WHERE id = ?";
-        
+
         try (var pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             int affectedRows = pstmt.executeUpdate();
@@ -201,10 +201,10 @@ public class IntegrationTest {
     private List<Transaction> getAllTestTransactions() throws SQLException {
         String sql = "SELECT * FROM transactions ORDER BY date DESC";
         List<Transaction> transactions = new ArrayList<>();
-        
+
         try (var stmt = connection.createStatement();
              var rs = stmt.executeQuery(sql)) {
-            
+
             while (rs.next()) {
                 transactions.add(new Transaction(
                     rs.getString("description"),
@@ -221,10 +221,10 @@ public class IntegrationTest {
     private List<Transaction> getTransactionsByCategory(String category) throws SQLException {
         String sql = "SELECT * FROM transactions WHERE category = ? ORDER BY date DESC";
         List<Transaction> transactions = new ArrayList<>();
-        
+
         try (var pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, category);
-            
+
             try (var rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     transactions.add(new Transaction(
@@ -243,11 +243,11 @@ public class IntegrationTest {
     private List<Transaction> getTransactionsByDateRange(LocalDate startDate, LocalDate endDate) throws SQLException {
         String sql = "SELECT * FROM transactions WHERE date BETWEEN ? AND ? ORDER BY date DESC";
         List<Transaction> transactions = new ArrayList<>();
-        
+
         try (var pstmt = connection.prepareStatement(sql)) {
             pstmt.setDate(1, java.sql.Date.valueOf(startDate));
             pstmt.setDate(2, java.sql.Date.valueOf(endDate));
-            
+
             try (var rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     transactions.add(new Transaction(
@@ -262,6 +262,6 @@ public class IntegrationTest {
         }
         return transactions;
     }
-    
-    
-} 
+
+
+}

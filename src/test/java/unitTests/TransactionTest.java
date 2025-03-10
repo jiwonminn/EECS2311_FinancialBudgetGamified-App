@@ -90,4 +90,4 @@ public class TransactionTest {
         assertEquals(transaction1.getAmount(), transaction2.getAmount()); // Equal objects
         assertNotEquals(transaction1.getAmount(), transaction3.getAmount()); // Different objects
     }
-} 
+}
