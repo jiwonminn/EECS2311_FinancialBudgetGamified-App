@@ -69,6 +69,7 @@ public class QuestsUI extends JPanel {
     private int userId;
     private String userName;
     private String userEmail;
+    private javax.swing.Timer autoCheckTimer;
     
     /**
      * Constructor
@@ -94,6 +95,20 @@ public class QuestsUI extends JPanel {
         
         initializeUI();
         loadQuests();
+        
+        // Set up timer to periodically check for completed quests (every 10 seconds)
+        autoCheckTimer = new javax.swing.Timer(10000, e -> {
+            try {
+                // Check for quest completions
+                questController.checkAndCompleteQuests(userId);
+                // Reload quests to reflect any automatic completions
+                loadQuests();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                // Silent failure - don't show error to user for background updates
+            }
+        });
+        autoCheckTimer.start();
     }
     
     /**
@@ -119,7 +134,7 @@ public class QuestsUI extends JPanel {
         titleLabel.setForeground(TEXT_COLOR);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         
-        JLabel subtitleLabel = new JLabel("Complete quests to earn rewards and experience");
+        JLabel subtitleLabel = new JLabel("Quests are completed automatically as you use the app");
         subtitleLabel.setForeground(new Color(180, 180, 180));
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         
@@ -310,9 +325,10 @@ public class QuestsUI extends JPanel {
     private JPanel createQuestCard(Quest quest, Color accentColor) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(PANEL_COLOR);
+        // Add subtle gradient effect with rounded corners
         panel.setBorder(new CompoundBorder(
             BorderFactory.createLineBorder(new Color(50, 30, 80), 1),
-            new EmptyBorder(15, 15, 15, 15)
+            new EmptyBorder(18, 20, 18, 20)
         ));
         panel.setMaximumSize(new Dimension(2000, 120));
         panel.setPreferredSize(new Dimension(800, 120));
@@ -328,7 +344,7 @@ public class QuestsUI extends JPanel {
         
         JLabel titleLabel = new JLabel(quest.getTitle());
         titleLabel.setForeground(TEXT_COLOR);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         JLabel descriptionLabel = new JLabel(quest.getDescription());
@@ -336,15 +352,43 @@ public class QuestsUI extends JPanel {
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Progress bar
-        JProgressBar progressBar = new JProgressBar();
+        // Progress bar - improved styling
+        JProgressBar progressBar = new JProgressBar() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                if (g instanceof Graphics2D) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    int width = getWidth();
+                    int height = getHeight();
+                    
+                    // Draw background with rounded corners
+                    g2d.setColor(new Color(30, 18, 50));
+                    g2d.fillRoundRect(0, 0, width, height, height, height);
+                    
+                    // Calculate filled width
+                    int fillWidth = (int) (width * ((double) getValue() / getMaximum()));
+                    
+                    // Draw filled portion with rounded corners
+                    g2d.setColor(accentColor);
+                    if (fillWidth > 0) {
+                        g2d.fillRoundRect(0, 0, fillWidth, height, height, height);
+                    }
+                }
+            }
+        };
+        
         progressBar.setMinimum(0);
         progressBar.setMaximum(100);
         progressBar.setValue(quest.isCompleted() ? 100 : (int)(Math.random() * 80 + 10)); // Random progress for demo
-        progressBar.setForeground(accentColor);
+        progressBar.setStringPainted(false);
+        progressBar.setOpaque(false);
+        progressBar.setBorderPainted(false);
         progressBar.setBackground(new Color(30, 18, 50));
-        progressBar.setPreferredSize(new Dimension(300, 8));
-        progressBar.setMaximumSize(new Dimension(500, 8));
+        progressBar.setForeground(accentColor);
+        progressBar.setPreferredSize(new Dimension(300, 10)); // Slightly taller
+        progressBar.setMaximumSize(new Dimension(500, 10));
         progressBar.setBorder(null);
         progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -355,9 +399,9 @@ public class QuestsUI extends JPanel {
         progressLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         questInfoPanel.add(titleLabel);
-        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 6)));
         questInfoPanel.add(descriptionLabel);
-        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 12)));
         questInfoPanel.add(progressBar);
         questInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         questInfoPanel.add(progressLabel);
@@ -372,25 +416,31 @@ public class QuestsUI extends JPanel {
         buttonsPanel.setBackground(PANEL_COLOR);
         
         JButton infoButton = createRoundButton("?", new Color(50, 50, 70));
-        infoButton.setPreferredSize(new Dimension(30, 30));
+        infoButton.setPreferredSize(new Dimension(35, 35)); // Slightly larger
         
-        // Complete button
-        JButton completeButton = new JButton(quest.isCompleted() ? "Complete" : "Complete");
-        completeButton.setBackground(quest.isCompleted() ? new Color(30, 30, 50) : new Color(40, 40, 60));
-        completeButton.setForeground(quest.isCompleted() ? new Color(100, 100, 130) : TEXT_COLOR);
-        completeButton.setFont(new Font("Arial", Font.BOLD, 12));
-        completeButton.setBorder(new EmptyBorder(8, 15, 8, 15));
-        completeButton.setFocusPainted(false);
-        completeButton.setEnabled(!quest.isCompleted());
+        // Remove complete button and use only info button
+        buttonsPanel.add(infoButton, BorderLayout.CENTER);
         
-        buttonsPanel.add(infoButton, BorderLayout.WEST);
-        buttonsPanel.add(completeButton, BorderLayout.CENTER);
+        // XP Reward with enhanced styling
+        JLabel xpRewardLabel = new JLabel("+" + quest.getXpReward() + " XP") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (g instanceof Graphics2D) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    // Add a subtle glow behind the XP text
+                    g2d.setColor(new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), 40));
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                }
+            }
+        };
         
-        // XP Reward
-        JLabel xpRewardLabel = new JLabel("+" + quest.getXpReward() + " XP");
         xpRewardLabel.setForeground(ACCENT_COLOR);
-        xpRewardLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        xpRewardLabel.setFont(new Font("Arial", Font.BOLD, 16));
         xpRewardLabel.setHorizontalAlignment(JLabel.RIGHT);
+        xpRewardLabel.setBorder(new EmptyBorder(5, 10, 5, 10));
         
         actionPanel.add(buttonsPanel, BorderLayout.CENTER);
         actionPanel.add(xpRewardLabel, BorderLayout.SOUTH);
@@ -400,45 +450,49 @@ public class QuestsUI extends JPanel {
         panel.add(questInfoPanel, BorderLayout.CENTER);
         panel.add(actionPanel, BorderLayout.EAST);
         
-        // Add margin between cards
-        JPanel containerPanel = new JPanel(new BorderLayout());
-        containerPanel.setBackground(BACKGROUND_COLOR);
-        containerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
-        containerPanel.setMaximumSize(new Dimension(2000, 135));
+        // Add margin between cards and slight shadow effect
+        JPanel containerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Paint subtle shadow
+                g2d.setColor(new Color(0, 0, 0, 20));
+                g2d.fillRoundRect(5, 5, getWidth() - 10, getHeight() - 20, 10, 10);
+            }
+        };
+        
+        containerPanel.setOpaque(false);
+        containerPanel.setBackground(new Color(0, 0, 0, 0)); // Transparent background
+        containerPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); // Increased spacing between cards
+        containerPanel.setMaximumSize(new Dimension(2000, 145));
         containerPanel.add(panel, BorderLayout.CENTER);
         
-        // Add action listener to complete button
-        completeButton.addActionListener(e -> {
-            try {
-                boolean success = questController.completeQuest(quest.getId(), userId);
-                if (success) {
-                    completeButton.setText("Complete");
-                    completeButton.setEnabled(false);
-                    completeButton.setBackground(new Color(30, 30, 50));
-                    completeButton.setForeground(new Color(100, 100, 130));
-                    progressBar.setValue(100);
-                    progressLabel.setText("100% Complete");
-                    quest.setCompleted(true);
-                    
-                    // Update all level panels
-                    updateLevelPanels();
-                    
-                    JOptionPane.showMessageDialog(
-                        this,
-                        "Quest completed! You earned " + quest.getXpReward() + " XP!",
-                        "Quest Completed",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Error completing quest: " + ex.getMessage(),
-                    "Database Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
+        // Add action listener to info button to show quest details
+        infoButton.addActionListener(e -> {
+            String questDetails = "Quest: " + quest.getTitle() + "\n\n" +
+                                 "Description: " + quest.getDescription() + "\n\n" +
+                                 "Type: " + quest.getQuestType() + "\n" +
+                                 "XP Reward: " + quest.getXpReward() + "\n";
+            
+            if (quest.getDeadline() != null) {
+                questDetails += "Deadline: " + quest.getDeadline() + "\n";
             }
+            
+            if (quest.isCompleted()) {
+                questDetails += "\nStatus: Completed";
+            } else {
+                questDetails += "\nStatus: In Progress";
+            }
+            
+            JOptionPane.showMessageDialog(
+                this,
+                questDetails,
+                "Quest Details",
+                JOptionPane.INFORMATION_MESSAGE
+            );
         });
         
         return containerPanel;

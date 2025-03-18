@@ -128,13 +128,39 @@ public class LevelProgressPanel extends JPanel {
         progressTitleLabel.setForeground(TEXT_COLOR);
         progressTitleLabel.setFont(new Font("Arial", Font.BOLD, 14));
         
-        xpProgressBar = new JProgressBar(0, 100);
+        // Custom XP progress bar with rounded corners
+        xpProgressBar = new JProgressBar(0, 100) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                if (g instanceof Graphics2D) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    int width = getWidth();
+                    int height = getHeight();
+                    
+                    // Draw background with rounded corners
+                    g2d.setColor(XP_BAR_TRACK_COLOR);
+                    g2d.fillRoundRect(0, 0, width, height, height, height);
+                    
+                    // Calculate filled width
+                    int fillWidth = (int) (width * ((double) getValue() / getMaximum()));
+                    
+                    // Draw filled portion with rounded corners
+                    g2d.setColor(XP_BAR_COLOR);
+                    if (fillWidth > 0) {
+                        g2d.fillRoundRect(0, 0, fillWidth, height, height, height);
+                    }
+                }
+            }
+        };
+        
         xpProgressBar.setValue(0);
         xpProgressBar.setStringPainted(false);
-        xpProgressBar.setForeground(XP_BAR_COLOR);
-        xpProgressBar.setBackground(XP_BAR_TRACK_COLOR);
+        xpProgressBar.setOpaque(false);
+        xpProgressBar.setBorderPainted(false);
         xpProgressBar.setBorder(null);
-        xpProgressBar.setPreferredSize(new Dimension(100, 8));
+        xpProgressBar.setPreferredSize(new Dimension(100, 10));
         
         xpProgressLabel = new JLabel("0 / 100 XP to level 2");
         xpProgressLabel.setForeground(new Color(180, 180, 180));
@@ -171,21 +197,53 @@ public class LevelProgressPanel extends JPanel {
         progressPanel.setBackground(BACKGROUND_COLOR);
         progressPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
         
-        xpProgressBar = new JProgressBar(0, 100);
+        // Custom XP progress bar with rounded corners
+        xpProgressBar = new JProgressBar(0, 100) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                if (g instanceof Graphics2D) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    int width = getWidth();
+                    int height = getHeight();
+                    
+                    // Draw background with rounded corners
+                    g2d.setColor(XP_BAR_TRACK_COLOR);
+                    g2d.fillRoundRect(0, 0, width, height, height, height);
+                    
+                    // Calculate filled width
+                    int fillWidth = (int) (width * ((double) getValue() / getMaximum()));
+                    
+                    // Draw filled portion with rounded corners
+                    g2d.setColor(XP_BAR_COLOR);
+                    if (fillWidth > 0) {
+                        g2d.fillRoundRect(0, 0, fillWidth, height, height, height);
+                    }
+                }
+            }
+        };
+        
         xpProgressBar.setValue(0);
         xpProgressBar.setStringPainted(false);
-        xpProgressBar.setForeground(XP_BAR_COLOR);
-        xpProgressBar.setBackground(XP_BAR_TRACK_COLOR);
+        xpProgressBar.setOpaque(false);
+        xpProgressBar.setBorderPainted(false);
         xpProgressBar.setBorder(null);
-        xpProgressBar.setPreferredSize(new Dimension(100, 5));
+        xpProgressBar.setPreferredSize(new Dimension(100, 6));
+        
+        JPanel xpLabelWrapper = new JPanel(new BorderLayout());
+        xpLabelWrapper.setBackground(BACKGROUND_COLOR);
         
         xpProgressLabel = new JLabel("0 / 100 XP");
         xpProgressLabel.setForeground(new Color(180, 180, 180));
         xpProgressLabel.setFont(new Font("Arial", Font.PLAIN, 11));
         xpProgressLabel.setHorizontalAlignment(JLabel.RIGHT);
         
+        xpLabelWrapper.add(xpProgressLabel, BorderLayout.EAST);
+        xpLabelWrapper.setBorder(new EmptyBorder(3, 0, 0, 0));
+        
         progressPanel.add(xpProgressBar, BorderLayout.CENTER);
-        progressPanel.add(xpProgressLabel, BorderLayout.EAST);
+        progressPanel.add(xpLabelWrapper, BorderLayout.SOUTH);
         
         add(topPanel, BorderLayout.NORTH);
         add(progressPanel, BorderLayout.CENTER);
@@ -209,11 +267,37 @@ public class LevelProgressPanel extends JPanel {
         levelLabel.setForeground(TEXT_COLOR);
         levelLabel.setFont(new Font("Arial", Font.BOLD, 12));
         
-        xpProgressBar = new JProgressBar(0, 100);
+        // Custom XP progress bar with rounded corners
+        xpProgressBar = new JProgressBar(0, 100) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                if (g instanceof Graphics2D) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    int width = getWidth();
+                    int height = getHeight();
+                    
+                    // Draw background with rounded corners
+                    g2d.setColor(XP_BAR_TRACK_COLOR);
+                    g2d.fillRoundRect(0, 0, width, height, height, height);
+                    
+                    // Calculate filled width
+                    int fillWidth = (int) (width * ((double) getValue() / getMaximum()));
+                    
+                    // Draw filled portion with rounded corners
+                    g2d.setColor(XP_BAR_COLOR);
+                    if (fillWidth > 0) {
+                        g2d.fillRoundRect(0, 0, fillWidth, height, height, height);
+                    }
+                }
+            }
+        };
+        
         xpProgressBar.setValue(0);
         xpProgressBar.setStringPainted(false);
-        xpProgressBar.setForeground(XP_BAR_COLOR);
-        xpProgressBar.setBackground(XP_BAR_TRACK_COLOR);
+        xpProgressBar.setOpaque(false);
+        xpProgressBar.setBorderPainted(false);
         xpProgressBar.setBorder(null);
         xpProgressBar.setPreferredSize(new Dimension(100, 8));
         

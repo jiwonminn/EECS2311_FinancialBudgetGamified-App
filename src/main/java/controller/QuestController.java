@@ -402,4 +402,195 @@ public class QuestController {
         // Add some initial XP so user starts at level 2
         addUserXP(userId, 150);
     }
+    
+    /**
+     * Check and automatically complete quests based on user activities
+     * @param userId The user ID to check quests for
+     * @throws SQLException if there's a database error
+     */
+    public void checkAndCompleteQuests(int userId) throws SQLException {
+        // Get all active quests for the user
+        List<Quest> activeQuests = getActiveQuestsByUserId(userId);
+        
+        // For each quest, check if it should be completed
+        for (Quest quest : activeQuests) {
+            boolean shouldComplete = false;
+            
+            // Check quest completion based on quest title or description
+            String title = quest.getTitle().toLowerCase();
+            String description = quest.getDescription().toLowerCase();
+            
+            // Get user transaction count for transaction-related quests
+            int transactionCount = getTransactionCountForUser(userId);
+            
+            // Quest for logging a transaction
+            if (title.contains("log a transaction") || description.contains("log a transaction") ||
+                description.contains("log at least one transaction")) {
+                if (transactionCount > 0) {
+                    shouldComplete = true;
+                }
+            }
+            
+            // Quest for logging multiple transactions
+            if (title.contains("log transactions") || description.contains("log multiple transactions")) {
+                // Check if they've met the required amount (usually the number of transactions)
+                if (transactionCount >= quest.getRequiredAmount()) {
+                    shouldComplete = true;
+                }
+            }
+            
+            // Quest for staying under budget
+            if (title.contains("stay under budget") || description.contains("stay under budget") ||
+                description.contains("keep your expenses below")) {
+                // Calculate the user's budget status
+                boolean underBudget = checkIfUserIsUnderBudget(userId);
+                if (underBudget) {
+                    shouldComplete = true;
+                }
+            }
+            
+            // Quest for savings
+            if (title.contains("save money") || description.contains("save money") ||
+                title.contains("savings") || description.contains("savings")) {
+                // Calculate the user's savings
+                double savings = calculateUserSavings(userId);
+                if (savings >= quest.getRequiredAmount()) {
+                    shouldComplete = true;
+                }
+            }
+            
+            // If quest should be completed, complete it
+            if (shouldComplete) {
+                completeQuest(quest.getId(), userId);
+                System.out.println("Automatically completed quest: " + quest.getTitle());
+            }
+        }
+    }
+    
+    /**
+     * Check if a user is under their budget
+     */
+    private boolean checkIfUserIsUnderBudget(int userId) throws SQLException {
+        // Get total income and expenses for the current month
+        double income = getTotalIncomeForMonth(userId);
+        double expenses = getTotalExpensesForMonth(userId);
+        
+        // User is under budget if they've spent less than their income
+        return expenses < income;
+    }
+    
+    /**
+     * Calculate a user's total savings (income - expenses)
+     */
+    private double calculateUserSavings(int userId) throws SQLException {
+        double income = getTotalIncomeForMonth(userId);
+        double expenses = getTotalExpensesForMonth(userId);
+        
+        return income - expenses;
+    }
+    
+    /**
+     * Get the total number of transactions for a user
+     */
+    private int getTransactionCountForUser(int userId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM transactions WHERE user_id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, userId);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Get total income for the current month
+     */
+    private double getTotalIncomeForMonth(int userId) throws SQLException {
+        // First day of current month
+        LocalDate firstDay = LocalDate.now().withDayOfMonth(1);
+        // Last day of current month
+        LocalDate lastDay = firstDay.plusMonths(1).minusDays(1);
+        
+        String sql = "SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'income' " +
+                    "AND date BETWEEN ? AND ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, java.sql.Date.valueOf(firstDay));
+            pstmt.setDate(3, java.sql.Date.valueOf(lastDay));
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    double sum = rs.getDouble(1);
+                    return rs.wasNull() ? 0 : sum;
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Get total expenses for the current month
+     */
+    private double getTotalExpensesForMonth(int userId) throws SQLException {
+        // First day of current month
+        LocalDate firstDay = LocalDate.now().withDayOfMonth(1);
+        // Last day of current month
+        LocalDate lastDay = firstDay.plusMonths(1).minusDays(1);
+        
+        String sql = "SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'expense' " +
+                    "AND date BETWEEN ? AND ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, java.sql.Date.valueOf(firstDay));
+            pstmt.setDate(3, java.sql.Date.valueOf(lastDay));
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    double sum = rs.getDouble(1);
+                    return rs.wasNull() ? 0 : sum;
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Gets all active (non-completed) quests for a user
+     * @param userId The ID of the user
+     * @return A list of active goals
+     */
+    public List<Quest> getActiveQuestsByUserId(int userId) throws SQLException {
+        String sql = "SELECT * FROM quests WHERE user_id = ? AND completion_status = false";
+        List<Quest> quests = new ArrayList<>();
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    quests.add(mapResultSetToQuest(rs));
+                }
+            }
+        }
+        
+        return quests;
+    }
 } 

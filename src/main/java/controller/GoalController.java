@@ -98,13 +98,16 @@ public class GoalController {
     }
     
     /**
-     * Awards XP to a user for completing a goal
+     * Awards XP to a user for completing a goal and checks quest completion status
      */
     private void awardXpForGoalCompletion(int userId) {
         try {
             QuestController questController = new QuestController();
             questController.addUserXP(userId, XP_REWARD_FOR_GOAL);
             System.out.println("Awarded " + XP_REWARD_FOR_GOAL + " XP for completing a goal");
+            
+            // Check if any quests can be completed
+            questController.checkAndCompleteQuests(userId);
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("Failed to award XP for goal completion!");

@@ -119,10 +119,22 @@ public class BudgetController {
     public void checkBudgetAndNotify(String recipientEmail, String username) {
         double monthlySpending = getMonthlySpending();
         double weeklySpending = getWeeklySpending();
-        if (isOverWeeklyBudget()) {
+        boolean weeklyExceeded = isOverWeeklyBudget();
+        boolean monthlyExceeded = isOverMonthlyBudget();
+        
+        // Check for quest completion after budget checks
+        try {
+            QuestController questController = new QuestController();
+            questController.checkAndCompleteQuests(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Failed to check quests during budget verification!");
+        }
+        
+        if (weeklyExceeded) {
             EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getWeeklyLimit(), weeklySpending);
         }
-        if (isOverMonthlyBudget()) {
+        if (monthlyExceeded) {
             EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getMonthlyLimit(), monthlySpending);
         }
     }

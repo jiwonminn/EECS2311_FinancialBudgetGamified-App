@@ -224,13 +224,17 @@ public class TransactionController {
     }
 
     /**
-     * Awards XP to a user for logging a transaction
+     * Awards XP to a user for logging a transaction and checks for quest completion
      */
     private static void awardXpForTransaction(int userId) {
         try {
             QuestController questController = new QuestController();
+            // Award XP for the transaction
             questController.addUserXP(userId, XP_REWARD_PER_TRANSACTION);
             System.out.println("Awarded " + XP_REWARD_PER_TRANSACTION + " XP for logging a transaction");
+            
+            // Check and complete quests automatically
+            questController.checkAndCompleteQuests(userId);
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("Failed to award XP for transaction!");
