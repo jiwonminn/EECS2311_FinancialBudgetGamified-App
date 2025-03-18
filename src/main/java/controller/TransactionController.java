@@ -10,6 +10,7 @@ import java.util.List;
 public class TransactionController {
     private Connection connection;
     private int userId = 1; // Default to 1 if not set explicitly
+    private static final int XP_REWARD_PER_TRANSACTION = 20; // XP points awarded for logging a transaction
 
     public TransactionController() throws SQLException {
         connection = DatabaseManager.getConnection();
@@ -52,6 +53,10 @@ public class TransactionController {
             pstmt.setString(5, type);
             pstmt.setDouble(6, amount);
             pstmt.executeUpdate();
+            
+            // Award XP for logging a transaction
+            awardXpForTransaction(userId);
+            
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -80,6 +85,10 @@ public class TransactionController {
             stmt.setString(5, isIncome ? "income" : "expense");
             stmt.setString(6, category);
             stmt.executeUpdate();
+            
+            // Award XP for logging a transaction
+            awardXpForTransaction(userId);
+            
             System.out.println("Transaction added successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -212,5 +221,19 @@ public class TransactionController {
         }
         
         return transactions;
+    }
+
+    /**
+     * Awards XP to a user for logging a transaction
+     */
+    private static void awardXpForTransaction(int userId) {
+        try {
+            QuestController questController = new QuestController();
+            questController.addUserXP(userId, XP_REWARD_PER_TRANSACTION);
+            System.out.println("Awarded " + XP_REWARD_PER_TRANSACTION + " XP for logging a transaction");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Failed to award XP for transaction!");
+        }
     }
 }

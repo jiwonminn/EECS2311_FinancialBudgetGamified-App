@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class GoalController {
     
+    private static final int XP_REWARD_FOR_GOAL = 50; // XP points awarded for completing a goal
+    
     /**
      * Creates a new goal in the database
      * @param goal The goal to create
@@ -57,6 +59,15 @@ public class GoalController {
      * @return True if successful, false otherwise
      */
     public boolean updateGoal(Goal goal) throws SQLException {
+        // Check if the goal is being marked as completed
+        boolean wasCompleted = false;
+        if (goal.getId() > 0) {
+            Goal existingGoal = getGoalById(goal.getId());
+            if (existingGoal != null) {
+                wasCompleted = existingGoal.isCompleted();
+            }
+        }
+        
         String sql = "UPDATE goals SET title = ?, description = ?, target_amount = ?, " +
                 "current_amount = ?, start_date = ?, target_date = ?, category = ?, " +
                 "completed = ? WHERE id = ?";
@@ -75,7 +86,28 @@ public class GoalController {
             stmt.setInt(9, goal.getId());
             
             int rowsAffected = stmt.executeUpdate();
+            
+            // Check if goal was just completed (wasn't completed before but is now)
+            if (rowsAffected > 0 && !wasCompleted && goal.isCompleted()) {
+                // Award XP for completing the goal
+                awardXpForGoalCompletion(goal.getUserId());
+            }
+            
             return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Awards XP to a user for completing a goal
+     */
+    private void awardXpForGoalCompletion(int userId) {
+        try {
+            QuestController questController = new QuestController();
+            questController.addUserXP(userId, XP_REWARD_FOR_GOAL);
+            System.out.println("Awarded " + XP_REWARD_FOR_GOAL + " XP for completing a goal");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Failed to award XP for goal completion!");
         }
     }
     

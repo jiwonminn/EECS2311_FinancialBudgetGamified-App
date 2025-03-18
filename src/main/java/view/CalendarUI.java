@@ -28,6 +28,13 @@ import javax.swing.SpinnerDateModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.time.format.DateTimeFormatter;
+import java.awt.event.*;
+import java.sql.Connection;
+import java.text.NumberFormat;
+import javax.swing.event.*;
+import javax.swing.text.*;
+import database.DatabaseManager;
+import view.LevelProgressPanel;
 
 public class CalendarUI extends JFrame implements CategoryChangeListener {
     // Define colors
@@ -152,7 +159,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
         // Add Transaction Log tab between Leaderboard and Quiz
-        String[] tabNames = {"Dashboard", "Goals", "Analytics", "Quiz", "Leaderboard", "Transaction Log"};
+        String[] tabNames = {"Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Leaderboard", "Transaction Log"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals(currentTab); // Set selected based on current tab
@@ -245,6 +252,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 return "📊";
             case "Goals":
                 return "🎯";
+            case "Quests":
+                return "🏆";
             case "Analytics":
                 return "📈";
             case "Quiz":
@@ -268,25 +277,51 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         // Create navigation panel with the current tab highlighted
         JPanel navigationPanel = createNavigationPanel(tabName);
 
-        // Create a top container panel that will hold both the balance and navigation
+        // Create a top container panel that will hold the navigation, level progress, and balance
         JPanel topContainer = new JPanel(new BorderLayout());
         topContainer.setBackground(BACKGROUND_COLOR);
 
-        // Add the balance panel at the top
-        topContainer.add(createBalancePanel(), BorderLayout.NORTH);
+        // 1. Add the navigation panel at the very top
+        topContainer.add(navigationPanel, BorderLayout.NORTH);
 
-        // Add the navigation panel below the balance panel
-        topContainer.add(navigationPanel, BorderLayout.SOUTH);
-
+        // 2. Create a panel to hold level progress bar and balance
+        JPanel progressAndBalancePanel = new JPanel(new BorderLayout());
+        progressAndBalancePanel.setBackground(BACKGROUND_COLOR);
+        
+        // Create a panel for the level progress bar
+        JPanel levelPanel = new JPanel(new BorderLayout());
+        levelPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Add Level Progress bar
+        LevelProgressPanel levelProgressPanel = new LevelProgressPanel(userId, LevelProgressPanel.LAYOUT_HEADER);
+        levelPanel.add(levelProgressPanel, BorderLayout.CENTER);
+        
+        // 3. Add balance panel below the level progress
+        JPanel balancePanel = createBalancePanel();
+        
+        // Add components to the progress and balance panel
+        progressAndBalancePanel.add(levelPanel, BorderLayout.CENTER);
+        progressAndBalancePanel.add(balancePanel, BorderLayout.SOUTH);
+        
+        // Add the progress and balance panel below the navigation
+        topContainer.add(progressAndBalancePanel, BorderLayout.CENTER);
+        
+        // Add the topContainer to the NORTH position of the content pane
         add(topContainer, BorderLayout.NORTH);
+        
+        // Add logout button at the top right corner
+        JPanel headerPanel = createHeaderPanel(userName);
+        
+        // We need to adjust how the headerPanel is incorporated
+        // Add it to the EAST position of the balance panel 
+        balancePanel.setLayout(new BorderLayout());
+        balanceLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        balancePanel.add(balanceLabel, BorderLayout.WEST);
+        balancePanel.add(headerPanel, BorderLayout.EAST);
 
         // Handle tab-specific content
         switch (tabName) {
             case "Dashboard":
-                // Add header panel below navigation in the top container
-                JPanel headerPanel = createHeaderPanel(userName);
-                topContainer.add(headerPanel, BorderLayout.CENTER);
-                
                 // Create main content panel with two sections
                 JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
                 contentPanel.setBackground(BACKGROUND_COLOR);
@@ -304,13 +339,15 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 break;
                 
             case "Goals":
-                // Add header panel below navigation in the top container
-                JPanel goalsHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(goalsHeaderPanel, BorderLayout.CENTER);
-                
                 // Create and add the GoalsUI panel
                 GoalsUI goalsUI = new GoalsUI(userId, userName, userEmail);
                 add(goalsUI, BorderLayout.CENTER);
+                break;
+                
+            case "Quests":
+                // Create and add the QuestsUI panel
+                QuestsUI questsUI = new QuestsUI(userId, userName, userEmail);
+                add(questsUI, BorderLayout.CENTER);
                 break;
                 
             case "Quiz":
@@ -322,16 +359,12 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 break;
                 
             case "Analytics":
-                // Analytics tab
+                // Use the actual AnalyticsUI since JFreeChart is available in the lib folder
                 AnalyticsUI analyticsUI = new AnalyticsUI(userId);
                 add(analyticsUI, BorderLayout.CENTER);
                 break;
                 
             case "Leaderboard":
-                // Add header panel below navigation in the top container
-                JPanel leaderboardHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(leaderboardHeaderPanel, BorderLayout.CENTER);
-                
                 // For now, show a placeholder message
                 JPanel leaderboardPlaceholderPanel = new JPanel(new BorderLayout());
                 leaderboardPlaceholderPanel.setBackground(BACKGROUND_COLOR);
@@ -359,11 +392,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 break;
                 
             case "Transaction Log":
-                JPanel logHeaderPanel = createHeaderPanel(userName);
-                topContainer.add(logHeaderPanel, BorderLayout.CENTER);
-                
                 // Create and add the LogUI panel
-                LogUI logUI =  new LogUI(userId);
+                LogUI logUI = new LogUI(userId);
                 add(logUI, BorderLayout.CENTER);
                 break;
         }
@@ -378,42 +408,17 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
         
-        // Top section with user info and logout button
-        JPanel topSection = new JPanel(new BorderLayout());
-        topSection.setBackground(BACKGROUND_COLOR);
-        
-        JLabel titleLabel = new JLabel("Level 5 Budget Warrior");
-        titleLabel.setForeground(TEXT_COLOR);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        topSection.add(titleLabel, BorderLayout.WEST);
+        // User info and logout button
+        JPanel userPanel = new JPanel(new BorderLayout());
+        userPanel.setBackground(BACKGROUND_COLOR);
         
         // Add logout button
         JButton logoutButton = new JButton("Logout");
         styleButton(logoutButton);
         logoutButton.addActionListener(e -> logout());
-        topSection.add(logoutButton, BorderLayout.EAST);
+        userPanel.add(logoutButton, BorderLayout.EAST);
         
-        headerPanel.add(topSection, BorderLayout.NORTH);
-        
-        // Progress bar panel
-        JPanel progressPanel = new JPanel(new BorderLayout(10, 5));
-        progressPanel.setBackground(BACKGROUND_COLOR);
-        
-        JLabel progressLabel = new JLabel("Level Progress");
-        progressLabel.setForeground(TEXT_COLOR);
-        progressPanel.add(progressLabel, BorderLayout.WEST);
-        
-        JLabel xpLabel = new JLabel("750 / 1000 XP");
-        xpLabel.setForeground(TEXT_COLOR);
-        progressPanel.add(xpLabel, BorderLayout.EAST);
-        
-        JProgressBar progressBar = new JProgressBar(0, 1000);
-        progressBar.setValue(750);
-        progressBar.setForeground(ACCENT_COLOR);
-        progressBar.setBackground(PANEL_COLOR);
-        progressPanel.add(progressBar, BorderLayout.SOUTH);
-        
-        headerPanel.add(progressPanel, BorderLayout.CENTER);
+        headerPanel.add(userPanel, BorderLayout.NORTH);
         
         return headerPanel;
     }

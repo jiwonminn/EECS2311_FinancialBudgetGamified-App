@@ -1,0 +1,650 @@
+package view;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
+import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+
+import controller.QuestController;
+import model.Quest;
+
+/**
+ * UI for displaying and managing quests
+ */
+public class QuestsUI extends JPanel {
+    // Colors
+    private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
+    private final Color PANEL_COLOR = new Color(40, 24, 69);
+    private final Color TEXT_COLOR = new Color(255, 255, 255);
+    private final Color ACCENT_COLOR = new Color(128, 90, 213);
+    private final Color SECONDARY_COLOR = new Color(70, 50, 110);
+    private final Color TAB_ACTIVE_COLOR = new Color(30, 20, 50);
+    private final Color TAB_INACTIVE_COLOR = new Color(20, 12, 35);
+    
+    // Quest type colors
+    private final Color DAILY_COLOR = new Color(52, 152, 219);
+    private final Color WEEKLY_COLOR = new Color(155, 89, 182);
+    private final Color MONTHLY_COLOR = new Color(211, 84, 0);
+    
+    // Components
+    private JPanel dailyQuestsPanel;
+    private JPanel weeklyQuestsPanel;
+    private JPanel monthlyQuestsPanel;
+    private JPanel specialQuestsPanel;
+    private JProgressBar xpProgressBar;
+    private JLabel levelLabel;
+    private JLabel xpLabel;
+    private JPanel tabsPanel;
+    private JPanel contentPanel;
+    private JPanel[] tabs;
+    private String currentTab = "Daily Quests";
+    
+    // Controller
+    private QuestController questController;
+    private int userId;
+    private String userName;
+    private String userEmail;
+    
+    /**
+     * Constructor
+     */
+    public QuestsUI(int userId, String userName, String userEmail) {
+        this.userId = userId;
+        this.userName = userName;
+        this.userEmail = userEmail;
+        this.questController = new QuestController();
+        
+        // Create database tables if they don't exist
+        try {
+            questController.createQuestTablesIfNotExists();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                this,
+                "Error initializing quest database: " + e.getMessage(),
+                "Database Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+        
+        initializeUI();
+        loadQuests();
+    }
+    
+    /**
+     * Initialize the UI components
+     */
+    private void initializeUI() {
+        setLayout(new BorderLayout());
+        setBackground(BACKGROUND_COLOR);
+        setBorder(new EmptyBorder(20, 20, 20, 20));
+        
+        // Create header panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(BACKGROUND_COLOR);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
+        
+        // Create title panel
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBackground(BACKGROUND_COLOR);
+        titlePanel.setBorder(new EmptyBorder(15, 0, 0, 0));
+        
+        JLabel titleLabel = new JLabel("Quest Board");
+        titleLabel.setForeground(TEXT_COLOR);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        
+        JLabel subtitleLabel = new JLabel("Complete quests to earn rewards and experience");
+        subtitleLabel.setForeground(new Color(180, 180, 180));
+        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        
+        titlePanel.add(titleLabel);
+        titlePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        titlePanel.add(subtitleLabel);
+        
+        headerPanel.add(titlePanel, BorderLayout.CENTER);
+        
+        // Create tabs panel
+        tabsPanel = new JPanel();
+        tabsPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        tabsPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Tab names
+        String[] tabNames = {"Daily Quests", "Weekly Quests", "Special Quests"};
+        tabs = new JPanel[tabNames.length];
+        
+        // Create tabs
+        for (int i = 0; i < tabNames.length; i++) {
+            final String tabName = tabNames[i];
+            tabs[i] = createTab(tabName, tabName.equals(currentTab));
+            tabsPanel.add(tabs[i]);
+            
+            // Add click listener to tab
+            tabs[i].addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    switchTab(tabName);
+                }
+            });
+        }
+        
+        headerPanel.add(tabsPanel, BorderLayout.SOUTH);
+        add(headerPanel, BorderLayout.NORTH);
+        
+        // Create content panel
+        contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Initialize quest panels
+        dailyQuestsPanel = new JPanel();
+        dailyQuestsPanel.setLayout(new BoxLayout(dailyQuestsPanel, BoxLayout.Y_AXIS));
+        dailyQuestsPanel.setBackground(BACKGROUND_COLOR);
+        
+        weeklyQuestsPanel = new JPanel();
+        weeklyQuestsPanel.setLayout(new BoxLayout(weeklyQuestsPanel, BoxLayout.Y_AXIS));
+        weeklyQuestsPanel.setBackground(BACKGROUND_COLOR);
+        
+        monthlyQuestsPanel = new JPanel();
+        monthlyQuestsPanel.setLayout(new BoxLayout(monthlyQuestsPanel, BoxLayout.Y_AXIS));
+        monthlyQuestsPanel.setBackground(BACKGROUND_COLOR);
+        
+        specialQuestsPanel = new JPanel();
+        specialQuestsPanel.setLayout(new BoxLayout(specialQuestsPanel, BoxLayout.Y_AXIS));
+        specialQuestsPanel.setBackground(BACKGROUND_COLOR);
+        
+        add(contentPanel, BorderLayout.CENTER);
+        
+        // Show initial tab
+        showTabContent(currentTab);
+    }
+    
+    /**
+     * Creates a tab for the tab panel
+     */
+    private JPanel createTab(String tabName, boolean isActive) {
+        JPanel tab = new JPanel();
+        tab.setLayout(new BorderLayout());
+        tab.setBackground(isActive ? TAB_ACTIVE_COLOR : TAB_INACTIVE_COLOR);
+        tab.setPreferredSize(new Dimension(120, 35));
+        tab.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(isActive ? 2 : 0, 0, 0, 0, ACCENT_COLOR),
+            new EmptyBorder(8, 15, 8, 15)
+        ));
+        
+        JLabel tabLabel = new JLabel(tabName);
+        tabLabel.setForeground(isActive ? TEXT_COLOR : new Color(180, 180, 180));
+        tabLabel.setFont(new Font("Arial", isActive ? Font.BOLD : Font.PLAIN, 13));
+        tabLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        tab.add(tabLabel, BorderLayout.CENTER);
+        tab.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        
+        return tab;
+    }
+    
+    /**
+     * Switch to the selected tab
+     */
+    private void switchTab(String tabName) {
+        if (tabName.equals(currentTab)) {
+            return;
+        }
+        
+        currentTab = tabName;
+        
+        // Update tabs
+        String[] tabNames = {"Daily Quests", "Weekly Quests", "Special Quests"};
+        for (int i = 0; i < tabNames.length; i++) {
+            boolean isActive = tabNames[i].equals(currentTab);
+            tabs[i].setBackground(isActive ? TAB_ACTIVE_COLOR : TAB_INACTIVE_COLOR);
+            tabs[i].setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(isActive ? 2 : 0, 0, 0, 0, ACCENT_COLOR),
+                new EmptyBorder(8, 15, 8, 15)
+            ));
+            
+            JLabel tabLabel = (JLabel) tabs[i].getComponent(0);
+            tabLabel.setForeground(isActive ? TEXT_COLOR : new Color(180, 180, 180));
+            tabLabel.setFont(new Font("Arial", isActive ? Font.BOLD : Font.PLAIN, 13));
+        }
+        
+        showTabContent(tabName);
+    }
+    
+    /**
+     * Show content for the selected tab
+     */
+    private void showTabContent(String tabName) {
+        contentPanel.removeAll();
+        
+        JPanel contentToShow = null;
+        
+        switch (tabName) {
+            case "Daily Quests":
+                contentToShow = dailyQuestsPanel;
+                break;
+            case "Weekly Quests":
+                contentToShow = weeklyQuestsPanel;
+                break;
+            case "Special Quests":
+                contentToShow = specialQuestsPanel;
+                break;
+        }
+        
+        if (contentToShow != null) {
+            JScrollPane scrollPane = createScrollPane(contentToShow);
+            contentPanel.add(scrollPane, BorderLayout.CENTER);
+        }
+        
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+    
+    /**
+     * Creates a scrollpane for a panel
+     */
+    private JScrollPane createScrollPane(JPanel panel) {
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Custom scroll bar UI
+        scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = ACCENT_COLOR;
+                this.trackColor = PANEL_COLOR;
+            }
+            
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+        });
+        
+        return scrollPane;
+    }
+    
+    /**
+     * Creates a single quest card
+     */
+    private JPanel createQuestCard(Quest quest, Color accentColor) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(PANEL_COLOR);
+        panel.setBorder(new CompoundBorder(
+            BorderFactory.createLineBorder(new Color(50, 30, 80), 1),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
+        panel.setMaximumSize(new Dimension(2000, 120));
+        panel.setPreferredSize(new Dimension(800, 120));
+        
+        // Left side - quest icon
+        JLabel questIcon = createQuestIcon(quest.getQuestType());
+        
+        // Center - quest info
+        JPanel questInfoPanel = new JPanel();
+        questInfoPanel.setLayout(new BoxLayout(questInfoPanel, BoxLayout.Y_AXIS));
+        questInfoPanel.setBackground(PANEL_COLOR);
+        questInfoPanel.setBorder(new EmptyBorder(0, 15, 0, 15));
+        
+        JLabel titleLabel = new JLabel(quest.getTitle());
+        titleLabel.setForeground(TEXT_COLOR);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel descriptionLabel = new JLabel(quest.getDescription());
+        descriptionLabel.setForeground(new Color(200, 200, 200));
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Progress bar
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setMinimum(0);
+        progressBar.setMaximum(100);
+        progressBar.setValue(quest.isCompleted() ? 100 : (int)(Math.random() * 80 + 10)); // Random progress for demo
+        progressBar.setForeground(accentColor);
+        progressBar.setBackground(new Color(30, 18, 50));
+        progressBar.setPreferredSize(new Dimension(300, 8));
+        progressBar.setMaximumSize(new Dimension(500, 8));
+        progressBar.setBorder(null);
+        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Completion text
+        JLabel progressLabel = new JLabel(progressBar.getValue() + "% Complete");
+        progressLabel.setForeground(new Color(180, 180, 180));
+        progressLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        progressLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        questInfoPanel.add(titleLabel);
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        questInfoPanel.add(descriptionLabel);
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        questInfoPanel.add(progressBar);
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        questInfoPanel.add(progressLabel);
+        
+        // Right side - buttons and rewards
+        JPanel actionPanel = new JPanel(new BorderLayout());
+        actionPanel.setBackground(PANEL_COLOR);
+        actionPanel.setPreferredSize(new Dimension(120, 60));
+        
+        // Info button
+        JPanel buttonsPanel = new JPanel(new BorderLayout(10, 0));
+        buttonsPanel.setBackground(PANEL_COLOR);
+        
+        JButton infoButton = createRoundButton("?", new Color(50, 50, 70));
+        infoButton.setPreferredSize(new Dimension(30, 30));
+        
+        // Complete button
+        JButton completeButton = new JButton(quest.isCompleted() ? "Complete" : "Complete");
+        completeButton.setBackground(quest.isCompleted() ? new Color(30, 30, 50) : new Color(40, 40, 60));
+        completeButton.setForeground(quest.isCompleted() ? new Color(100, 100, 130) : TEXT_COLOR);
+        completeButton.setFont(new Font("Arial", Font.BOLD, 12));
+        completeButton.setBorder(new EmptyBorder(8, 15, 8, 15));
+        completeButton.setFocusPainted(false);
+        completeButton.setEnabled(!quest.isCompleted());
+        
+        buttonsPanel.add(infoButton, BorderLayout.WEST);
+        buttonsPanel.add(completeButton, BorderLayout.CENTER);
+        
+        // XP Reward
+        JLabel xpRewardLabel = new JLabel("+" + quest.getXpReward() + " XP");
+        xpRewardLabel.setForeground(ACCENT_COLOR);
+        xpRewardLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        xpRewardLabel.setHorizontalAlignment(JLabel.RIGHT);
+        
+        actionPanel.add(buttonsPanel, BorderLayout.CENTER);
+        actionPanel.add(xpRewardLabel, BorderLayout.SOUTH);
+        
+        // Add components to panel
+        panel.add(questIcon, BorderLayout.WEST);
+        panel.add(questInfoPanel, BorderLayout.CENTER);
+        panel.add(actionPanel, BorderLayout.EAST);
+        
+        // Add margin between cards
+        JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.setBackground(BACKGROUND_COLOR);
+        containerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
+        containerPanel.setMaximumSize(new Dimension(2000, 135));
+        containerPanel.add(panel, BorderLayout.CENTER);
+        
+        // Add action listener to complete button
+        completeButton.addActionListener(e -> {
+            try {
+                boolean success = questController.completeQuest(quest.getId(), userId);
+                if (success) {
+                    completeButton.setText("Complete");
+                    completeButton.setEnabled(false);
+                    completeButton.setBackground(new Color(30, 30, 50));
+                    completeButton.setForeground(new Color(100, 100, 130));
+                    progressBar.setValue(100);
+                    progressLabel.setText("100% Complete");
+                    quest.setCompleted(true);
+                    
+                    // Update all level panels
+                    updateLevelPanels();
+                    
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Quest completed! You earned " + quest.getXpReward() + " XP!",
+                        "Quest Completed",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Error completing quest: " + ex.getMessage(),
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+        });
+        
+        return containerPanel;
+    }
+    
+    /**
+     * Creates a quest icon based on quest type
+     */
+    private JLabel createQuestIcon(String questType) {
+        JLabel iconLabel = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                int size = 40;
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
+                
+                // Background circle
+                Color iconColor;
+                String iconText;
+                
+                switch (questType) {
+                    case "DAILY":
+                        iconColor = DAILY_COLOR;
+                        iconText = "📋";
+                        break;
+                    case "WEEKLY":
+                        iconColor = WEEKLY_COLOR;
+                        iconText = "🛡️";
+                        break;
+                    case "MONTHLY":
+                        iconColor = MONTHLY_COLOR;
+                        iconText = "⭐";
+                        break;
+                    default:
+                        iconColor = ACCENT_COLOR;
+                        iconText = "📋";
+                }
+                
+                g2d.setColor(iconColor);
+                g2d.fillOval(x, y, size, size);
+                
+                // Icon text
+                g2d.setColor(TEXT_COLOR);
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm = g2d.getFontMetrics();
+                int textWidth = fm.stringWidth(iconText);
+                int textHeight = fm.getHeight();
+                g2d.drawString(iconText, x + (size - textWidth) / 2, y + size / 2 + textHeight / 4);
+                
+                g2d.dispose();
+            }
+            
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(80, 60);
+            }
+        };
+        
+        return iconLabel;
+    }
+    
+    /**
+     * Creates a round button
+     */
+    private JButton createRoundButton(String text, Color bgColor) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                if (getModel().isPressed()) {
+                    g2d.setColor(bgColor.darker());
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(bgColor.brighter());
+                } else {
+                    g2d.setColor(bgColor);
+                }
+                
+                g2d.fillOval(0, 0, getWidth(), getHeight());
+                
+                g2d.setColor(TEXT_COLOR);
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int textWidth = fm.stringWidth(getText());
+                int textHeight = fm.getHeight();
+                
+                g2d.drawString(getText(), (getWidth() - textWidth) / 2, (getHeight() + textHeight / 3) / 2);
+                g2d.dispose();
+            }
+        };
+        
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setForeground(TEXT_COLOR);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        
+        return button;
+    }
+    
+    /**
+     * Load quests from the database
+     */
+    private void loadQuests() {
+        try {
+            // Check if we need to generate sample quests
+            List<Quest> existingQuests = questController.getQuestsByUserId(userId);
+            if (existingQuests.isEmpty()) {
+                questController.generateSampleQuests(userId);
+            }
+            
+            // Load daily quests
+            List<Quest> dailyQuests = questController.getDailyQuestsByUserId(userId);
+            dailyQuestsPanel.removeAll();
+            for (Quest quest : dailyQuests) {
+                dailyQuestsPanel.add(createQuestCard(quest, DAILY_COLOR));
+            }
+            
+            if (dailyQuests.isEmpty()) {
+                dailyQuestsPanel.add(createEmptyQuestMessage("No daily quests available"));
+            }
+            
+            // Load weekly quests
+            List<Quest> weeklyQuests = questController.getWeeklyQuestsByUserId(userId);
+            weeklyQuestsPanel.removeAll();
+            for (Quest quest : weeklyQuests) {
+                weeklyQuestsPanel.add(createQuestCard(quest, WEEKLY_COLOR));
+            }
+            
+            if (weeklyQuests.isEmpty()) {
+                weeklyQuestsPanel.add(createEmptyQuestMessage("No weekly quests available"));
+            }
+            
+            // Load monthly quests - using these as "Special Quests"
+            List<Quest> monthlyQuests = questController.getMonthlyQuestsByUserId(userId);
+            specialQuestsPanel.removeAll();
+            for (Quest quest : monthlyQuests) {
+                specialQuestsPanel.add(createQuestCard(quest, MONTHLY_COLOR));
+            }
+            
+            if (monthlyQuests.isEmpty()) {
+                specialQuestsPanel.add(createEmptyQuestMessage("No special quests available"));
+            }
+            
+            // Update level displays (both top and bottom)
+            updateLevelPanels();
+            
+            // Refresh UI
+            revalidate();
+            repaint();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                this,
+                "Error loading quests: " + e.getMessage(),
+                "Database Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+    
+    /**
+     * Update all level progress panels in this UI
+     */
+    private void updateLevelPanels() {
+        // Find and update all LevelProgressPanel instances
+        for (Component comp : getComponents()) {
+            if (comp instanceof LevelProgressPanel) {
+                ((LevelProgressPanel) comp).updateLevelDisplay();
+            } else if (comp instanceof JPanel) {
+                for (Component inner : ((JPanel) comp).getComponents()) {
+                    if (inner instanceof LevelProgressPanel) {
+                        ((LevelProgressPanel) inner).updateLevelDisplay();
+                    } else if (inner instanceof JPanel) {
+                        for (Component innerInner : ((JPanel) inner).getComponents()) {
+                            if (innerInner instanceof LevelProgressPanel) {
+                                ((LevelProgressPanel) innerInner).updateLevelDisplay();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Creates an empty message panel
+     */
+    private JPanel createEmptyQuestMessage(String message) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(new EmptyBorder(50, 20, 20, 20));
+        
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(new Color(150, 150, 150));
+        messageLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        panel.add(messageLabel, BorderLayout.CENTER);
+        
+        return panel;
+    }
+} 

@@ -36,6 +36,11 @@ public class Main {
             goalController.createGoalsTableIfNotExists();
             System.out.println("Goals table initialized successfully.");
             
+            // Initialize quests table
+            controller.QuestController questController = new controller.QuestController();
+            questController.createQuestTablesIfNotExists();
+            System.out.println("Quests tables initialized successfully.");
+            
             // Set system look and feel
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             

@@ -28,8 +28,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.chart.labels.CategoryItemLabelGenerator;
 import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.labels.ItemLabelAnchor;
-import org.jfree.chart.labels.TextAnchor;
-import org.jfree.ui.TextAnchor;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.ui.TextAnchor;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
