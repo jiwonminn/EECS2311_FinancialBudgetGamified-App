@@ -28,22 +28,22 @@ class TransactionControllerTest extends TransactionController {
 		private Transaction transaction;
 	    private LocalDate testDate;
 	    private Timestamp controllerTestDate;
-	    
+
 	    @BeforeEach
 	    public void setTime() {
 	    	controllerTestDate = Timestamp.valueOf(LocalDateTime.now());
 	    }
-	    
+
 	    private Timestamp getCurrentTimestamp() {
 	        return new Timestamp(System.currentTimeMillis());
 	    }
-	    
+
 
 //	    @Test
 //	    public void NegativeTransaction() {
 //	    	assertThrows(IllegalArgumentException.class,()-> new Transaction("Test",-100.0,LocalDate.now(),true,"Test"));
 //	    }
-	    
+
 	    @Test
 	    public void addNegativeTransaction() {
 	    	assertThrows(IllegalArgumentException.class,()-> addTransaction(10, "2025-02-10", "Test", "Test","Test", -10));
@@ -52,21 +52,21 @@ class TransactionControllerTest extends TransactionController {
 	    @Test
 	    public void noDescription () {
 	    	assertThrows(IllegalArgumentException.class, ()-> addTransaction(10, "2025-02-10", "", "Test","Test", -10));
-	    	
+
 	    }
-	    
+
 	    @Test
 	    public void nullCases() {
 	    	assertThrows(NullPointerException.class,()-> addTransaction(null,100,null,false,"Test"));
-	    	
+
 	    }
-	    
+
 	    @Test
 	    public void transactionAdded() throws SQLException {
 	    	boolean result = addTransaction(1,"2025-02-03","Test","Food","Expense",10);
 	        assertTrue(result);
-	        
+
 	    }
-	    
+
 }
 

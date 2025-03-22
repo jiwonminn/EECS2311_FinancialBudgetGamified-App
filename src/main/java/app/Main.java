@@ -28,9 +28,9 @@ public class Main {
 
         try {
             // Initialize the database
-            DatabaseInitializer.initializeDatabase();
-            System.out.println("Database initialized successfully.");
-            
+//            DatabaseInitializer.initializeDatabase();
+//            System.out.println("Database initialized successfully.");
+//
             // Initialize goals table
             controller.GoalController goalController = new controller.GoalController();
             goalController.createGoalsTableIfNotExists();

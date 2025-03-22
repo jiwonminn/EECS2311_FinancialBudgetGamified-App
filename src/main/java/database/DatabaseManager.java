@@ -5,9 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:postgresql://localhost:5432/demodb"; // change if needed
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "joshuang0827";
+    // Updated URL to match host port (5431) and database name (KKS)
+    private static final String URL = "jdbc:postgresql://localhost:5431/KKS";
+    private static final String USER = "khalifa";
+    private static final String PASSWORD = "your_password";
 
     // Always return a new connection
     public static Connection getConnection() throws SQLException {
