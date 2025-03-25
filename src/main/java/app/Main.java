@@ -7,7 +7,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import database.DatabaseInitializer;
 import view.LoginScreen;
 //import database.DatabaseUpdater;
 
