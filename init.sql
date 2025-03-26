@@ -53,6 +53,23 @@ CREATE TABLE IF NOT EXISTS user_experience (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+
+CREATE TABLE IF NOT EXISTS goals (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    target_amount DOUBLE PRECISION NOT NULL,
+    current_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+    start_date DATE NOT NULL,
+    target_date DATE NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
 -- Optional seed data:
 -- Insert default budgets for users who don't have one
 INSERT INTO user_budget (user_id, total_budget)

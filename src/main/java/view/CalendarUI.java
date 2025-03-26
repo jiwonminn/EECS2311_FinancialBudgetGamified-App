@@ -198,8 +198,12 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                             }
                         }
                     }
-                    
-                    switchTab(tabName);
+
+                    try {
+                        switchTab(tabName);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
         }
@@ -270,7 +274,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
     /**
      * Switches to the selected tab.
      */
-    private void switchTab(String tabName) {
+    private void switchTab(String tabName) throws SQLException {
         System.out.println("Switching to tab: " + tabName);
         getContentPane().removeAll();
 
@@ -441,7 +445,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         return balancePanel;
     }
 
-    public void updateBalanceDisplay() {
+    public void updateBalanceDisplay() throws SQLException {
         // Fetch updated balance from database via BudgetController
         userBalance = BudgetController.getCurrentBalance(userId);
         balanceLabel.setText("Balance: $" + String.format("%.2f", userBalance));
@@ -676,7 +680,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         return logPanel;
     }
     
-    private JPanel createTransactionHistoryPanel() {
+    private JPanel createTransactionHistoryPanel() throws SQLException {
         JPanel historyPanel = new JPanel(new BorderLayout());
         historyPanel.setBackground(PANEL_COLOR);
         historyPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -822,7 +826,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         }
     }
 
-    private void updateTransactionDisplay() {
+    private void updateTransactionDisplay() throws SQLException {
         if (transactionDisplayPanel != null) {
             transactionDisplayPanel.removeAll();
 
@@ -956,8 +960,16 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 boolean success = TransactionController.deleteTransaction(transactionId);
                 if (success) {
                     // Update the UI to remove the deleted transaction
-                    updateTransactionDisplay();
-                    updateBalanceDisplay();
+                    try {
+                        updateTransactionDisplay();
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    try {
+                        updateBalanceDisplay();
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(cardPanel, "Failed to delete transaction", "Error", JOptionPane.ERROR_MESSAGE);
                 }

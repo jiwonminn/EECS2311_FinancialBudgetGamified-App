@@ -2,6 +2,7 @@ package unitTests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,28 +57,28 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    void testGetTotalIncome() {
+    void testGetTotalIncome() throws SQLException {
         double expectedIncome = 7500.0; // 5000 + 1000 + 1500
         assertEquals(expectedIncome, analyticsController.getTotalIncome(), 0.01,
                 "Total income should be sum of all income transactions");
     }
 
     @Test
-    void testGetTotalExpense() {
+    void testGetTotalExpense() throws SQLException {
         double expectedExpense = 2900.0; // 2000 + 500 + 100 + 300
         assertEquals(expectedExpense, analyticsController.getTotalExpense(), 0.01,
                 "Total expense should be sum of all expense transactions");
     }
 
     @Test
-    void testGetCurrentSavings() {
+    void testGetCurrentSavings() throws SQLException {
         double expectedSavings = 4600.0; // 7500 - 2900
         assertEquals(expectedSavings, analyticsController.getCurrentSavings(), 0.01,
                 "Current savings should be total income minus total expenses");
     }
 
     @Test
-    void testGetExpensesByCategory() {
+    void testGetExpensesByCategory() throws SQLException {
         Map<String, Double> expensesByCategory = analyticsController.getExpensesByCategory();
 
         assertEquals(2000.0, expensesByCategory.get("Housing"), 0.01,
@@ -91,7 +92,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    void testGetIncomeData() {
+    void testGetIncomeData() throws SQLException {
         Map<LocalDate, Double> incomeData = analyticsController.getIncomeData();
 
         assertEquals(1500.0, incomeData.get(TEST_DATE.minusDays(1)), 0.01,
@@ -103,7 +104,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    void testGetSavingsOverTime() {
+    void testGetSavingsOverTime() throws SQLException {
         Map<LocalDate, Double> savingsOverTime = analyticsController.getSavingsOverTime();
 
         assertEquals(1500.0, savingsOverTime.get(TEST_DATE.minusDays(1)), 0.01,
@@ -115,7 +116,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    void testEmptyTransactions() {
+    void testEmptyTransactions() throws SQLException {
         testTransactions.clear();
 
         assertEquals(0.0, analyticsController.getTotalIncome(), 0.01,
@@ -133,7 +134,7 @@ class AnalyticsControllerTest {
     }
 
     @Test
-    void testTransactionsOnSameDay() {
+    void testTransactionsOnSameDay() throws SQLException {
         testTransactions.clear();
         testTransactions.add(new Transaction("Income 1", 1000.0, TEST_DATE, true, "Income"));
         testTransactions.add(new Transaction("Income 2", 500.0, TEST_DATE, true, "Income"));

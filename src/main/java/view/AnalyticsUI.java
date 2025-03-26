@@ -37,6 +37,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -90,7 +91,7 @@ public class AnalyticsUI extends JPanel {
         }
     }
 
-    private void initializeUI() {
+    private void initializeUI() throws SQLException {
         // Set up the main panel
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
@@ -165,7 +166,7 @@ public class AnalyticsUI extends JPanel {
     }
 
     // Create a monthly income vs expenses bar chart
-    private JFreeChart createBarChart() {
+    private JFreeChart createBarChart() throws SQLException {
         // Create dataset
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
@@ -236,7 +237,7 @@ public class AnalyticsUI extends JPanel {
     }
 
     // Create a pie chart for income vs expenses
-    private JFreeChart createPieChart() {
+    private JFreeChart createPieChart() throws SQLException {
         // Create dataset
         DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
 
@@ -287,7 +288,7 @@ public class AnalyticsUI extends JPanel {
     }
 
     // Create a line chart for savings over time
-    private JFreeChart createSavingsChart() {
+    private JFreeChart createSavingsChart() throws SQLException {
         // Get savings data
         Map<LocalDate, Double> savingsData = controller.getSavingsOverTime();
         boolean useMonthly = savingsData.size() > 60; // Use monthly aggregation if we have lots of data points
@@ -372,7 +373,7 @@ public class AnalyticsUI extends JPanel {
     }
 
     // Create a donut chart for expenses by category
-    private JFreeChart createExpensesByCategoryChart() {
+    private JFreeChart createExpensesByCategoryChart() throws SQLException {
         // Create dataset
         DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
 
@@ -582,7 +583,7 @@ public class AnalyticsUI extends JPanel {
         }
     }
 
-    private void refreshCharts() {
+    private void refreshCharts() throws SQLException {
         // Update each chart with new data
         savingsChartPanel.setChart(createSavingsChart());
         expensesCategoryChartPanel.setChart(createExpensesByCategoryChart());

@@ -2,6 +2,7 @@ package view;
 
 import controller.UserController;
 import controller.UserControllerWithDatabase;
+import model.User;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -256,9 +257,15 @@ public class LoginScreen extends JFrame {
                 return;
             }
 
+            UserControllerWithDatabase userController = new UserControllerWithDatabase();
+            int user = 0;
+            try {
+                user = userController.authenticateUser(email, password);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
 
-            int userId = controller.UserControllerWithDatabase.authenticateUser(email, password);
-            if (userId == -1) {
+            if (user == -1) {
                 JOptionPane.showMessageDialog(
                         LoginScreen.this,
                         "Invalid email or password",
@@ -272,9 +279,10 @@ public class LoginScreen extends JFrame {
             userEmail = email;
             isSubmitted = true;
             dispose();
+            int finalUser = user;
             SwingUtilities.invokeLater(() -> {
                 try {
-                    new CalendarUI(userId, userName, userEmail);
+                    new CalendarUI(finalUser, userName, userEmail);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex);
                 }

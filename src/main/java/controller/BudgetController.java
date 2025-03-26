@@ -1,136 +1,85 @@
 package controller;
 
-import database.DatabaseManager;
+import database.dao.TransactionDao;
+import database.dao.TransactionDaoImpl;
 import model.Budget;
+import model.Transaction;
 import utils.EmailNotifier;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 
 public class BudgetController {
     private Budget budget;
     private int userId;
+    private TransactionDao transactionDao;
 
-    /**
-     * Constructs a BudgetController for a given user.
-     * The budget object holds preset limits (e.g., default values or user-configured limits).
-     */
     public BudgetController(int userId, Budget budget) {
         this.userId = userId;
         this.budget = budget;
+        this.transactionDao = new TransactionDaoImpl();
     }
 
-    /**
-     * Calculates the total expense for the current month for the user.
-     * Assumes that transactions with type 'Expense' (case-insensitive) are expenses.
-     */
-    public double getMonthlySpending() {
-        double total = 0.0;
+    public double getMonthlySpending() throws SQLException {
+        List<Transaction> transactions = transactionDao.getTransactionsByUserId(userId);
         LocalDate now = LocalDate.now();
         LocalDate start = now.withDayOfMonth(1);
         LocalDate end = start.plusMonths(1);
-        String query = "SELECT SUM(amount) FROM transactions " +
-                "WHERE user_id = ? AND LOWER(type) = 'expense' " +
-                "AND date >= ? AND date < ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setDate(2, java.sql.Date.valueOf(start));
-            pstmt.setDate(3, java.sql.Date.valueOf(end));
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    total = rs.getDouble(1);
-                }
+        double total = 0.0;
+        for (Transaction t : transactions) {
+            if (!t.isIncome() && !t.getDate().isBefore(start) && t.getDate().isBefore(end)) {
+                total += t.getAmount();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return total;
     }
 
-    /**
-     * Calculates the total expense for the current week for the user.
-     * Assumes week starts on Monday.
-     */
-    public double getWeeklySpending() {
-        double total = 0.0;
+    public double getWeeklySpending() throws SQLException {
+        List<Transaction> transactions = transactionDao.getTransactionsByUserId(userId);
         LocalDate now = LocalDate.now();
         LocalDate start = now.minusDays(now.getDayOfWeek().getValue() - 1);
         LocalDate end = start.plusWeeks(1);
-        String query = "SELECT SUM(amount) FROM transactions " +
-                "WHERE user_id = ? AND LOWER(type) = 'expense' " +
-                "AND date >= ? AND date < ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setDate(2, java.sql.Date.valueOf(start));
-            pstmt.setDate(3, java.sql.Date.valueOf(end));
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    total = rs.getDouble(1);
-                }
+        double total = 0.0;
+        for (Transaction t : transactions) {
+            if (!t.isIncome() && !t.getDate().isBefore(start) && t.getDate().isBefore(end)) {
+                total += t.getAmount();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return total;
     }
 
-    /**
-     * Returns the current balance calculated from transactions.
-     * It sums all income transactions and subtracts all expense transactions.
-     */
-    public static double getCurrentBalance(int user) {
-        double incomeTotal = 0.0;
-        double expenseTotal = 0.0;
-        String query = "SELECT type, SUM(amount) as total FROM transactions " +
-                "WHERE user_id = ? GROUP BY type";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, user);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String type = rs.getString("type");
-                    double total = rs.getDouble("total");
-                    if (type != null && type.equalsIgnoreCase("Income")) {
-                        incomeTotal += total;
-                    } else {
-                        expenseTotal += total;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    // A static helper method that computes the balance using transactions.
+    public static double getCurrentBalance(int userId) throws SQLException {
+        TransactionDao transactionDao = new TransactionDaoImpl();
+        List<Transaction> transactions = transactionDao.getTransactionsByUserId(userId);
+        double incomeTotal = transactions.stream().filter(Transaction::isIncome).mapToDouble(Transaction::getAmount).sum();
+        double expenseTotal = transactions.stream().filter(t -> !t.isIncome()).mapToDouble(Transaction::getAmount).sum();
         return incomeTotal - expenseTotal;
     }
 
-    public boolean isOverWeeklyBudget() {
+    public boolean isOverWeeklyBudget() throws SQLException {
         return getWeeklySpending() > budget.getWeeklyLimit();
     }
 
-    public boolean isOverMonthlyBudget() {
+    public boolean isOverMonthlyBudget() throws SQLException {
         return getMonthlySpending() > budget.getMonthlyLimit();
     }
 
-    public void checkBudgetAndNotify(String recipientEmail, String username) {
+    public void checkBudgetAndNotify(String recipientEmail, String username) throws SQLException {
         double monthlySpending = getMonthlySpending();
         double weeklySpending = getWeeklySpending();
         boolean weeklyExceeded = isOverWeeklyBudget();
         boolean monthlyExceeded = isOverMonthlyBudget();
-        
-        // Check for quest completion after budget checks
+
+        // Check for quest completion
         try {
             QuestController questController = new QuestController();
             questController.checkAndCompleteQuests(userId);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Failed to check quests during budget verification!");
         }
-        
+
         if (weeklyExceeded) {
             EmailNotifier.sendBudgetExceededEmail(recipientEmail, username, budget.getWeeklyLimit(), weeklySpending);
         }
@@ -142,7 +91,7 @@ public class BudgetController {
     public void updateBudget(double monthly, double weekly) {
         budget.setMonthlyLimit(monthly);
         budget.setWeeklyLimit(weekly);
-        // With no separate table, update only the in-memory model
+        // Persist changes if needed
     }
 
     public Budget getBudget() {

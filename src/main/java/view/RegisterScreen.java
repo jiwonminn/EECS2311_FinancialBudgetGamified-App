@@ -8,6 +8,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
+import java.sql.SQLException;
 
 public class RegisterScreen extends JFrame {
     // Define colors
@@ -239,11 +240,18 @@ public class RegisterScreen extends JFrame {
                 return;
             }
 
-            int userId = UserControllerWithDatabase.registerUser(email, password);
-            if (userId != -1) {
+            UserControllerWithDatabase userController = new UserControllerWithDatabase();
+            int user = 0;
+            try {
+                user = userController.registerUser(email, password);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            if (user != -1) {
                 fadeOutAndSwitchToLogin();
                 // Create the User model with the generated id, username (could be derived), email, etc.
-                User newUser = new User(userId, email.split("@")[0], email, 0.0, 0);
+                User newUser = new User(user, email.split("@")[0], email, 0.0, 0);
                 // Proceed to login or show success message
             } else {
                 JOptionPane.showMessageDialog(

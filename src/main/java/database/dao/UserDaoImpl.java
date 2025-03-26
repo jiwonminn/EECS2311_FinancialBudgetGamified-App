@@ -23,23 +23,28 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User authenticateUser(String email, String password) throws SQLException {
-        String query = "SELECT * FROM users WHERE email = ? AND password = ?";
+    public  int authenticateUser(String email, String password) {
+        String query = "SELECT id FROM users WHERE email = ? AND password = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, email);
             pstmt.setString(2, password);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return new User(rs.getString("username"), rs.getString("email"), rs.getDouble("balance"));
+                    return rs.getInt("id");
+                } else {
+                    return -1; // Indicates authentication failure
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
         }
-        return null;
     }
 
+
     @Override
-    public int registerUser(String email, String password) throws SQLException {
+    public  int registerUser(String email, String password) {
         String query = "INSERT INTO users (email, password) VALUES (?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {

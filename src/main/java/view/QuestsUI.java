@@ -80,18 +80,7 @@ public class QuestsUI extends JPanel {
         this.userEmail = userEmail;
         this.questController = new QuestController();
         
-        // Create database tables if they don't exist
-        try {
-            questController.createQuestTablesIfNotExists();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(
-                this,
-                "Error initializing quest database: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+
         
         initializeUI();
         loadQuests();

@@ -58,22 +58,12 @@ public class GoalsUI extends JPanel {
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
-        
-        try {
-            goalController = new GoalController();
-            categoryManager = CategoryManager.getInstance();
-            
-            // Ensure goals table exists
-            goalController.createGoalsTableIfNotExists();
-            
-            initializeUI();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Error initializing goals: " + e.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-        }
+
+        goalController = new GoalController();
+        categoryManager = CategoryManager.getInstance();
+
+
+        initializeUI();
     }
     
     /**

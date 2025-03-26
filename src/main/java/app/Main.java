@@ -26,37 +26,12 @@ public class Main {
     public static void main(String[] args) throws SQLException {
 
         try {
-            // Initialize the database
-//            DatabaseInitializer.initializeDatabase();
-//            System.out.println("Database initialized successfully.");
-//
-            // Initialize goals table
-            controller.GoalController goalController = new controller.GoalController();
-            goalController.createGoalsTableIfNotExists();
-            System.out.println("Goals table initialized successfully.");
-            
-            // Initialize quests table
-            controller.QuestController questController = new controller.QuestController();
-            questController.createQuestTablesIfNotExists();
-            System.out.println("Quests tables initialized successfully.");
-            
-            // Set system look and feel
+
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
             // Add custom styling to UI defaults
             UIManager.put("OptionPane.background", new Color(40, 24, 69));
             UIManager.put("Panel.background", new Color(40, 24, 69));
             UIManager.put("OptionPane.messageForeground", Color.WHITE);
-        } catch (SQLException e) {
-            System.err.println("Failed to initialize database: " + e.getMessage());
-            e.printStackTrace();
-            
-            // Show error dialog to user
-            JOptionPane.showMessageDialog(null,
-                "There was a problem connecting to the database. Some features may not work properly.\n" +
-                "Error: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }

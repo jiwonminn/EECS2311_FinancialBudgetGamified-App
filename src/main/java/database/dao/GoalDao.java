@@ -1,6 +1,9 @@
 package database.dao;
 
 import model.Goal;
+import model.Quest;
+
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 

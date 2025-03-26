@@ -2,6 +2,8 @@ package database.dao;
 
 import model.Goal;
 import database.DatabaseManager;
+import model.Quest;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

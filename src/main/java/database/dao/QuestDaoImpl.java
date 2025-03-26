@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuestDaoImpl implements QuestDao {
-
+    private ExperienceDao experienceDao;
     @Override
     public int createQuest(Quest quest) throws SQLException {
         String sql = "INSERT INTO quests (title, description, quest_type, xp_reward, required_amount, completion_status, deadline, user_id) " +
@@ -91,21 +91,115 @@ public class QuestDaoImpl implements QuestDao {
 
     @Override
     public List<Quest> getActiveQuestsByUserId(int userId) throws SQLException {
-        List<Quest> quests = new ArrayList<>();
         String sql = "SELECT * FROM quests WHERE user_id = ? AND completion_status = false";
+        List<Quest> quests = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    quests.add(mapResultSetToQuest(rs));
+                }
+            }
+        }
+
+        return quests;
+    }
+
+    @Override
+    public List<Quest> getDailyQuestsByUserId(int userId) throws SQLException {
+        String sql = "SELECT * FROM quests WHERE user_id = ? AND quest_type = 'DAILY'";
+        List<Quest> quests = new ArrayList<>();
+
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setInt(1, userId);
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     quests.add(mapResultSetToQuest(rs));
                 }
             }
         }
+
         return quests;
     }
 
-    private Quest mapResultSetToQuest(ResultSet rs) throws SQLException {
+    @Override
+    public List<Quest> getWeeklyQuestsByUserId(int userId) throws SQLException {
+        String sql = "SELECT * FROM quests WHERE user_id = ? AND quest_type = 'WEEKLY'";
+        List<Quest> quests = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    quests.add(mapResultSetToQuest(rs));
+                }
+            }
+        }
+
+        return quests;    }
+
+    @Override
+    public List<Quest> getMonthlyQuestsByUserId(int userId) throws SQLException {
+        String sql = "SELECT * FROM quests WHERE user_id = ? AND quest_type = 'MONTHLY'";
+        List<Quest> quests = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    quests.add(mapResultSetToQuest(rs));
+                }
+            }
+        }
+
+        return quests;
+    }
+
+    @Override
+    public boolean completeQuest(int questId, int userId) throws SQLException {
+        String sql = "UPDATE quests SET completion_status = true WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, questId);
+            pstmt.setInt(2, userId);
+
+            int result = pstmt.executeUpdate();
+
+            if (result > 0) {
+                // Get the XP reward for this quest
+                sql = "SELECT xp_reward FROM quests WHERE id = ?";
+                try (PreparedStatement xpStmt = conn.prepareStatement(sql)) {
+                    xpStmt.setInt(1, questId);
+                    try (ResultSet rs = xpStmt.executeQuery()) {
+                        if (rs.next()) {
+                            int xpReward = rs.getInt("xp_reward");
+                            // Add XP to user
+                            return experienceDao.addUserXP(userId, xpReward);
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public Quest mapResultSetToQuest(ResultSet rs) throws SQLException {
         Quest quest = new Quest();
         quest.setId(rs.getInt("id"));
         quest.setTitle(rs.getString("title"));
@@ -121,5 +215,7 @@ public class QuestDaoImpl implements QuestDao {
         }
         return quest;
     }
+
+
 }
 

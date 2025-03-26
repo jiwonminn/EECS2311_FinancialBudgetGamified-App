@@ -1,74 +1,31 @@
 package controller;
 
-import database.DatabaseManager;
+import database.dao.TransactionDao;
+import database.dao.TransactionDaoImpl;
 import model.Transaction;
 
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class AnalyticsController {
     private int userId;
+    private TransactionDao transactionDao;
 
     public AnalyticsController(int userId) {
         this.userId = userId;
+        this.transactionDao = new TransactionDaoImpl();
     }
 
-    // Fetch all transactions for the given user, ordered by date DESC
-    public List<Transaction> getTransactions() {
-        List<Transaction> transactions = new ArrayList<>();
-        String query = "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            pstmt.setInt(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    // Get category; default to "Other" if missing
-                    String category;
-                    try {
-                        category = rs.getString("category");
-                        if (category == null) {
-                            category = "Other";
-                        }
-                    } catch (SQLException e) {
-                        category = "Other";
-                    }
-
-                    // Retrieve the "type" column and convert to boolean:
-                    // Assume "Income" (ignoring case) means true, else false.
-                    String typeStr = rs.getString("type");
-                    boolean isIncome = typeStr != null && typeStr.equalsIgnoreCase("Income");
-
-                    // Convert SQL Date to LocalDate
-                    LocalDate date = rs.getDate("date").toLocalDate();
-
-                    Transaction transaction = new Transaction(
-                            rs.getString("description"),
-                            rs.getDouble("amount"),
-                            date,
-                            isIncome,
-                            category
-                    );
-                    transactions.add(transaction);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Failed to fetch transactions!");
-        }
-        return transactions;
+    public List<Transaction> getTransactions() throws SQLException {
+        return transactionDao.getTransactionsByUserId(userId);
     }
 
-    // Aggregate income by date
-    public Map<LocalDate, Double> getIncomeData() {
+    public Map<LocalDate, Double> getIncomeData() throws SQLException {
         List<Transaction> transactions = getTransactions();
         Map<LocalDate, Double> incomeMap = new HashMap<>();
-
         for (Transaction transaction : transactions) {
             if (transaction.isIncome()) {
                 LocalDate date = transaction.getDate();
@@ -78,11 +35,9 @@ public class AnalyticsController {
         return incomeMap;
     }
 
-    // Aggregate expenses by date
-    public Map<LocalDate, Double> getExpenseData() {
+    public Map<LocalDate, Double> getExpenseData() throws SQLException {
         List<Transaction> transactions = getTransactions();
         Map<LocalDate, Double> expenseMap = new HashMap<>();
-
         for (Transaction transaction : transactions) {
             if (!transaction.isIncome()) {
                 LocalDate date = transaction.getDate();
@@ -92,56 +47,47 @@ public class AnalyticsController {
         return expenseMap;
     }
 
-    // Calculate total income
-    public double getTotalIncome() {
-        List<Transaction> transactions = getTransactions();
-        return transactions.stream()
+    public double getTotalIncome() throws SQLException {
+        return getTransactions().stream()
                 .filter(Transaction::isIncome)
                 .mapToDouble(Transaction::getAmount)
                 .sum();
     }
 
-    // Calculate total expense
-    public double getTotalExpense() {
-        List<Transaction> transactions = getTransactions();
-        return transactions.stream()
-                .filter(transaction -> !transaction.isIncome())
+    public double getTotalExpense() throws SQLException {
+        return getTransactions().stream()
+                .filter(t -> !t.isIncome())
                 .mapToDouble(Transaction::getAmount)
                 .sum();
     }
 
-    // Calculate current savings (income - expense)
-    public double getCurrentSavings() {
+    public double getCurrentSavings() throws SQLException {
         return getTotalIncome() - getTotalExpense();
     }
 
-    // Track savings over time (e.g., daily savings)
-    public Map<LocalDate, Double> getSavingsOverTime() {
+    public Map<LocalDate, Double> getSavingsOverTime() throws SQLException {
         Map<LocalDate, Double> savingsMap = new HashMap<>();
         Map<LocalDate, Double> incomeMap = getIncomeData();
         Map<LocalDate, Double> expenseMap = getExpenseData();
 
-        // Calculate savings for each date with income data
+        // Process dates with income
         for (LocalDate date : incomeMap.keySet()) {
-            double income = incomeMap.getOrDefault(date, 0.0);
+            double income = incomeMap.get(date);
             double expense = expenseMap.getOrDefault(date, 0.0);
             savingsMap.put(date, income - expense);
         }
-        // Include dates with only expenses
+        // Process dates with only expense
         for (LocalDate date : expenseMap.keySet()) {
             if (!savingsMap.containsKey(date)) {
-                double expense = expenseMap.get(date);
-                savingsMap.put(date, -expense);
+                savingsMap.put(date, -expenseMap.get(date));
             }
         }
         return savingsMap;
     }
 
-    // Calculate total expenses by category
-    public Map<String, Double> getExpensesByCategory() {
+    public Map<String, Double> getExpensesByCategory() throws SQLException {
         List<Transaction> transactions = getTransactions();
         Map<String, Double> expensesByCategory = new HashMap<>();
-
         for (Transaction transaction : transactions) {
             if (!transaction.isIncome()) {
                 String category = transaction.getCategory();
@@ -151,25 +97,7 @@ public class AnalyticsController {
         return expensesByCategory;
     }
 
-    // Add this new method to handle CSV imports
-    public void addTransaction(LocalDate date, double amount, String description, String type, String category) {
-        String query = "INSERT INTO transactions (user_id, date, amount, description, type, category) VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            pstmt.setInt(1, userId);
-            pstmt.setDate(2, Date.valueOf(date));
-            pstmt.setDouble(3, amount);
-            pstmt.setString(4, description);
-            pstmt.setString(5, type);
-            pstmt.setString(6, category);
-
-            pstmt.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Failed to add transaction!");
-        }
+    public void addTransaction(LocalDate date, double amount, String description, String type, String category) throws SQLException {
+        transactionDao.addTransaction(userId,  date, amount,  description,  type,  category);
     }
 }
