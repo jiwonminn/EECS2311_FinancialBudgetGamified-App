@@ -45,6 +45,12 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public  int registerUser(String email, String password) {
+
+        int userId = authenticateUser(email, password);
+        if (userId != -1) {
+            return -1; // Indicates user already exists
+        }
+
         String query = "INSERT INTO users (email, password) VALUES (?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
