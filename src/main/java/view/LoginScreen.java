@@ -1,15 +1,40 @@
 package view;
 
-import controller.UserController;
-import controller.UserControllerWithDatabase;
-import model.User;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
+import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.geom.Ellipse2D;
 import java.sql.SQLException;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
+
+import controller.UserController;
+import controller.UserControllerWithDatabase;
+import utils.SessionManager;
 
 public class LoginScreen extends JFrame {
     // Define colors
@@ -225,28 +250,28 @@ public class LoginScreen extends JFrame {
         // Login button action
         loginButton.addActionListener(e -> {
             String email = emailField.getText().trim();
-            String password = new String(passwordField.getPassword()).trim();
-            if (email.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        LoginScreen.this,
-                        "Please enter both email and password",
-                        "Login Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
+            String password = new String(passwordField.getPassword());
 
-            if (!email.matches("^[\\w-.]+@[\\w-]+\\.[\\w]{2,}$")) {
+            if (email.isEmpty()) {
                 JOptionPane.showMessageDialog(
                         LoginScreen.this,
-                        "Invalid email format. For example, user@example.com",
+                        "Please enter an email",
                         "Input Error",
                         JOptionPane.ERROR_MESSAGE
                 );
                 return;
             }
 
-            // Validate password length
+            if (password.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        LoginScreen.this,
+                        "Please enter a password",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
             if (password.length() < 3) {
                 JOptionPane.showMessageDialog(
                         LoginScreen.this,
@@ -258,14 +283,14 @@ public class LoginScreen extends JFrame {
             }
 
             UserControllerWithDatabase userController = new UserControllerWithDatabase();
-            int user = 0;
+            int userId = 0;
             try {
-                user = userController.authenticateUser(email, password);
+                userId = userController.authenticateUser(email, password);
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
 
-            if (user == -1) {
+            if (userId == -1) {
                 JOptionPane.showMessageDialog(
                         LoginScreen.this,
                         "Invalid email or password",
@@ -274,15 +299,22 @@ public class LoginScreen extends JFrame {
                 );
                 return;
             }
-            // If authenticated, create your User model (you might use the new constructor with id)
+            
+            // If authenticated, set the username and store session
             userName = email.split("@")[0]; // or use other logic to determine username
             userEmail = email;
+            
+            // Store user info in SessionManager for global access
+            SessionManager.getInstance().setCurrentUser(userId, userName, userEmail);
+            
             isSubmitted = true;
             dispose();
-            int finalUser = user;
+            
+            // Launch the main UI
+            final int finalUserId = userId; // Create final copy for lambda
             SwingUtilities.invokeLater(() -> {
                 try {
-                    new CalendarUI(finalUser, userName, userEmail);
+                    new CalendarUI(finalUserId, userName, userEmail);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex);
                 }

@@ -3,10 +3,13 @@ package controller;
 import model.Quiz;
 import model.Quiz.QuizQuestion;
 import controller.UserController;
+import controller.QuestController;
+import utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.sql.SQLException;
 
 /**
  * Controller for managing the quiz functionality.
@@ -15,6 +18,7 @@ import java.util.List;
 public class QuizController {
     private Quiz quiz;
     private UserController userController;
+    private QuestController questController;
 
     /**
      * Creates a new QuizController with default questions.
@@ -25,6 +29,13 @@ public class QuizController {
         this.userController = userController;
         this.quiz = new Quiz();
         loadDefaultQuestions();
+        
+        // Initialize QuestController for rewarding XP and tracking quests
+        try {
+            this.questController = new QuestController();
+        } catch (Exception e) {
+            System.out.println("Error initializing QuestController: " + e.getMessage());
+        }
     }
 
     /**
@@ -451,5 +462,88 @@ public class QuizController {
             }
         }
         this.quiz = filteredQuiz;
+    }
+
+    /**
+     * Ends a quiz and awards XP through QuestController
+     * Should be called when a quiz is completed
+     */
+    public void completeQuiz() {
+        if (userController == null) return;
+        
+        // Get the score to award XP
+        int score = quiz.getScore();
+        
+        try {
+            // Get current user ID from active session
+            int userId = getCurrentUserId();
+            
+            if (userId > 0) {
+                System.out.println("Processing quiz completion for user " + userId + " with score " + score);
+                
+                // Create quiz completion table if it doesn't exist
+                if (questController != null) {
+                    try {
+                        questController.createQuizCompletionTableIfNotExists();
+                    } catch (Exception e) {
+                        System.out.println("Error creating quiz completion table: " + e.getMessage());
+                    }
+                    
+                    // Award XP based on quiz score
+                    boolean success = questController.addUserXP(userId, score);
+                    
+                    if (success) {
+                        System.out.println("Successfully added " + score + " XP for completing quiz");
+                        
+                        // Record quiz completion for quest tracking
+                        questController.recordQuizCompletion(userId, score);
+                        
+                        // Also explicitly check for quest completions
+                        questController.checkAndCompleteQuests(userId);
+                    } else {
+                        System.out.println("Failed to add XP for completing quiz");
+                    }
+                } else {
+                    System.out.println("QuestController not available, using UserController for points only");
+                    // Create a new quest controller if not already initialized
+                    try {
+                        this.questController = new QuestController();
+                        this.questController.addUserXP(userId, score);
+                        this.questController.recordQuizCompletion(userId, score);
+                        this.questController.checkAndCompleteQuests(userId);
+                    } catch (Exception e) {
+                        System.out.println("Error creating QuestController: " + e.getMessage());
+                    }
+                }
+            } else {
+                System.out.println("Could not determine user ID, using only UserController for points");
+            }
+        } catch (Exception e) {
+            System.out.println("Error updating XP after quiz: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Gets the current user ID from the active session
+     * @return the user ID or -1 if not found
+     */
+    private int getCurrentUserId() {
+        try {
+            // First try to get from UserController if available
+            if (userController != null) {
+                int controllerUserId = userController.getUserId();
+                if (controllerUserId > 0) {
+                    return controllerUserId;
+                }
+            }
+            
+            // Then try from session manager
+            return SessionManager.getInstance().getUserId();
+        } catch (Exception e) {
+            System.out.println("Could not get user ID: " + e.getMessage());
+            // Fallback to default user ID if necessary
+            return 1; // Default to first user
+        }
     }
 }

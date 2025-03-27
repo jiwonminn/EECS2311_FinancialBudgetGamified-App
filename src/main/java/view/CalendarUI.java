@@ -35,6 +35,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 import database.DatabaseManager;
 import view.LevelProgressPanel;
+import utils.SessionManager;
 
 public class CalendarUI extends JFrame implements CategoryChangeListener {
     // Define colors
@@ -65,25 +66,30 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
 
 
     public CalendarUI(int userId, String userName, String userEmail) throws SQLException {
+        // Store user information
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
-
-        // Get the user balance from the database
-        this.userBalance = BudgetController.getCurrentBalance(userId);
-
-        // Initialize the UserController with user details
-        UserController userController = new UserController(userName, userEmail, userBalance);
+        
+        // Store user info in SessionManager for global access
+        SessionManager.getInstance().setCurrentUser(userId, userName, userEmail);
+        
+        // Initialize controllers
         transactionController = new TransactionController();
-        transactionController.setUserId(userId);
-
-        // Initialize GoalController
         goalController = new GoalController();
-
+        
         // Initialize CategoryManager and register as listener
         categoryManager = CategoryManager.getInstance();
         categoryManager.addListener(this);
-
+        
+        // Get the user balance from the database if available
+        try {
+            this.userBalance = BudgetController.getCurrentBalance(userId);
+        } catch (Exception e) {
+            System.out.println("Error loading balance: " + e.getMessage());
+            this.userBalance = 0.0;
+        }
+        
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

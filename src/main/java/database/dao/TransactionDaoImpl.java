@@ -1,11 +1,16 @@
 package database.dao;
 
-import model.Transaction;
-import database.DatabaseManager;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import database.DatabaseManager;
+import model.Transaction;
 
 public class TransactionDaoImpl implements TransactionDao {
 
@@ -96,6 +101,26 @@ public class TransactionDaoImpl implements TransactionDao {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    @Override
+    public int getTransactionCountForDay(int userId, LocalDate date) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM transactions WHERE user_id = ? AND date = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setDate(2, java.sql.Date.valueOf(date));
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {

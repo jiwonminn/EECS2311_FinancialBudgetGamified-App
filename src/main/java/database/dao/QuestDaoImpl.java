@@ -1,14 +1,26 @@
 package database.dao;
 
-import model.Quest;
-import database.DatabaseManager;
-import java.sql.*;
-import java.time.LocalDate;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import database.DatabaseManager;
+import model.Quest;
+
 public class QuestDaoImpl implements QuestDao {
     private ExperienceDao experienceDao;
+    
+    // Add constructor to initialize experienceDao
+    public QuestDaoImpl() {
+        this.experienceDao = new ExperienceDaoImpl();
+    }
+    
     @Override
     public int createQuest(Quest quest) throws SQLException {
         String sql = "INSERT INTO quests (title, description, quest_type, xp_reward, required_amount, completion_status, deadline, user_id) " +
@@ -188,8 +200,20 @@ public class QuestDaoImpl implements QuestDao {
                     try (ResultSet rs = xpStmt.executeQuery()) {
                         if (rs.next()) {
                             int xpReward = rs.getInt("xp_reward");
-                            // Add XP to user
-                            return experienceDao.addUserXP(userId, xpReward);
+                            // Add XP to user - safely handle null experienceDao
+                            try {
+                                if (experienceDao != null) {
+                                    return experienceDao.addUserXP(userId, xpReward);
+                                } else {
+                                    System.out.println("WARNING: experienceDao is null, initializing it now");
+                                    experienceDao = new ExperienceDaoImpl();
+                                    return experienceDao.addUserXP(userId, xpReward);
+                                }
+                            } catch (Exception e) {
+                                System.out.println("Error adding XP: " + e.getMessage());
+                                // Return true since the quest was marked as complete even if XP couldn't be added
+                                return true;
+                            }
                         }
                     }
                 }
@@ -216,6 +240,25 @@ public class QuestDaoImpl implements QuestDao {
         return quest;
     }
 
-
+    @Override
+    public Quest getQuestById(int questId) throws SQLException {
+        String sql = "SELECT * FROM quests WHERE id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, questId);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToQuest(rs);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error getting quest by ID: " + e.getMessage());
+        }
+        
+        return null;
+    }
 }
 

@@ -618,6 +618,11 @@ public class QuizUI extends JPanel {
         int score = quizController.getQuiz().getScore();
         int maxScore = quizController.getQuiz().getMaximumScore();
         
+        System.out.println("Quiz completed with score: " + score + "/" + maxScore);
+        
+        // Complete the quiz - this adds XP and checks quests
+        quizController.completeQuiz();
+        
         // Update score text
         scoreLabel.setText("Your score: " + score + " / " + maxScore);
         

@@ -1,9 +1,10 @@
 package database.dao;
 
-import model.Transaction;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+
+import model.Transaction;
 
 public interface TransactionDao {
     List<Transaction> getTransactionsByUserId(int userId) throws SQLException;
@@ -11,5 +12,6 @@ public interface TransactionDao {
     boolean updateTransaction(Transaction transaction) throws SQLException;
     boolean deleteTransaction(int transactionId) throws SQLException;
     int getTransactionCountForUser(int userId) throws SQLException;
+    int getTransactionCountForDay(int userId, LocalDate date) throws SQLException;
 }
 

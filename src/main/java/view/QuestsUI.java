@@ -4,17 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.RenderingHints;
-import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -26,8 +24,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import controller.QuestController;
@@ -85,11 +83,13 @@ public class QuestsUI extends JPanel {
         initializeUI();
         loadQuests();
         
-        // Set up timer to periodically check for completed quests (every 10 seconds)
-        autoCheckTimer = new javax.swing.Timer(10000, e -> {
+        // Set up timer to periodically check for completed quests (every 5 seconds)
+        autoCheckTimer = new javax.swing.Timer(5000, e -> {
             try {
                 // Check for quest completions
                 questController.checkAndCompleteQuests(userId);
+                // Force quest controller tables creation
+                questController.createQuestTablesIfNotExists();
                 // Reload quests to reflect any automatic completions
                 loadQuests();
             } catch (SQLException ex) {
@@ -319,8 +319,8 @@ public class QuestsUI extends JPanel {
             BorderFactory.createLineBorder(new Color(50, 30, 80), 1),
             new EmptyBorder(18, 20, 18, 20)
         ));
-        panel.setMaximumSize(new Dimension(2000, 120));
-        panel.setPreferredSize(new Dimension(800, 120));
+        panel.setMaximumSize(new Dimension(2000, 160));
+        panel.setPreferredSize(new Dimension(800, 160));
         
         // Left side - quest icon
         JLabel questIcon = createQuestIcon(quest.getQuestType());
@@ -331,15 +331,30 @@ public class QuestsUI extends JPanel {
         questInfoPanel.setBackground(PANEL_COLOR);
         questInfoPanel.setBorder(new EmptyBorder(0, 15, 0, 15));
         
-        JLabel titleLabel = new JLabel(quest.getTitle());
+        // Create a title panel that supports text wrapping
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(PANEL_COLOR);
+        titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel titleLabel = new JLabel("<html><div style='width: 400px;'>" + quest.getTitle() + "</div></html>");
         titleLabel.setForeground(TEXT_COLOR);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titlePanel.add(titleLabel, BorderLayout.WEST);
         
-        JLabel descriptionLabel = new JLabel(quest.getDescription());
+        // Create a description panel that supports text wrapping
+        JPanel descPanel = new JPanel(new BorderLayout());
+        descPanel.setBackground(PANEL_COLOR);
+        descPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel descriptionLabel = new JLabel("<html><div style='width: 400px;'>" + quest.getDescription() + "</div></html>");
         descriptionLabel.setForeground(new Color(200, 200, 200));
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        descPanel.add(descriptionLabel, BorderLayout.WEST);
+        
+        questInfoPanel.add(titlePanel);
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 8))); // Space after title
+        questInfoPanel.add(descPanel);
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Space after description
         
         // Progress bar - improved styling
         JProgressBar progressBar = new JProgressBar() {
@@ -370,29 +385,38 @@ public class QuestsUI extends JPanel {
         
         progressBar.setMinimum(0);
         progressBar.setMaximum(100);
-        progressBar.setValue(quest.isCompleted() ? 100 : (int)(Math.random() * 80 + 10)); // Random progress for demo
+        
+        // Calculate actual progress instead of using random values
+        int progressValue = 0;
+        try {
+            // Use the controller to calculate quest progress
+            progressValue = questController.calculateQuestProgress(quest, userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Error calculating quest progress: " + e.getMessage());
+            // Default value on error
+            progressValue = quest.isCompleted() ? 100 : 0;
+        }
+        
+        progressBar.setValue(progressValue);
         progressBar.setStringPainted(false);
         progressBar.setOpaque(false);
         progressBar.setBorderPainted(false);
         progressBar.setBackground(new Color(30, 18, 50));
         progressBar.setForeground(accentColor);
-        progressBar.setPreferredSize(new Dimension(300, 10)); // Slightly taller
-        progressBar.setMaximumSize(new Dimension(500, 10));
+        progressBar.setPreferredSize(new Dimension(300, 12)); // Slightly taller for better visibility
+        progressBar.setMaximumSize(new Dimension(500, 12));
         progressBar.setBorder(null);
         progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Completion text
-        JLabel progressLabel = new JLabel(progressBar.getValue() + "% Complete");
+        // Completion text with actual progress value
+        JLabel progressLabel = new JLabel(progressValue + "% Complete");
         progressLabel.setForeground(new Color(180, 180, 180));
         progressLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         progressLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        questInfoPanel.add(titleLabel);
-        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-        questInfoPanel.add(descriptionLabel);
-        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 12)));
         questInfoPanel.add(progressBar);
-        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        questInfoPanel.add(Box.createRigidArea(new Dimension(0, 8))); // Increased spacing
         questInfoPanel.add(progressLabel);
         
         // Right side - buttons and rewards
@@ -456,7 +480,7 @@ public class QuestsUI extends JPanel {
         containerPanel.setOpaque(false);
         containerPanel.setBackground(new Color(0, 0, 0, 0)); // Transparent background
         containerPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); // Increased spacing between cards
-        containerPanel.setMaximumSize(new Dimension(2000, 145));
+        containerPanel.setMaximumSize(new Dimension(2000, 185)); // Increased to match the card size
         containerPanel.add(panel, BorderLayout.CENTER);
         
         // Add action listener to info button to show quest details

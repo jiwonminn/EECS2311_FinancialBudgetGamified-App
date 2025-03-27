@@ -1,11 +1,11 @@
 package database.dao;
 
 
-import model.Quest;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import model.Quest;
 
 public interface QuestDao {
     int createQuest(Quest quest) throws SQLException;
@@ -18,5 +18,13 @@ public interface QuestDao {
     List<Quest> getMonthlyQuestsByUserId(int userId) throws SQLException;
     boolean completeQuest(int questId, int userId) throws SQLException;
     Quest mapResultSetToQuest(ResultSet rs) throws SQLException;
+    
+    /**
+     * Get a quest by its ID
+     * @param questId The quest ID
+     * @return The Quest object, or null if not found
+     * @throws SQLException if there's a database error
+     */
+    Quest getQuestById(int questId) throws SQLException;
 }
 
