@@ -1,50 +1,14 @@
 package view;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
-import java.awt.RenderingHints;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.geom.Ellipse2D;
-import java.sql.SQLException;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
-
-import controller.UserController;
 import controller.UserControllerWithDatabase;
 import utils.SessionManager;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.SQLException;
 
-public class LoginScreen extends JFrame {
-    // Define colors
-    private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
-    private final Color PANEL_COLOR = new Color(40, 24, 69);
-    private final Color TEXT_COLOR = new Color(255, 255, 255);
-    private final Color ACCENT_COLOR = new Color(128, 90, 213);
-    private final Color FIELD_BACKGROUND = new Color(50, 35, 80);
-    private final Color FIELD_BORDER = new Color(70, 50, 110);
-
+public class LoginScreen extends BaseScreen {
     private JTextField emailField;
     private JPasswordField passwordField;
     private boolean isSubmitted = false;
@@ -52,145 +16,66 @@ public class LoginScreen extends JFrame {
     private String userName;
 
     public LoginScreen() {
-        // Remove window decorations to allow opacity control
-        setUndecorated(true);
-        setTitle("Financial Budget Gamified - Login");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Set initial opacity to 0.5 for fade-in
-        setOpacity(0.5f);
+        super("Financial Budget Gamified - Login");
+        JPanel mainPanel = createMainPanel();
+        setContentPane(createWrapperPanel(mainPanel));
+        initResizeListener();
+        setVisible(true);
+        fadeIn(0.5f);
+    }
 
-        setSize(1920, 1080);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setLocationRelativeTo(null);
-
-        // Create a wrapper panel for centering
-        JPanel wrapperPanel = new JPanel(new GridBagLayout());
-        wrapperPanel.setBackground(BACKGROUND_COLOR);
-
-        // Main content panel using BoxLayout (vertical)
+    private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(PANEL_COLOR);
-        int horizontalPadding = (int)(getWidth() * 0.02);
-        int verticalPadding = (int)(getHeight() * 0.03);
+        int horizontalPadding = (int) (getWidth() * 0.02);
+        int verticalPadding = (int) (getHeight() * 0.03);
         mainPanel.setBorder(new EmptyBorder(verticalPadding, horizontalPadding, verticalPadding, horizontalPadding));
 
-        // --- Custom Exit Button Panel ---
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        topPanel.setOpaque(false); // Make panel transparent so background shows through
-        JButton exitButton = new JButton("X");
-        exitButton.setForeground(TEXT_COLOR);
-        exitButton.setFont(new Font("Arial", Font.BOLD, 18));
-        exitButton.setBorderPainted(false);
-        exitButton.setFocusPainted(false);
-        exitButton.setContentAreaFilled(false);
-        exitButton.addActionListener(e -> System.exit(0));
-        topPanel.add(exitButton);
-        // Add the exit button panel at the top
-        mainPanel.add(topPanel);
-        // --------------------------------
+        // Exit button panel
+        mainPanel.add(createExitButtonPanel());
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Logo/Icon panel
-        JPanel iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        iconPanel.setBackground(PANEL_COLOR);
-        JLabel iconLabel = createShieldIcon();
-        iconPanel.add(iconLabel);
+        // Icon panel
+        mainPanel.add(createIconPanel());
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Welcome text
+        // Welcome & subtitle labels
         JLabel welcomeLabel = new JLabel("Welcome Adventurer");
         welcomeLabel.setForeground(TEXT_COLOR);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
         welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(welcomeLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-        // Subtitle
         JLabel subtitleLabel = new JLabel("Begin your financial quest");
         subtitleLabel.setForeground(new Color(180, 180, 180));
         subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(subtitleLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 35)));
 
-        // Input fields panel
-        JPanel inputsPanel = new JPanel();
-        inputsPanel.setLayout(new BoxLayout(inputsPanel, BoxLayout.Y_AXIS));
-        inputsPanel.setBackground(PANEL_COLOR);
-        inputsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Email field panel
+        emailField = createTextField();
+        emailField.setToolTipText("Enter a valid email (e.g., user@example.com)");
+        JPanel emailPanel = createLabeledField("Email", emailField);
+        mainPanel.add(emailPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        int fieldWidth = Math.max(300, (int)(getWidth() * 0.3));
+        // Password field panel
+        passwordField = createPasswordField();
+        passwordField.setToolTipText("Password must be at least 3 characters");
+        JPanel passwordPanel = createLabeledField("Password", passwordField);
+        mainPanel.add(passwordPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        // Email field
-        JLabel emailLabel = new JLabel("Email");
-        emailLabel.setForeground(TEXT_COLOR);
-        emailField = new JTextField();
-        emailField.setBackground(FIELD_BACKGROUND);
-        emailField.setForeground(TEXT_COLOR);
-        emailField.setCaretColor(TEXT_COLOR);
-        emailField.setHorizontalAlignment(JTextField.CENTER);
-        emailField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(FIELD_BORDER),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
-        emailField.setMaximumSize(new Dimension(fieldWidth, 40));
-        emailField.setPreferredSize(new Dimension(fieldWidth, 40));
-        JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        emailLabelPanel.setBackground(PANEL_COLOR);
-        emailLabelPanel.add(emailLabel);
-        JPanel emailFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        emailFieldPanel.setBackground(PANEL_COLOR);
-        emailFieldPanel.add(emailField);
-
-        // Password field
-        JLabel passwordLabel = new JLabel("Password");
-        passwordLabel.setForeground(TEXT_COLOR);
-        passwordField = new JPasswordField();
-        passwordField.setBackground(FIELD_BACKGROUND);
-        passwordField.setForeground(TEXT_COLOR);
-        passwordField.setCaretColor(TEXT_COLOR);
-        passwordField.setHorizontalAlignment(JTextField.CENTER);
-        passwordField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(FIELD_BORDER),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
-        passwordField.setMaximumSize(new Dimension(fieldWidth, 40));
-        passwordField.setPreferredSize(new Dimension(fieldWidth, 40));
-        JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        passwordLabelPanel.setBackground(PANEL_COLOR);
-        passwordLabelPanel.add(passwordLabel);
-        JPanel passwordFieldPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        passwordFieldPanel.setBackground(PANEL_COLOR);
-        passwordFieldPanel.add(passwordField);
-
-        // Login button with gradient
-        JButton loginButton = new JButton("Enter the Realm") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gradient = new GradientPaint(
-                        0, 0, new Color(128, 90, 213),
-                        getWidth(), getHeight(), new Color(90, 140, 255)
-                );
-                g2.setPaint(gradient);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.setColor(TEXT_COLOR);
-                String text = getText();
-                FontMetrics fm = g2.getFontMetrics();
-                int x = (getWidth() - fm.stringWidth(text)) / 2;
-                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
-                g2.drawString(text, x, y);
-                g2.dispose();
-            }
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(fieldWidth, 45);
-            }
-        };
-        loginButton.setForeground(TEXT_COLOR);
-        loginButton.setBorderPainted(false);
-        loginButton.setFocusPainted(false);
-        loginButton.setContentAreaFilled(false);
-        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Login button
+        JButton loginButton = createGradientButton("Enter the Realm", 45);
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(PANEL_COLOR);
         buttonPanel.add(loginButton);
+        mainPanel.add(buttonPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Account info label
         JLabel accountLabel = new JLabel("Already have an account? Resume your journey");
@@ -200,8 +85,10 @@ public class LoginScreen extends JFrame {
         JPanel accountPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         accountPanel.setBackground(PANEL_COLOR);
         accountPanel.add(accountLabel);
+        mainPanel.add(accountPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Register switch panel with smooth fade transition
+        // Register switch button
         JPanel registerSwitchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         registerSwitchPanel.setBackground(PANEL_COLOR);
         JButton registerSwitchButton = new JButton("Register");
@@ -210,195 +97,106 @@ public class LoginScreen extends JFrame {
         registerSwitchButton.setBorderPainted(false);
         registerSwitchButton.setFocusPainted(false);
         registerSwitchButton.setContentAreaFilled(false);
-        registerSwitchButton.addActionListener(e -> fadeOutAndSwitchToRegister());
+        registerSwitchButton.addActionListener(e ->
+                fadeOutAndSwitch(() -> {
+                    RegisterScreen regScreen = new RegisterScreen();
+                    regScreen.fadeIn(0.5f);
+                })
+        );
         registerSwitchPanel.add(registerSwitchButton);
-
-        // Add components to mainPanel with spacing
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Some space below exit button
-        mainPanel.add(iconPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(welcomeLabel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(subtitleLabel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 35)));
-        mainPanel.add(emailLabelPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(emailFieldPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(passwordLabelPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(passwordFieldPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-        mainPanel.add(buttonPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(accountPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         mainPanel.add(registerSwitchPanel);
 
-        Dimension loginPanelSize = new Dimension(fieldWidth + 100, 600);
-        mainPanel.setMinimumSize(loginPanelSize);
-        mainPanel.setPreferredSize(loginPanelSize);
-
-        wrapperPanel.add(mainPanel);
-        setContentPane(wrapperPanel);
-        getContentPane().setBackground(BACKGROUND_COLOR);
-
-        // In your LoginScreen constructor, set tooltips:
-        emailField.setToolTipText("Enter a valid email (e.g., user@example.com)");
-        passwordField.setToolTipText("Password must be at least 3 characters");
+        Dimension panelSize = new Dimension(fieldWidth + 100, 600);
+        mainPanel.setMinimumSize(panelSize);
+        mainPanel.setPreferredSize(panelSize);
 
         // Login button action
-        loginButton.addActionListener(e -> {
-            String email = emailField.getText().trim();
-            String password = new String(passwordField.getPassword());
+        loginButton.addActionListener(e -> handleLoginAction());
 
-            if (email.isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        LoginScreen.this,
-                        "Please enter an email",
-                        "Input Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
+        return mainPanel;
+    }
 
-            if (password.isEmpty()) {
-                JOptionPane.showMessageDialog(
-                        LoginScreen.this,
-                        "Please enter a password",
-                        "Input Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            if (password.length() < 3) {
-                JOptionPane.showMessageDialog(
-                        LoginScreen.this,
-                        "Password must be at least 3 characters long",
-                        "Input Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            UserControllerWithDatabase userController = new UserControllerWithDatabase();
-            int userId = 0;
-            try {
-                userId = userController.authenticateUser(email, password);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-
-            if (userId == -1) {
-                JOptionPane.showMessageDialog(
-                        LoginScreen.this,
-                        "Invalid email or password",
-                        "Login Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-            
-            // If authenticated, set the username and store session
-            userName = email.split("@")[0]; // or use other logic to determine username
-            userEmail = email;
-            
-            // Store user info in SessionManager for global access
-            SessionManager.getInstance().setCurrentUser(userId, userName, userEmail);
-            
-            isSubmitted = true;
-            dispose();
-            
-            // Launch the main UI
-            final int finalUserId = userId; // Create final copy for lambda
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    new CalendarUI(finalUserId, userName, userEmail);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
-        });
-
+    private void initResizeListener() {
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent evt) {
-                int newFieldWidth = Math.max(300, (int)(getWidth() * 0.3));
-                emailField.setMaximumSize(new Dimension(newFieldWidth, 40));
-                emailField.setPreferredSize(new Dimension(newFieldWidth, 40));
-                passwordField.setMaximumSize(new Dimension(newFieldWidth, 40));
-                passwordField.setPreferredSize(new Dimension(newFieldWidth, 40));
-                loginButton.setPreferredSize(new Dimension(newFieldWidth, 45));
+                fieldWidth = Math.max(300, (int) (getWidth() * 0.3));
+                emailField.setMaximumSize(new Dimension(fieldWidth, 40));
+                emailField.setPreferredSize(new Dimension(fieldWidth, 40));
+                passwordField.setMaximumSize(new Dimension(fieldWidth, 40));
+                passwordField.setPreferredSize(new Dimension(fieldWidth, 40));
                 revalidate();
                 repaint();
             }
         });
-
-        setVisible(true);
-        fadeIn(0.5f);
     }
 
-    // Fade-out before switching to RegisterScreen
-    private void fadeOutAndSwitchToRegister() {
-        Timer timer = new Timer(50, null);
-        final float[] opacityValue = {getOpacity()};
-        timer.addActionListener(e -> {
-            opacityValue[0] -= 0.05f;
-            if (opacityValue[0] <= 0.5f) {
-                opacityValue[0] = 0.5f;
-                timer.stop();
-                dispose();
-                SwingUtilities.invokeLater(() -> {
-                    RegisterScreen regScreen = new RegisterScreen();
-                    regScreen.fadeIn(0.5f);
-                });
+    private void handleLoginAction() {
+        String email = emailField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (email.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter an email",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter a password",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (password.length() < 3) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Password must be at least 3 characters long",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        UserControllerWithDatabase userController = new UserControllerWithDatabase();
+        int userId = 0;
+        try {
+            userId = userController.authenticateUser(email, password);
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        if (userId == -1) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Invalid email or password",
+                    "Login Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Successful login
+        userName = email.split("@")[0];
+        userEmail = email;
+        SessionManager.getInstance().setCurrentUser(userId, userName, userEmail);
+        isSubmitted = true;
+        dispose();
+
+        final int finalUserId = userId;
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new CalendarUI(finalUserId, userName, userEmail);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
-            setOpacity(opacityValue[0]);
         });
-        timer.start();
-    }
-
-    // Fade-in: Gradually increase opacity from startOpacity to 1.0
-    public void fadeIn(float startOpacity) {
-        setOpacity(startOpacity);
-        Timer timer = new Timer(50, null);
-        final float[] opacityValue = {startOpacity};
-        timer.addActionListener(e -> {
-            opacityValue[0] += 0.05f;
-            if (opacityValue[0] >= 1f) {
-                opacityValue[0] = 1f;
-                timer.stop();
-            }
-            setOpacity(opacityValue[0]);
-        });
-        timer.start();
-    }
-
-    private JLabel createShieldIcon() {
-        JLabel iconLabel = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                Ellipse2D circle = new Ellipse2D.Double(0, 0, 70, 70);
-                g2d.setColor(ACCENT_COLOR);
-                g2d.fill(circle);
-                g2d.setColor(TEXT_COLOR);
-                int shieldWidth = 30;
-                int shieldHeight = 40;
-                int x = (70 - shieldWidth) / 2;
-                int y = (70 - shieldHeight) / 2;
-                g2d.setStroke(new BasicStroke(2f));
-                g2d.fillRoundRect(x, y, shieldWidth, shieldHeight, 10, 10);
-                g2d.dispose();
-            }
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(70, 70);
-            }
-        };
-        return iconLabel;
     }
 
     public boolean isSubmitted() {
@@ -413,9 +211,4 @@ public class LoginScreen extends JFrame {
         return userEmail;
     }
 
-    @Deprecated
-    public static void main(String[] args) throws SQLException {
-        System.out.println("This main method is deprecated. Please use app.Main.main() instead.");
-        app.Main.main(args);
-    }
 }
