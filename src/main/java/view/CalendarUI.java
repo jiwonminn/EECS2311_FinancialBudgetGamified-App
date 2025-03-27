@@ -35,7 +35,6 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 import database.DatabaseManager;
 import view.LevelProgressPanel;
-import utils.SessionManager;
 
 public class CalendarUI extends JFrame implements CategoryChangeListener {
     // Define colors
@@ -64,32 +63,30 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
     private double userBalance; // New field to store the user's balance
     private JLabel balanceLabel;
 
+    private static final String[] tabNames = {
+        "Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Financial Tips", "Leaderboard", "Transaction Log"
+    };
 
     public CalendarUI(int userId, String userName, String userEmail) throws SQLException {
-        // Store user information
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
-        
-        // Store user info in SessionManager for global access
-        SessionManager.getInstance().setCurrentUser(userId, userName, userEmail);
-        
-        // Initialize controllers
+
+        // Get the user balance from the database
+        this.userBalance = BudgetController.getCurrentBalance(userId);
+
+        // Initialize the UserController with user details
+        UserController userController = new UserController(userName, userEmail, userBalance);
         transactionController = new TransactionController();
+        transactionController.setUserId(userId);
+
+        // Initialize GoalController
         goalController = new GoalController();
-        
+
         // Initialize CategoryManager and register as listener
         categoryManager = CategoryManager.getInstance();
         categoryManager.addListener(this);
-        
-        // Get the user balance from the database if available
-        try {
-            this.userBalance = BudgetController.getCurrentBalance(userId);
-        } catch (Exception e) {
-            System.out.println("Error loading balance: " + e.getMessage());
-            this.userBalance = 0.0;
-        }
-        
+
         setTitle("Financial Budget Gamified - Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -165,7 +162,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
         
         // Add Transaction Log tab between Leaderboard and Quiz
-        String[] tabNames = {"Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Leaderboard", "Transaction Log"};
+        String[] tabNames = {"Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Financial Tips", "Leaderboard", "Transaction Log"};
         
         for (String tabName : tabNames) {
             boolean isSelected = tabName.equals(currentTab); // Set selected based on current tab
@@ -268,6 +265,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 return "📈";
             case "Quiz":
                 return "❓";
+            case "Financial Tips":
+                return "💡";
             case "Leaderboard":
                 return "🏆";
             case "Transaction Log":
@@ -392,6 +391,12 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 // Use the actual AnalyticsUI since JFreeChart is available in the lib folder
                 AnalyticsUI analyticsUI = new AnalyticsUI(userId);
                 add(analyticsUI, BorderLayout.CENTER);
+                break;
+                
+            case "Financial Tips":
+                // Create and add the FinancialTipsUI panel
+                FinancialTipsUI financialTipsUI = new FinancialTipsUI();
+                add(financialTipsUI, BorderLayout.CENTER);
                 break;
                 
             case "Leaderboard":
@@ -856,8 +861,6 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         if (transactionDisplayPanel != null) {
             transactionDisplayPanel.removeAll();
 
-
-
             // Get transactions from controller
             List<Transaction> transactions = transactionController.getAllTransactions(userId);
             
@@ -1021,7 +1024,6 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
 
         return cardPanel;
     }
-
 
     // Get color for a category
     private Color getCategoryColor(String category) {
