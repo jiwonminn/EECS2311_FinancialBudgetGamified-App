@@ -1,14 +1,31 @@
 package controller;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+import database.DatabaseManager;
 import database.dao.Budget;
 import database.dao.Budgetimpl;
 import database.dao.ExperienceDao;
@@ -18,7 +35,6 @@ import database.dao.QuestDaoImpl;
 import database.dao.TransactionDao;
 import database.dao.TransactionDaoImpl;
 import model.Quest;
-import database.DatabaseManager;
 
 public class QuestController {
     private QuestDao QuestDao;
@@ -121,6 +137,82 @@ public class QuestController {
                 
                 return true;
             }
+
+            // Show congratulatory popup
+            Quest quest = QuestDao.getQuestById(questId);
+            if (quest != null) {
+                SwingUtilities.invokeLater(() -> {
+                    JDialog popup = new JDialog((Frame) null, "Quest Completed!", true);
+                    popup.setLayout(new BorderLayout(10, 10));
+                    popup.getContentPane().setBackground(new Color(40, 24, 69));
+                    
+                    // Create main panel
+                    JPanel mainPanel = new JPanel();
+                    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+                    mainPanel.setBackground(new Color(40, 24, 69));
+                    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+                    
+                    // Add trophy icon
+                    JLabel trophyLabel = new JLabel("🏆");
+                    trophyLabel.setFont(new Font("Arial", Font.PLAIN, 48));
+                    trophyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    mainPanel.add(trophyLabel);
+                    
+                    // Add some spacing
+                    mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    
+                    // Add congratulatory message
+                    JLabel congratsLabel = new JLabel("Congratulations!");
+                    congratsLabel.setFont(new Font("Arial", Font.BOLD, 24));
+                    congratsLabel.setForeground(new Color(255, 255, 255));
+                    congratsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    mainPanel.add(congratsLabel);
+                    
+                    // Add quest title
+                    JLabel questLabel = new JLabel(quest.getTitle());
+                    questLabel.setFont(new Font("Arial", Font.BOLD, 18));
+                    questLabel.setForeground(new Color(128, 90, 213));
+                    questLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    mainPanel.add(questLabel);
+                    
+                    // Add some spacing
+                    mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    
+                    // Add XP reward
+                    JLabel xpLabel = new JLabel("+" + quest.getXpReward() + " XP");
+                    xpLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                    xpLabel.setForeground(new Color(39, 174, 96));
+                    xpLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    mainPanel.add(xpLabel);
+                    
+                    // Add close button
+                    JButton closeButton = new JButton("Continue");
+                    closeButton.setBackground(new Color(128, 90, 213));
+                    closeButton.setForeground(Color.WHITE);
+                    closeButton.setFocusPainted(false);
+                    closeButton.setBorderPainted(false);
+                    closeButton.setFont(new Font("Arial", Font.BOLD, 14));
+                    closeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    closeButton.addActionListener(e -> popup.dispose());
+                    
+                    // Add some spacing before button
+                    mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+                    mainPanel.add(closeButton);
+                    
+                    popup.add(mainPanel, BorderLayout.CENTER);
+                    
+                    // Set dialog properties
+                    popup.setSize(300, 400);
+                    popup.setLocationRelativeTo(null);
+                    popup.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                    popup.setResizable(false);
+                    
+                    // Show the popup
+                    popup.setVisible(true);
+                });
+            }
+            
             return completed;
         } catch (Exception e) {
             System.out.println("Error completing quest: " + e.getMessage());
@@ -133,7 +225,26 @@ public class QuestController {
      * Adds XP to a user and updates their level if necessary
      */
     public boolean addUserXP(int userId, int xpAmount) throws SQLException {
-        return experienceDao.addUserXP(userId, xpAmount);
+        // Get current XP and level
+        int[] currentExp = getUserExperience(userId);
+        int currentXP = currentExp[0];
+        int currentLevel = currentExp[1];
+        
+        // Add new XP
+        boolean success = experienceDao.addUserXP(userId, xpAmount);
+        
+        if (success) {
+            // Get new XP and level
+            int[] newExp = getUserExperience(userId);
+            int newLevel = newExp[1];
+            
+            // If level increased, show level up popup
+            if (newLevel > currentLevel) {
+                showLevelUpPopup(newLevel);
+            }
+        }
+        
+        return success;
     }
 
     /**
@@ -579,5 +690,151 @@ public class QuestController {
                 }
             }
         }
+    }
+
+    /**
+     * Refreshes quests based on their type (daily/weekly)
+     * @param userId The user ID
+     * @throws SQLException if there's a database error
+     */
+    public void refreshQuests(int userId) throws SQLException {
+        LocalDate today = LocalDate.now();
+        
+        // Get all quests for the user
+        List<Quest> userQuests = getQuestsByUserId(userId);
+        
+        for (Quest quest : userQuests) {
+            // Skip completed quests
+            if (quest.isCompleted()) continue;
+            
+            // Check if quest needs to be refreshed based on its type
+            boolean shouldRefresh = false;
+            switch (quest.getQuestType().toUpperCase()) {
+                case "DAILY":
+                    // Refresh if the deadline has passed
+                    shouldRefresh = quest.getDeadline().isBefore(today);
+                    break;
+                case "WEEKLY":
+                    // Refresh if the deadline has passed
+                    shouldRefresh = quest.getDeadline().isBefore(today);
+                    break;
+                case "MONTHLY":
+                    // Monthly quests don't need refresh
+                    continue;
+            }
+            
+            if (shouldRefresh) {
+                // Delete the old quest
+                deleteQuest(quest.getId(), userId);
+                
+                // Create a new quest of the same type
+                Quest newQuest = new Quest(
+                    0,
+                    quest.getTitle(),
+                    quest.getDescription(),
+                    quest.getQuestType(),
+                    quest.getXpReward(),
+                    quest.getRequiredAmount(),
+                    false,
+                    calculateNewDeadline(quest.getQuestType()),
+                    userId
+                );
+                
+                createQuest(newQuest);
+            }
+        }
+    }
+    
+    /**
+     * Calculates the new deadline for a quest based on its type
+     */
+    private LocalDate calculateNewDeadline(String questType) {
+        LocalDate today = LocalDate.now();
+        switch (questType.toUpperCase()) {
+            case "DAILY":
+                return today.plusDays(1);
+            case "WEEKLY":
+                return today.plusWeeks(1);
+            case "MONTHLY":
+                return today.plusMonths(1);
+            default:
+                return today.plusDays(1);
+        }
+    }
+    
+    /**
+     * Shows a level-up congratulatory popup
+     */
+    private void showLevelUpPopup(int newLevel) {
+        SwingUtilities.invokeLater(() -> {
+            JDialog popup = new JDialog((Frame) null, "Level Up!", true);
+            popup.setLayout(new BorderLayout(10, 10));
+            popup.getContentPane().setBackground(new Color(40, 24, 69));
+            
+            // Create main panel
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            mainPanel.setBackground(new Color(40, 24, 69));
+            mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            // Add level up icon
+            JLabel levelIcon = new JLabel("⭐");
+            levelIcon.setFont(new Font("Arial", Font.PLAIN, 48));
+            levelIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainPanel.add(levelIcon);
+            
+            // Add some spacing
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+            
+            // Add level up message
+            JLabel levelUpLabel = new JLabel("Level Up!");
+            levelUpLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            levelUpLabel.setForeground(new Color(255, 255, 255));
+            levelUpLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainPanel.add(levelUpLabel);
+            
+            // Add new level
+            JLabel newLevelLabel = new JLabel("You've reached level " + newLevel + "!");
+            newLevelLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            newLevelLabel.setForeground(new Color(128, 90, 213));
+            newLevelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainPanel.add(newLevelLabel);
+            
+            // Add some spacing
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+            
+            // Add encouragement message
+            JLabel encouragementLabel = new JLabel("Keep up the great work!");
+            encouragementLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            encouragementLabel.setForeground(new Color(39, 174, 96));
+            encouragementLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainPanel.add(encouragementLabel);
+            
+            // Add close button
+            JButton closeButton = new JButton("Continue");
+            closeButton.setBackground(new Color(128, 90, 213));
+            closeButton.setForeground(Color.WHITE);
+            closeButton.setFocusPainted(false);
+            closeButton.setBorderPainted(false);
+            closeButton.setFont(new Font("Arial", Font.BOLD, 14));
+            closeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            closeButton.addActionListener(e -> popup.dispose());
+            
+            // Add some spacing before button
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+            mainPanel.add(closeButton);
+            
+            popup.add(mainPanel, BorderLayout.CENTER);
+            
+            // Set dialog properties
+            popup.setSize(300, 400);
+            popup.setLocationRelativeTo(null);
+            popup.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            popup.setResizable(false);
+            
+            // Show the popup
+            popup.setVisible(true);
+        });
     }
 }
