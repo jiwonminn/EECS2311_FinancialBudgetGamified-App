@@ -401,28 +401,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 
             case "Leaderboard":
                 // For now, show a placeholder message
-                JPanel leaderboardPlaceholderPanel = new JPanel(new BorderLayout());
-                leaderboardPlaceholderPanel.setBackground(BACKGROUND_COLOR);
-                leaderboardPlaceholderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-                
-                JLabel leaderboardLabel = new JLabel("Leaderboard");
-                leaderboardLabel.setForeground(TEXT_COLOR);
-                leaderboardLabel.setFont(new Font("Arial", Font.BOLD, 24));
-                leaderboardLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JLabel leaderboardDescriptionLabel = new JLabel("See how your progress compares with other users.");
-                leaderboardDescriptionLabel.setForeground(new Color(180, 180, 180));
-                leaderboardDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                leaderboardDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
-                
-                JPanel leaderboardTextPanel = new JPanel();
-                leaderboardTextPanel.setLayout(new BoxLayout(leaderboardTextPanel, BoxLayout.Y_AXIS));
-                leaderboardTextPanel.setBackground(BACKGROUND_COLOR);
-                leaderboardTextPanel.add(leaderboardLabel);
-                leaderboardTextPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-                leaderboardTextPanel.add(leaderboardDescriptionLabel);
-                
-                leaderboardPlaceholderPanel.add(leaderboardTextPanel, BorderLayout.CENTER);
+                LeaderboardUI leaderboardPlaceholderPanel = new LeaderboardUI(userId);
                 add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
                 break;
                 
