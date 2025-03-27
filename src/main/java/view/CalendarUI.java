@@ -276,6 +276,26 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
      */
     private void switchTab(String tabName) throws SQLException {
         System.out.println("Switching to tab: " + tabName);
+        
+        // Check if we're switching away from the Quiz tab and there's an incomplete quiz
+        Component currentComponent = ((BorderLayout)getContentPane().getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        if (currentComponent instanceof QuizUI) {
+            QuizUI quizUI = (QuizUI) currentComponent;
+            if (quizUI.isQuizInProgress()) {
+                int result = JOptionPane.showConfirmDialog(
+                    this,
+                    "You have an incomplete quiz. Are you sure you want to leave?",
+                    "Incomplete Quiz",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+                
+                if (result == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+        }
+        
         getContentPane().removeAll();
 
         // Create navigation panel with the current tab highlighted

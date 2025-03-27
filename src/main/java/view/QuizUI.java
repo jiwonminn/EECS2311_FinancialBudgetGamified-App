@@ -44,6 +44,7 @@ public class QuizUI extends JPanel {
     
     private int selectedAnswerIndex = -1;
     private boolean answerSubmitted = false;
+    private boolean quizInProgress = false;
     
     /**
      * Creates a new QuizUI with the given QuizController.
@@ -56,6 +57,15 @@ public class QuizUI extends JPanel {
         
         setupUI();
         showCategorySelection();
+    }
+    
+    /**
+     * Checks if there is currently a quiz in progress.
+     * 
+     * @return true if a quiz is in progress, false otherwise
+     */
+    public boolean isQuizInProgress() {
+        return quizInProgress;
     }
     
     /**
@@ -237,12 +247,27 @@ public class QuizUI extends JPanel {
         card.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (quizInProgress) {
+                    int result = JOptionPane.showConfirmDialog(
+                        QuizUI.this,
+                        "You have an incomplete quiz. Are you sure you want to start a new one?",
+                        "Incomplete Quiz",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    
+                    if (result == JOptionPane.NO_OPTION) {
+                        return;
+                    }
+                }
+                
                 if ("All Categories".equals(category)) {
                     quizController.filterByCategory(null);
                 } else {
                     quizController.filterByCategory(category);
                 }
                 quizController.startNewQuiz();
+                quizInProgress = true;
                 updateQuestionPanel();
                 cardLayout.show(contentPanel, "QUESTION");
             }
@@ -607,6 +632,9 @@ public class QuizUI extends JPanel {
             }
         }
         
+        // Reset quiz in progress flag
+        quizInProgress = false;
+        
         // Show the results panel
         cardLayout.show(contentPanel, "RESULTS");
     }
@@ -615,6 +643,20 @@ public class QuizUI extends JPanel {
      * Shows the category selection panel.
      */
     private void showCategorySelection() {
+        if (quizInProgress) {
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "You have an incomplete quiz. Are you sure you want to start a new one?",
+                "Incomplete Quiz",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (result == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        quizInProgress = false;
         cardLayout.show(contentPanel, "CATEGORY");
     }
     
