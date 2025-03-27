@@ -34,6 +34,10 @@ public class Transaction {
     	if(category == null) {
     		throw new NullPointerException("Category can not be null");
     	}
+    	
+    	if(amount < 0.00) {
+    		throw new IllegalArgumentException("Amount can not be negative");
+    	}
         this.description = description;
         this.amount = amount;
         this.date = date;

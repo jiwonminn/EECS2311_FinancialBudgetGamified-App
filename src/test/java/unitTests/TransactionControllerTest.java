@@ -39,10 +39,10 @@ class TransactionControllerTest extends TransactionController {
 	    }
 
 
-//	    @Test
-//	    public void NegativeTransaction() {
-//	    	assertThrows(IllegalArgumentException.class,()-> new Transaction("Test",-100.0,LocalDate.now(),true,"Test"));
-//	    }
+	    @Test
+	    public void NegativeTransaction() {
+	    	assertThrows(IllegalArgumentException.class,()-> new Transaction("Test",-100.0,LocalDate.now(),true,"Test"));
+	    }
 
 	    @Test
 	    public void addNegativeTransaction() {

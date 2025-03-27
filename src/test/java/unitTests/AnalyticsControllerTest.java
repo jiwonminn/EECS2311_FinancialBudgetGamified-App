@@ -150,15 +150,15 @@ class AnalyticsControllerTest {
                 "Same category expenses should be summed");
     }
 
-//    @Test
-//    void testNegativeAmounts() {
-//        testTransactions.clear();
-//        assertThrows(IllegalArgumentException.class, () -> {
-//            testTransactions.add(new Transaction("Negative Income", -1000.0, TEST_DATE, true, "Income"));
-//        }, "Should not allow negative income amount");
-//
-//        assertThrows(IllegalArgumentException.class, () -> {
-//            testTransactions.add(new Transaction("Negative Expense", -500.0, TEST_DATE, false, "Food"));
-//        }, "Should not allow negative expense amount");
-//    }
+    @Test
+    void testNegativeAmounts() {
+        testTransactions.clear();
+        assertThrows(IllegalArgumentException.class, () -> {
+            testTransactions.add(new Transaction("Negative Income", -1000.0, TEST_DATE, true, "Income"));
+        }, "Should not allow negative income amount");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            testTransactions.add(new Transaction("Negative Expense", -500.0, TEST_DATE, false, "Food"));
+        }, "Should not allow negative expense amount");
+    }
 }
