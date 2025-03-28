@@ -11,6 +11,8 @@ public class Quiz {
     private List<QuizQuestion> questions;
     private int currentQuestionIndex;
     private int score;
+    private List<Boolean> answeredQuestions;  // Track which questions have been answered
+    private int selectedAnswer;  // Track the currently selected answer
     
     /**
      * Creates a new quiz with an empty question list.
@@ -19,6 +21,8 @@ public class Quiz {
         this.questions = new ArrayList<>();
         this.currentQuestionIndex = 0;
         this.score = 0;
+        this.answeredQuestions = new ArrayList<>();
+        this.selectedAnswer = -1;  // Initialize with no selection
     }
     
     /**
@@ -27,6 +31,7 @@ public class Quiz {
      */
     public void addQuestion(QuizQuestion question) {
         questions.add(question);
+        answeredQuestions.add(false);  // Initialize as unanswered
     }
     
     /**
@@ -49,6 +54,22 @@ public class Quiz {
     }
     
     /**
+     * Sets the currently selected answer for the current question.
+     * @param answerIndex The index of the selected answer
+     */
+    public void setSelectedAnswer(int answerIndex) {
+        this.selectedAnswer = answerIndex;
+    }
+    
+    /**
+     * Gets the currently selected answer for the current question.
+     * @return The index of the selected answer, or -1 if no answer is selected
+     */
+    public int getSelectedAnswer() {
+        return selectedAnswer;
+    }
+    
+    /**
      * Moves to the next question in the quiz.
      * @return true if there is a next question, false otherwise
      */
@@ -67,11 +88,25 @@ public class Quiz {
      */
     public boolean checkAnswer(int answerIndex) {
         QuizQuestion currentQuestion = getCurrentQuestion();
-        if (currentQuestion != null && answerIndex == currentQuestion.getCorrectAnswerIndex()) {
-            score += currentQuestion.getPoints();
-            return true;
+        if (currentQuestion == null) {
+            return false;
         }
-        return false;
+        
+        // Update the selected answer
+        setSelectedAnswer(answerIndex);
+        
+        // If already answered, just return if the answer is correct
+        if (answeredQuestions.get(currentQuestionIndex)) {
+            return answerIndex == currentQuestion.getCorrectAnswerIndex();
+        }
+        
+        // Process new answer
+        boolean isCorrect = answerIndex == currentQuestion.getCorrectAnswerIndex();
+        if (isCorrect) {
+            score += currentQuestion.getPoints();
+        }
+        answeredQuestions.set(currentQuestionIndex, true);
+        return isCorrect;
     }
     
     /**
@@ -88,6 +123,18 @@ public class Quiz {
     public void reset() {
         currentQuestionIndex = 0;
         score = 0;
+        selectedAnswer = -1;
+        // Reset answered questions list
+        answeredQuestions = new ArrayList<>();
+        for (int i = 0; i < questions.size(); i++) {
+            answeredQuestions.add(false);
+        }
+        // Reset shuffled answers for each question
+        for (QuizQuestion question : questions) {
+            question.shuffleAnswers();
+        }
+        // Shuffle the order of questions
+        Collections.shuffle(questions);
     }
     
     /**
@@ -95,7 +142,7 @@ public class Quiz {
      */
     public void shuffleQuestions() {
         Collections.shuffle(questions);
-        currentQuestionIndex = 0;
+        reset();  // Reset all state after shuffling
     }
     
     /**
@@ -136,6 +183,8 @@ public class Quiz {
         private int points;
         private String explanation;
         private String category;
+        private List<String> shuffledAnswers;  // Store shuffled answers
+        private int shuffledCorrectIndex;  // Store correct index after shuffling
         
         /**
          * Creates a new quiz question.
@@ -155,6 +204,30 @@ public class Quiz {
             this.points = points;
             this.explanation = explanation;
             this.category = category;
+            shuffleAnswers();  // Initialize shuffled answers
+        }
+        
+        /**
+         * Shuffles the answers and updates the correct answer index.
+         */
+        public void shuffleAnswers() {
+            // Create a list of indices to track the original positions
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < answers.size(); i++) {
+                indices.add(i);
+            }
+            
+            // Shuffle the indices
+            Collections.shuffle(indices);
+            
+            // Create new shuffled answers list
+            shuffledAnswers = new ArrayList<>();
+            for (int i = 0; i < indices.size(); i++) {
+                shuffledAnswers.add(answers.get(indices.get(i)));
+                if (indices.get(i) == correctAnswerIndex) {
+                    shuffledCorrectIndex = i;
+                }
+            }
         }
         
         public String getQuestion() {
@@ -162,11 +235,11 @@ public class Quiz {
         }
         
         public List<String> getAnswers() {
-            return Collections.unmodifiableList(answers);
+            return Collections.unmodifiableList(shuffledAnswers != null ? shuffledAnswers : answers);
         }
         
         public int getCorrectAnswerIndex() {
-            return correctAnswerIndex;
+            return shuffledAnswers != null ? shuffledCorrectIndex : correctAnswerIndex;
         }
         
         public int getPoints() {
