@@ -509,11 +509,11 @@
             feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 16));
             feedbackLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            // New quiz button
-            newQuizButton = createGradientButton("Take Another Quiz");
-            newQuizButton.addActionListener(e -> {
-                showCategorySelection();
-            });
+            // Return message
+            JLabel returnLabel = new JLabel("Click on quiz tab to return back");
+            returnLabel.setForeground(new Color(180, 180, 180));
+            returnLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            returnLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
             // Trophy image
             JPanel trophyPanel = new JPanel() {
@@ -565,7 +565,7 @@
             panel.add(Box.createRigidArea(new Dimension(0, 20)));
             panel.add(feedbackLabel);
             panel.add(Box.createRigidArea(new Dimension(0, 30)));
-            panel.add(newQuizButton);
+            panel.add(returnLabel);
             panel.add(Box.createVerticalGlue());
             
             return panel;
