@@ -155,53 +155,67 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
      * @param currentTab The name of the current tab to highlight
      * @return The navigation panel
      */
+    /**
+     * Creates the top navigation panel with a profile icon on the far left
+     * and the rest of the tabs to the right.
+     */
     private JPanel createNavigationPanel(String currentTab) {
-        // Create a panel with FlowLayout centered, with proper spacing
-        JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        // Align everything to the left
+        JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
-        
-        // Add Transaction Log tab between Leaderboard and Quiz
-        String[] tabNames = {"Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Financial Tips", "Leaderboard", "Transaction Log"};
-        
+
+        // 1. Add the profile icon (emoji) on the far left
+        JButton profileButton = new JButton("👤");
+        profileButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        profileButton.setBorderPainted(false);
+        profileButton.setContentAreaFilled(false);
+        profileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        profileButton.setForeground(TEXT_COLOR);
+        profileButton.addActionListener(e -> {
+            // Open your UserProfileDialog when clicked
+            UserProfileDialog dialog = new UserProfileDialog(CalendarUI.this, userId);
+            dialog.setVisible(true);
+        });
+        navigationPanel.add(profileButton);
+
+        // Optional: add a little spacing before the first tab
+        navigationPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // 2. Now add your tabs to the same row
+        String[] tabNames = {
+                "Dashboard", "Goals", "Quests", "Analytics",
+                "Quiz", "Financial Tips", "Leaderboard", "Transaction Log"
+        };
+
         for (String tabName : tabNames) {
-            boolean isSelected = tabName.equals(currentTab); // Set selected based on current tab
+            boolean isSelected = tabName.equals(currentTab);
             JPanel tabPanel = createTabPanel(tabName, isSelected);
             navigationPanel.add(tabPanel);
-            
-            // Add tab click listener
+
+            // Add click listener for switching tabs
             tabPanel.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    // Set all tabs to unselected style
+                    // Reset all tabs to unselected
                     for (Component comp : navigationPanel.getComponents()) {
                         if (comp instanceof JPanel) {
                             comp.setBackground(new Color(18, 12, 31));
-                            // Update labels inside the panel
-                            for (Component inner : ((JPanel)comp).getComponents()) {
+                            for (Component inner : ((JPanel) comp).getComponents()) {
                                 if (inner instanceof JLabel) {
-                                    JLabel label = (JLabel)inner;
-                                    if (label.getText() != null && !label.getText().isEmpty() 
-                                            && label.getText().length() > 1) {
-                                        label.setForeground(new Color(200, 200, 200));
-                                    }
+                                    ((JLabel) inner).setForeground(new Color(200, 200, 200));
                                 }
                             }
                         }
                     }
-                    
-                    // Set clicked tab to selected style
+                    // Highlight the clicked tab
                     tabPanel.setBackground(ACCENT_COLOR);
                     for (Component inner : tabPanel.getComponents()) {
                         if (inner instanceof JLabel) {
-                            JLabel label = (JLabel)inner;
-                            if (label.getText() != null && !label.getText().isEmpty() 
-                                    && label.getText().length() > 1) {
-                                label.setForeground(TEXT_COLOR);
-                            }
+                            ((JLabel) inner).setForeground(TEXT_COLOR);
                         }
                     }
-
+                    // Switch to the clicked tab
                     try {
                         switchTab(tabName);
                     } catch (SQLException e) {
@@ -210,15 +224,11 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 }
             });
         }
-        
-        // Wrap the navigation panel in a container to ensure it takes full width
-        JPanel navContainer = new JPanel(new BorderLayout());
-        navContainer.setBackground(new Color(18, 12, 31));
-        navContainer.add(navigationPanel, BorderLayout.CENTER);
-        
-        return navContainer;
+
+        return navigationPanel;
     }
-    
+
+
     /**
      * Creates a single tab panel for the navigation bar.
      */

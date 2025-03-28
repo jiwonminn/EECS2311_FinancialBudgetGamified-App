@@ -21,6 +21,10 @@ public class User {
         this.points = points;
     }
 
+    public User(String email) {
+        this.email = email;
+    }
+
     // Getters
     public int getId() {
         return id;

@@ -15,7 +15,7 @@ public class UserDaoImpl implements UserDao {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     // Assuming User has an appropriate constructor
-                    return new User(rs.getString("username"), rs.getString("email"), rs.getDouble("balance"));
+                    return new User(rs.getString("email"));
                 }
             }
         }
@@ -71,5 +71,31 @@ public class UserDaoImpl implements UserDao {
             e.printStackTrace();
             return -1; // Indicates failure
         }
+    }
+
+    @Override
+    public int updatePassword(int userId, String newPassword) throws SQLException {
+        String query = "UPDATE users SET password = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, newPassword);
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public String getPasswordForUser(int userId) throws SQLException {
+        String query = "SELECT password FROM users WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("password");
+                }
+            }
+        }
+        return "";
     }
 }
