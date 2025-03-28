@@ -112,11 +112,7 @@ public class UserProfileDialog extends JDialog {
                     try {
                         boolean success = get();
                         if (success) {
-                            JOptionPane.showMessageDialog(
-                                    UserProfileDialog.this,
-                                    "Password updated successfully!",
-                                    "Success",
-                                    JOptionPane.INFORMATION_MESSAGE);
+                            // Close the dialog immediately upon successful password update
                             dispose();
                         } else {
                             JOptionPane.showMessageDialog(
@@ -141,5 +137,4 @@ public class UserProfileDialog extends JDialog {
             worker.execute();
         }
     }
-
 }
