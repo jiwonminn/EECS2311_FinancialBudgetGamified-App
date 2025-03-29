@@ -35,23 +35,7 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        // Update database schema if needed
-//        try {
-//            // Ensure the database is up to date
-//            DatabaseUpdater.updateTransactionsTable();
-//            System.out.println("Database schema check completed.");
-//        } catch (Exception e) {
-//            System.err.println("Failed to update database schema: " + e.getMessage());
-//            e.printStackTrace();
-//
-//            // Show error dialog to user
-//            JOptionPane.showMessageDialog(null,
-//                "There was a problem connecting to the database. Some features may not work properly.\n" +
-//                "Error: " + e.getMessage(),
-//                "Database Error",
-//                JOptionPane.ERROR_MESSAGE);
-//        }
+
         
         // Launch login screen
         SwingUtilities.invokeLater(() -> new LoginScreen());
