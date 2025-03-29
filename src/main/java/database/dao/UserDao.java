@@ -10,4 +10,6 @@ public interface UserDao {
     int updatePassword(int userId, String newPassword) throws SQLException;
     // New: get the current password from the database
     String getPasswordForUser(int userId) throws SQLException;
+    // New: delete a user from the database
+    boolean deleteUser(int userId) throws SQLException;
 }

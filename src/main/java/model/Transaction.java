@@ -80,6 +80,10 @@ public class Transaction {
         return userId;
     }
 
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
     public String getDescription() {
         return description;
     }

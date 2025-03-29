@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
-public class IntegrationTest {
+public class FinancialAppIntegrationTest {
     private static Connection connection;
     private static UserController userController;
     private static UserControllerWithDatabase userControllerWithDb;

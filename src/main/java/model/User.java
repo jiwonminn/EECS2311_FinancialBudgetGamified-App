@@ -4,6 +4,7 @@ public class User {
     private int id;           // Database-generated user ID
     private String username;
     private String email;
+    private String password;
     private double balance;
     private int points;
 
@@ -11,12 +12,25 @@ public class User {
     public User(String username, String email, double balance) {
         this(-1, username, email, balance, 0);
     }
+    
+    public User(String username, String email, String password, double balance) {
+        this(-1, username, email, password, balance, 0);
+    }
 
     // Full constructor to be used when retrieving user information from the database
     public User(int id, String username, String email, double balance, int points) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.balance = balance;
+        this.points = points;
+    }
+    
+    public User(int id, String username, String email, String password, double balance, int points) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
         this.balance = balance;
         this.points = points;
     }
