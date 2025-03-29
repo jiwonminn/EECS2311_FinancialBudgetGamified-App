@@ -94,7 +94,14 @@ public class RegisterScreen extends BaseScreen {
         mainPanel.setPreferredSize(panelSize);
 
         // Register button action
-        registerButton.addActionListener(e -> handleRegisterAction());
+        registerButton.addActionListener(e -> {
+			try {
+				handleRegisterAction();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
 
         return mainPanel;
     }
@@ -113,7 +120,7 @@ public class RegisterScreen extends BaseScreen {
         });
     }
 
-    private void handleRegisterAction() {
+    private void handleRegisterAction() throws SQLException {
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 

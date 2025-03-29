@@ -12,6 +12,10 @@
         private int userId = 1; // Default to 1 if not set explicitly
         private static final int XP_REWARD_PER_TRANSACTION = 20; // XP points awarded for logging a transaction
 
+        public TransactionController() throws SQLException {
+        	this.connection = DatabaseManager.getConnection();
+        }
+        
         public TransactionController(Connection connection) {
             this.connection = connection;
         }

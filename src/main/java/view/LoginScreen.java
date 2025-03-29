@@ -111,7 +111,14 @@ public class LoginScreen extends BaseScreen {
         mainPanel.setPreferredSize(panelSize);
 
         // Login button action
-        loginButton.addActionListener(e -> handleLoginAction());
+        loginButton.addActionListener(e -> {
+			try {
+				handleLoginAction();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
 
         return mainPanel;
     }
@@ -130,7 +137,7 @@ public class LoginScreen extends BaseScreen {
         });
     }
 
-    private void handleLoginAction() {
+    private void handleLoginAction() throws SQLException {
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword());
 

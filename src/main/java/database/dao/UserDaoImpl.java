@@ -7,8 +7,8 @@ import java.sql.*;
 public class UserDaoImpl implements UserDao {
     private final Connection connection;
     
-    public UserDaoImpl() {
-        this.connection = connection;
+    public UserDaoImpl() throws SQLException {
+        this.connection = DatabaseManager.getConnection();
     }
     
 

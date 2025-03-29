@@ -13,7 +13,7 @@ public class UserProfileDialog extends JDialog {
     private JButton updateButton;
     private JButton cancelButton;
 
-    public UserProfileDialog(Frame owner, int userId) {
+    public UserProfileDialog(Frame owner, int userId) throws SQLException {
         super(owner, "User Profile", true);
         controller = new UserProfileController(userId);
         initializeUI();

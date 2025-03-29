@@ -9,7 +9,7 @@ public class UserProfileController {
     private int userId;
     private UserDao userDao;
 
-    public UserProfileController(int userId) {
+    public UserProfileController(int userId) throws SQLException {
         this.userId = userId;
         this.userDao = new UserDaoImpl();
     }
