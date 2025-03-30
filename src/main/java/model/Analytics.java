@@ -14,6 +14,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 public class Analytics {
     private Map<String, Double> categorySpending;
@@ -32,7 +33,6 @@ public class Analytics {
     public List<String[]> readCSVFile(File file) throws IOException {
         List<String[]> transactions = new ArrayList<>();
         CSVFormat format = CSVFormat.DEFAULT.builder()
-                .setHeader("Date", "Description", "Debit", "Credit", "Balance")
                 .setSkipHeaderRecord(true)
                 .build();
 
@@ -40,35 +40,114 @@ public class Analytics {
              CSVParser parser = format.parse(reader)) {
 
             for (CSVRecord record : parser) {
-                if (record.size() >= 5) {  // TD Bank format has 5 columns
-                    String date = record.get("Date");
-                    String description = record.get("Description");
-                    String debit = record.get("Debit").trim();    // Expense
-                    String credit = record.get("Credit").trim();  // Income
-
-                    // Skip if both debit and credit are empty
-                    if (debit.isEmpty() && credit.isEmpty()) {
-                        continue;
-                    }
-
-                    // Convert date from MM/dd/yyyy to yyyy-MM-dd
-                    String[] dateParts = date.split("/");
-                    if (dateParts.length == 3) {
-                        date = dateParts[2] + "-" + String.format("%02d", Integer.parseInt(dateParts[0])) + "-" +
-                                String.format("%02d", Integer.parseInt(dateParts[1]));
-                    }
-
-                    String[] transaction = new String[4];
-                    transaction[0] = date;  // Date in yyyy-MM-dd format
-                    transaction[1] = !debit.isEmpty() ? debit : credit;  // Amount
-                    transaction[2] = determineCategory(description);  // Category based on description
-                    transaction[3] = description;  // Description
-
-                    transactions.add(transaction);
+                // Check for the expected number of columns
+                if (record.size() < 4) { // At least Date, Description, Amount (Debit/Credit)
+                    throw new IllegalArgumentException("Invalid CSV format: insufficient columns in record " + record);
                 }
+
+                // Extract fields based on common column names
+                String date = getFieldValue(record, "Date", "Transaction Date", "date");
+                String description = getFieldValue(record, "Description", "Transaction Description", "description");
+                String debit = getFieldValue(record, "Debit", "Amount", "debit");
+                String credit = getFieldValue(record, "Credit", "Income", "credit");
+
+                // Validate the format of the transaction
+                if (!isValidTransaction(date, description, debit, credit)) {
+                    throw new IllegalArgumentException("Invalid transaction format: " + record);
+                }
+
+                // Skip if both debit and credit are empty
+                if (debit.isEmpty() && credit.isEmpty()) {
+                    continue;
+                }
+
+                // Convert date from MM/dd/yyyy to yyyy-MM-dd
+                date = convertDateFormat(date);
+
+                String[] transaction = new String[4];
+                transaction[0] = date;  // Date in yyyy-MM-dd format
+                transaction[1] = !debit.isEmpty() ? debit : credit;  // Amount
+                transaction[2] = determineCategory(description);  // Category based on description
+                transaction[3] = description;  // Description
+
+                transactions.add(transaction);
             }
         }
         return transactions;
+    }
+
+    /**
+     * Retrieves the value of a field from the CSV record based on possible headers.
+     */
+    private String getFieldValue(CSVRecord record, String... possibleHeaders) {
+        for (String header : possibleHeaders) {
+            int index = record.getParser().getHeaderMap().get(header);
+            if (index >= 0 && index < record.size()) {
+                return record.get(index).trim();
+            }
+        }
+        return ""; // Return empty if no valid header found
+    }
+
+    /**
+     * Converts date from various formats to yyyy-MM-dd.
+     */
+    private String convertDateFormat(String date) {
+        // Example: Handle MM/dd/yyyy and dd-MM-yyyy formats
+        String[] dateParts;
+        if (date.contains("/")) {
+            dateParts = date.split("/");
+            if (dateParts.length == 3) {
+                return dateParts[2] + "-" + String.format("%02d", Integer.parseInt(dateParts[0])) + "-" +
+                        String.format("%02d", Integer.parseInt(dateParts[1]));
+            }
+        } else if (date.contains("-")) {
+            dateParts = date.split("-");
+            if (dateParts.length == 3) {
+                return dateParts[2] + "-" + String.format("%02d", Integer.parseInt(dateParts[1])) + "-" +
+                        String.format("%02d", Integer.parseInt(dateParts[0]));
+            }
+        }
+        // If no valid format is found, return the original date (or handle as needed)
+        return date;
+    }
+
+    /**
+     * Validates the format of a transaction.
+     * @return true if the transaction format is valid, false otherwise.
+     */
+    private boolean isValidTransaction(String date, String description, String debit, String credit) {
+        // Check if the date is in the correct format (MM/dd/yyyy or dd-MM-yyyy)
+        if (!Pattern.matches("\\d{1,2}/\\d{1,2}/\\d{4}", date) && !Pattern.matches("\\d{1,2}-\\d{1,2}-\\d{4}", date)) {
+            return false;
+        }
+
+        // Check if the description is not empty
+        if (description == null || description.trim().isEmpty()) {
+            return false;
+        }
+
+        // Check if either debit or credit has a valid number
+        if (!debit.isEmpty() && !isNumeric(debit)) {
+            return false;
+        }
+        if (!credit.isEmpty() && !isNumeric(credit)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks if a string is a valid number.
+     */
+    private boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     // Helper method to determine category based on description

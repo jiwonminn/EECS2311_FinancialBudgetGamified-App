@@ -3,12 +3,15 @@ package controller;
 import database.dao.TransactionDao;
 import database.dao.TransactionDaoImpl;
 import model.Transaction;
+import model.Analytics;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 public class AnalyticsController {
     private int userId;
@@ -99,5 +102,30 @@ public class AnalyticsController {
 
     public void addTransaction(LocalDate date, double amount, String description, String type, String category) throws SQLException {
         transactionDao.addTransaction(userId,  date, amount,  description,  type,  category);
+    }
+
+    /**
+     * Imports transactions from a CSV file.
+     * @param file The CSV file to import.
+     * @throws IOException If there is an error reading the file.
+     * @throws SQLException If there is an error adding transactions to the database.
+     */
+    public void importTransactionsFromCsv(File file) throws IOException, SQLException {
+        Analytics analytics = new Analytics();
+        List<String[]> transactions = analytics.readCSVFile(file);
+
+        for (String[] transaction : transactions) {
+            // Assuming the transaction array contains: [date, amount, category, description]
+            LocalDate date = LocalDate.parse(transaction[0]); // Assuming date is in yyyy-MM-dd format
+            double amount = Double.parseDouble(transaction[1]);
+            String category = transaction[2];
+            String description = transaction[3];
+
+            // Determine if the transaction is income or expense
+            String type = amount < 0 ? "expense" : "income"; // Assuming negative amounts are expenses
+
+            // Add the transaction to the database
+            addTransaction(date, amount, description, type, category);
+        }
     }
 }

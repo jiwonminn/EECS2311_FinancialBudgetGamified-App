@@ -1,5 +1,6 @@
 package view;
 import controller.AnalyticsController;
+import controller.TransactionController;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -45,9 +46,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.io.File;
+import java.io.IOException;
 
 public class AnalyticsUI extends JPanel {
     private AnalyticsController controller;
+    private TransactionController transactionController;
     private int userId;
     private final Color BACKGROUND_COLOR = new Color(24, 15, 41);
     private final Color PANEL_COLOR = new Color(40, 24, 69);
@@ -81,12 +85,13 @@ public class AnalyticsUI extends JPanel {
         this.userId = userId;
         try {
             controller = new AnalyticsController(userId);
+            transactionController = new TransactionController();
             initializeUI();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error initializing Analytics: " + e.getMessage(), 
-                "Initialization Error", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error initializing Analytics: " + e.getMessage(),
+                    "Initialization Error",
+                    JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
@@ -128,11 +133,11 @@ public class AnalyticsUI extends JPanel {
         importButton.setOpaque(true);
         importButton.setBorderPainted(false);
         importButton.addActionListener(e -> handleCsvImport());
-        
+
         JPanel importPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         importPanel.setBackground(BACKGROUND_COLOR);
         importPanel.add(importButton);
-        
+
         headerPanel.add(importPanel, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
@@ -207,32 +212,32 @@ public class AnalyticsUI extends JPanel {
 
         // Customize the plot
         CategoryPlot plot = chart.getCategoryPlot();
-        
+
         // Customize renderer
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, CORRECT_COLOR);  // Income - green
         renderer.setSeriesPaint(1, INCORRECT_COLOR); // Expenses - red
-        
+
         // Improve bar spacing
         renderer.setItemMargin(0.3);  // Increase space between bars in a category
-        
+
         // Add dollar value labels on top of the bars
         renderer.setDefaultItemLabelGenerator(new org.jfree.chart.labels.StandardCategoryItemLabelGenerator(
                 "${2}", new DecimalFormat("0.00")));
         renderer.setDefaultItemLabelsVisible(true);
         renderer.setDefaultItemLabelPaint(TEXT_COLOR);
-        
+
         // Adjust the range axis to provide more room for labels
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setUpperMargin(0.25);  // Add more space at the top for labels
-        
+
         // Improve zero value display
         rangeAxis.setNumberFormatOverride(new DecimalFormat("$#,##0.00"));
-        
+
         // Adjust category axis
         CategoryAxis domainAxis = plot.getDomainAxis();
         domainAxis.setCategoryMargin(0.4);  // More space between categories
-        
+
         return chart;
     }
 
@@ -257,7 +262,7 @@ public class AnalyticsUI extends JPanel {
                 true,                              // Tooltips
                 false                              // URLs
         );
-        
+
         // Add subtitle with total amounts
         TextTitle subtitle = new TextTitle(
                 String.format("Income: $%.2f | Expenses: $%.2f", totalIncome, totalExpense),
@@ -278,7 +283,7 @@ public class AnalyticsUI extends JPanel {
         plot.setLabelBackgroundPaint(null);
         plot.setLabelOutlinePaint(null);
         plot.setShadowPaint(null);
-        
+
         // Add percentage labels
         PieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator(
                 "{0}: {2}", new DecimalFormat("0.00"), new DecimalFormat("0%"));
@@ -292,19 +297,19 @@ public class AnalyticsUI extends JPanel {
         // Get savings data
         Map<LocalDate, Double> savingsData = controller.getSavingsOverTime();
         boolean useMonthly = savingsData.size() > 60; // Use monthly aggregation if we have lots of data points
-        
+
         JFreeChart chart;
-        
+
         if (useMonthly) {
             // Aggregate by month for clarity with lots of data
             Map<String, Double> monthlySavings = aggregateByMonth(savingsData);
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-            
+
             // Add to dataset
             for (Map.Entry<String, Double> entry : new TreeSet<>(monthlySavings.entrySet())) {
                 dataset.addValue(entry.getValue(), "Savings", entry.getKey());
             }
-            
+
             // Create line chart
             chart = ChartFactory.createLineChart(
                     "Monthly Savings Trend",    // Chart title
@@ -316,7 +321,7 @@ public class AnalyticsUI extends JPanel {
                     true,                       // Tooltips
                     false                       // URLs
             );
-            
+
             // Customize renderer
             CategoryPlot plot = chart.getCategoryPlot();
             LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
@@ -330,16 +335,16 @@ public class AnalyticsUI extends JPanel {
         } else {
             // Create time series dataset for daily data
             TimeSeries series = new TimeSeries("Savings");
-            
+
             // Add data points
             for (Map.Entry<LocalDate, Double> entry : savingsData.entrySet()) {
                 LocalDate date = entry.getKey();
                 series.add(new Day(date.getDayOfMonth(), date.getMonthValue(), date.getYear()), entry.getValue());
             }
-            
+
             TimeSeriesCollection dataset = new TimeSeriesCollection();
             dataset.addSeries(series);
-            
+
             // Create chart
             chart = ChartFactory.createTimeSeriesChart(
                     "Daily Savings Trend",      // Chart title
@@ -350,7 +355,7 @@ public class AnalyticsUI extends JPanel {
                     true,                       // Tooltips
                     false                       // URLs
             );
-            
+
             // Customize plot
             XYPlot plot = chart.getXYPlot();
             XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
@@ -359,7 +364,7 @@ public class AnalyticsUI extends JPanel {
             renderer.setSeriesShapesVisible(0, true);
             plot.setRenderer(renderer);
         }
-        
+
         // Apply dark theme and add subtitle
         applyDarkTheme(chart);
         TextTitle subtitle = new TextTitle(
@@ -368,7 +373,7 @@ public class AnalyticsUI extends JPanel {
         );
         subtitle.setPaint(new Color(180, 180, 180));
         chart.addSubtitle(subtitle);
-        
+
         return chart;
     }
 
@@ -392,7 +397,7 @@ public class AnalyticsUI extends JPanel {
         JFreeChart chart = ChartFactory.createPieChart(
                 "Expense Categories",        // Chart title
                 dataset,                     // Dataset
-                false,                       // Legend 
+                false,                       // Legend
                 true,                        // Tooltips
                 false                        // URLs
         );
@@ -418,12 +423,12 @@ public class AnalyticsUI extends JPanel {
         plot.setCircular(true);
         plot.setLabelGap(0.02);
         plot.setInteriorGap(0.04);
-        
+
         // JFreeChart 1.5+ uses this instead of setSectionDepth for donut effect
         if (plot instanceof org.jfree.chart.plot.RingPlot) {
             ((org.jfree.chart.plot.RingPlot) plot).setSectionDepth(0.35);
         }
-        
+
         // Set custom colors for each category
         int colorIndex = 0;
         for (Object key : dataset.getKeys()) {
@@ -431,7 +436,7 @@ public class AnalyticsUI extends JPanel {
             plot.setSectionPaint((Comparable<?>) key, EXPENSE_CATEGORY_COLORS[colorIndex % EXPENSE_CATEGORY_COLORS.length]);
             colorIndex++;
         }
-        
+
         // Add percentage and dollar amount labels
         PieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator(
                 "{0}: {2} (${1})", new DecimalFormat("0.00"), new DecimalFormat("0%"));
@@ -444,11 +449,11 @@ public class AnalyticsUI extends JPanel {
     private void applyDarkTheme(JFreeChart chart) {
         // Background
         chart.setBackgroundPaint(PANEL_COLOR);
-        
+
         // Title
         chart.getTitle().setPaint(TEXT_COLOR);
         chart.getTitle().setFont(new Font("Arial", Font.BOLD, 16));
-        
+
         // Plot
         if (chart.getPlot() instanceof PiePlot) {
             PiePlot plot = (PiePlot) chart.getPlot();
@@ -462,13 +467,13 @@ public class AnalyticsUI extends JPanel {
             plot.setDomainGridlinePaint(new Color(70, 50, 110));
             plot.setRangeGridlinePaint(new Color(70, 50, 110));
             plot.setOutlinePaint(PANEL_COLOR);
-            
+
             // Axes
             CategoryAxis domainAxis = plot.getDomainAxis();
             domainAxis.setLabelPaint(TEXT_COLOR);
             domainAxis.setTickLabelPaint(TEXT_COLOR);
             domainAxis.setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
-            
+
             NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
             rangeAxis.setLabelPaint(TEXT_COLOR);
             rangeAxis.setTickLabelPaint(TEXT_COLOR);
@@ -480,19 +485,19 @@ public class AnalyticsUI extends JPanel {
             plot.setDomainGridlinePaint(new Color(70, 50, 110));
             plot.setRangeGridlinePaint(new Color(70, 50, 110));
             plot.setOutlinePaint(PANEL_COLOR);
-            
+
             // Axes
             plot.getDomainAxis().setLabelPaint(TEXT_COLOR);
             plot.getDomainAxis().setTickLabelPaint(TEXT_COLOR);
             plot.getDomainAxis().setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
-            
+
             NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
             rangeAxis.setLabelPaint(TEXT_COLOR);
             rangeAxis.setTickLabelPaint(TEXT_COLOR);
             rangeAxis.setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
             rangeAxis.setNumberFormatOverride(new DecimalFormat("$#,##0.00"));
         }
-        
+
         // Legend
         if (chart.getLegend() != null) {
             chart.getLegend().setBackgroundPaint(PANEL_COLOR);
@@ -505,19 +510,19 @@ public class AnalyticsUI extends JPanel {
     // Helper method to aggregate data by month
     private Map<String, Double> aggregateByMonth(Map<LocalDate, Double> data) {
         Map<String, Double> monthlyData = new HashMap<>();
-        
+
         for (Map.Entry<LocalDate, Double> entry : data.entrySet()) {
             LocalDate date = entry.getKey();
             String monthYear = date.getMonth().toString() + " " + date.getYear();
-            
+
             // Sum values for the same month
             monthlyData.put(monthYear, monthlyData.getOrDefault(monthYear, 0.0) + entry.getValue());
         }
-        
+
         return monthlyData;
     }
 
-    // CSV import functionality from the new version
+    // Handle CSV import
     private void handleCsvImport() {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
@@ -525,60 +530,15 @@ public class AnalyticsUI extends JPanel {
 
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
-            try (BufferedReader br = new BufferedReader(new FileReader(fileChooser.getSelectedFile()))) {
-                String line;
-                boolean firstLine = true;
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-                while ((line = br.readLine()) != null) {
-                    if (firstLine) {
-                        firstLine = false;
-                        continue; // Skip header row
-                    }
-
-                    String[] values = line.split(",");
-                    if (values.length >= 5) {
-                        // Remove any quotes and trim whitespace
-                        String dateStr = values[0].trim().replace("\"", "").replace("'", "");
-                        String description = values[1].trim().replace("\"", "").replace("'", "");
-                        String expense = values[2].trim().replace("\"", "").replace("'", "");
-                        String income = values[3].trim().replace("\"", "").replace("'", "");
-
-                        try {
-                            LocalDate date = LocalDate.parse(dateStr, formatter);
-
-                            if (!expense.isEmpty()) {
-                                // Add expense transaction
-                                controller.addTransaction(date, Double.parseDouble(expense),
-                                        description, "expense", "Uncategorized");
-                            } else if (!income.isEmpty()) {
-                                // Add income transaction
-                                controller.addTransaction(date, Double.parseDouble(income),
-                                        description, "income", "Uncategorized");
-                            }
-                        } catch (Exception e) {
-                            System.out.println("Error parsing date: " + dateStr);
-                            continue; // Skip this row and continue with next
-                        }
-                    }
-                }
-
-                // Show success message
-                JOptionPane.showMessageDialog(this,
-                        "CSV file imported successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-
-                // Refresh the charts
-                refreshCharts();
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Error importing CSV file: " + ex.getMessage() +
-                                "\nMake sure your CSV format is: date,description,expense,income,balance" +
-                                "\nDate should be in YYYY-MM-DD format",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+            File fileToImport = fileChooser.getSelectedFile();
+            try {
+                // Use the TransactionController to import transactions from the CSV file
+                transactionController.importTransactionsFromCsv(fileToImport);
+                JOptionPane.showMessageDialog(this, "Transactions imported successfully!");
+                refreshCharts(); // Refresh the charts after import
+            } catch (IOException | SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error importing transactions: " + e.getMessage(), "Import Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
