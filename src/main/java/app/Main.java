@@ -28,8 +28,9 @@ public class Main {
     public static void main(String[] args) throws SQLException {
 
         try {
-            // Initialize JavaFX toolkit
-            new JFXPanel(); // This initializes JavaFX platform
+            // Initialize JavaFX toolkit properly
+            Platform.setImplicitExit(false);
+            // We don't need to create a JFXPanel instance here
             
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             // Add custom styling to UI defaults

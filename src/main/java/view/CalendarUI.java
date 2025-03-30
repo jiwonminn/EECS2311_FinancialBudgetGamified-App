@@ -164,8 +164,8 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
 
 
         // 1. Add the profile icon (emoji) on the far left
-        JButton profileButton = new JButton("👤");
-        profileButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        JButton profileButton = new JButton("Settings");
+        profileButton.setFont(new Font("Arial", Font.BOLD, 14));
         profileButton.setBorderPainted(false);
         profileButton.setContentAreaFilled(false);
         profileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -255,12 +255,32 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         tabPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         tabPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         
-        // Tab icon
-        JLabel iconLabel = new JLabel(getTabIcon(tabName));
-        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        iconLabel.setForeground(TEXT_COLOR);
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        tabPanel.add(iconLabel);
+        // Create custom icon panel
+        JPanel iconPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawTabIcon(g, tabName, getWidth(), getHeight());
+            }
+            
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(24, 24);
+            }
+            
+            @Override
+            public Dimension getMinimumSize() {
+                return new Dimension(24, 24);
+            }
+            
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(24, 24);
+            }
+        };
+        iconPanel.setOpaque(false);
+        iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tabPanel.add(iconPanel);
         
         // Add some space between icon and text
         tabPanel.add(Box.createRigidArea(new Dimension(0, 3)));
@@ -276,26 +296,140 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
     }
     
     /**
-     * Gets the icon text for a tab name.
+     * Draws the icon for a tab name.
      */
+    private void drawTabIcon(Graphics g, String tabName, int width, int height) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setColor(TEXT_COLOR);
+        
+        int x = width / 2;
+        int y = height / 2;
+        int size = Math.min(width, height) - 6;
+        
+        switch (tabName) {
+            case "Dashboard":
+                // Dashboard icon - grid of squares
+                int gridSize = size / 2;
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        int rectX = x - size/2 + i*gridSize + 1;
+                        int rectY = y - size/2 + j*gridSize + 1;
+                        g2d.drawRect(rectX, rectY, gridSize - 2, gridSize - 2);
+                    }
+                }
+                break;
+                
+            case "Goals":
+                // Goals icon - target/bullseye
+                g2d.drawOval(x - size/2, y - size/2, size, size);
+                g2d.drawOval(x - size/3, y - size/3, 2*size/3, 2*size/3);
+                g2d.fillOval(x - size/6, y - size/6, size/3, size/3);
+                break;
+                
+            case "Quests":
+                // Quests icon - trophy
+                // Base
+                int baseWidth = size * 3/4;
+                g2d.drawLine(x - baseWidth/2, y + size/3, x + baseWidth/2, y + size/3);
+                // Stem
+                g2d.drawLine(x, y + size/3, x, y + size/2);
+                // Cup
+                int[] xPoints = {x - size/2, x - size/2, x + size/2, x + size/2};
+                int[] yPoints = {y - size/3, y - size/2, y - size/2, y - size/3};
+                g2d.drawPolyline(xPoints, yPoints, 4);
+                g2d.drawLine(x - size/2, y - size/3, x + size/2, y - size/3);
+                break;
+                
+            case "Analytics":
+                // Analytics icon - bar chart
+                int barWidth = size / 4;
+                g2d.drawRect(x - size/2, y, barWidth, size/2);
+                g2d.drawRect(x - size/2 + barWidth + 1, y - size/4, barWidth, 3*size/4);
+                g2d.drawRect(x - size/2 + 2*barWidth + 2, y - size/2, barWidth, size);
+                break;
+                
+            case "Quiz":
+                // Quiz icon - question mark
+                g2d.drawOval(x - size/2, y - size/2, size, size);
+                // Question mark
+                Font font = new Font("Arial", Font.BOLD, size * 2/3);
+                g2d.setFont(font);
+                FontMetrics fm = g2d.getFontMetrics();
+                g2d.drawString("?", x - fm.stringWidth("?")/2, y + fm.getAscent()/2);
+                break;
+                
+            case "Financial Tips":
+                // Financial Tips icon - lightbulb
+                // Bulb
+                g2d.drawOval(x - size/3, y - size/2, 2*size/3, 2*size/3);
+                // Base
+                int baseY = y - size/2 + 2*size/3;
+                g2d.drawLine(x - size/6, baseY, x - size/6, y + size/4);
+                g2d.drawLine(x + size/6, baseY, x + size/6, y + size/4);
+                g2d.drawLine(x - size/6, y + size/4, x + size/6, y + size/4);
+                break;
+                
+            case "Leaderboard":
+                // Leaderboard icon - podium
+                int step1Width = size / 3;
+                int step2Width = size / 3;
+                int step3Width = size / 3;
+                
+                // First place (middle)
+                g2d.drawRect(x - step1Width/2, y - size/2, step1Width, size);
+                
+                // Second place (left)
+                g2d.drawRect(x - step1Width/2 - step2Width, y - size/3, step2Width, 5*size/6);
+                
+                // Third place (right)
+                g2d.drawRect(x + step1Width/2, y - size/6, step3Width, 2*size/3);
+                break;
+                
+            case "Transaction Log":
+                // Transaction Log icon - list/receipt
+                int lineSpacing = size / 5;
+                g2d.drawRect(x - size/2, y - size/2, size, size);
+                
+                // Draw lines representing text entries
+                for (int i = 1; i <= 3; i++) {
+                    int lineY = y - size/2 + i * lineSpacing;
+                    g2d.drawLine(x - size/3, lineY, x + size/3, lineY);
+                }
+                break;
+                
+            default:
+                // Default icon - dot
+                g2d.fillOval(x - size/4, y - size/4, size/2, size/2);
+                break;
+        }
+        
+        g2d.dispose();
+    }
+    
+    /**
+     * Gets the icon text for a tab name.
+     * @deprecated Use the drawTabIcon method instead
+     */
+    @Deprecated
     private String getTabIcon(String tabName) {
         switch (tabName) {
             case "Dashboard":
-                return "📊";
+                return "D";
             case "Goals":
-                return "🎯";
+                return "G";
             case "Quests":
-                return "🏆";
+                return "Q";
             case "Analytics":
-                return "📈";
+                return "A";
             case "Quiz":
-                return "❓";
+                return "?";
             case "Financial Tips":
-                return "💡";
+                return "T";
             case "Leaderboard":
-                return "🏆";
+                return "L";
             case "Transaction Log":
-                return "📝";
+                return "T";
             default:
                 return "•";
         }
