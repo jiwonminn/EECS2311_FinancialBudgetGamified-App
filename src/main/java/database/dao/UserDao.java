@@ -12,4 +12,9 @@ public interface UserDao {
     String getPasswordForUser(int userId) throws SQLException;
     // New: delete a user from the database
     boolean deleteUser(int userId) throws SQLException;
+    
+    // Username management methods
+    int updateUsername(int userId, String newUsername) throws SQLException;
+    String getUsernameForUser(int userId) throws SQLException;
+    boolean isUsernameAvailable(String username) throws SQLException;
 }

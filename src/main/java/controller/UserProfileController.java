@@ -23,7 +23,22 @@ public class UserProfileController {
         return userDao.getPasswordForUser(userId);
     }
 
+    // Get current username from the database
+    public String getUsername() throws SQLException {
+        return userDao.getUsernameForUser(userId);
+    }
+
+    // Check if a username is available (not already taken)
+    public boolean isUsernameAvailable(String username) throws SQLException {
+        return userDao.isUsernameAvailable(username);
+    }
+
     public boolean updatePassword(String newPassword) throws SQLException {
         return userDao.updatePassword(userId, newPassword) > 0;
+    }
+
+    // Update username in the database
+    public boolean updateUsername(String newUsername) throws SQLException {
+        return userDao.updateUsername(userId, newUsername) > 0;
     }
 }

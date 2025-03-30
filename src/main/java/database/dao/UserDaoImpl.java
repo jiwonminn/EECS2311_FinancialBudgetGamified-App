@@ -25,7 +25,13 @@ public class UserDaoImpl implements UserDao {
                 if (rs.next()) {
                     // Create User object with all available fields
                     String email = rs.getString("email");
-                    String username = email.split("@")[0]; // Use part before @ as username
+                    
+                    // Get username from DB or use email prefix as fallback
+                    String username = rs.getString("username");
+                    if (username == null || username.isEmpty()) {
+                        username = email.split("@")[0]; // Use part before @ as username
+                    }
+                    
                     String password = rs.getString("password");
                     double balance = 0.0; // Default balance
                     int points = 0; // Default points
@@ -119,6 +125,53 @@ public class UserDaoImpl implements UserDao {
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setInt(1, userId);
             return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public int updateUsername(int userId, String newUsername) throws SQLException {
+        // First check if the username is available
+        if (!isUsernameAvailable(newUsername)) {
+            throw new SQLException("Username '" + newUsername + "' is already taken");
+        }
+        
+        String query = "UPDATE users SET username = ? WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, newUsername);
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public String getUsernameForUser(int userId) throws SQLException {
+        String query = "SELECT username, email FROM users WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String username = rs.getString("username");
+                    // If username is not set, use email prefix
+                    if (username == null || username.isEmpty()) {
+                        String email = rs.getString("email");
+                        return email.split("@")[0];
+                    }
+                    return username;
+                }
+            }
+        }
+        return "";
+    }
+
+    @Override
+    public boolean isUsernameAvailable(String username) throws SQLException {
+        String query = "SELECT id FROM users WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // If no record is found, the username is available
+                return !rs.next();
+            }
         }
     }
 }
