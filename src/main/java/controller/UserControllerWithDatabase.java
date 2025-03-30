@@ -8,7 +8,7 @@ import java.sql.SQLException;
 public class UserControllerWithDatabase {
     private UserDao userDao;
 
-    public UserControllerWithDatabase() {
+    public UserControllerWithDatabase() throws SQLException {
         // Create an instance of the DAO implementation.
         this.userDao = new UserDaoImpl();
     }

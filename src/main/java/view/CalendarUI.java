@@ -160,7 +160,31 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         navigationPanel.setBackground(new Color(18, 12, 31)); // Darker background for tabs
         navigationPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Remove border
-        
+
+
+        // 1. Add the profile icon (emoji) on the far left
+        JButton profileButton = new JButton("👤");
+        profileButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        profileButton.setBorderPainted(false);
+        profileButton.setContentAreaFilled(false);
+        profileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        profileButton.setForeground(TEXT_COLOR);
+        profileButton.addActionListener(e -> {
+            // Open your UserProfileDialog when clicked
+            UserProfileDialog dialog = null;
+            try {
+                dialog = new UserProfileDialog(CalendarUI.this, userId);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            dialog.setVisible(true);
+        });
+        navigationPanel.add(profileButton);
+
+        // Optional: add a little spacing before the first tab
+        navigationPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+
         // Add Transaction Log tab between Leaderboard and Quiz
         String[] tabNames = {"Dashboard", "Goals", "Quests", "Analytics", "Quiz", "Financial Tips", "Leaderboard", "Transaction Log"};
         

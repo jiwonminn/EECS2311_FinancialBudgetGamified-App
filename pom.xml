@@ -50,7 +50,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
         </dependency>
-        
+
         <!-- Apache Commons CSV for CSV file handling -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -84,7 +84,7 @@
                     <target>21</target>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

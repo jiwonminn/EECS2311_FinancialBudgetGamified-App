@@ -1,0 +1,288 @@
+package database;
+
+import java.sql.*;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executor;
+
+public class StubConnection implements Connection {
+    private final Map<Integer, Map<String, Object>> users;
+    private boolean closed = false;
+
+    public StubConnection(Map<Integer, Map<String, Object>> users) {
+        this.users = users;
+    }
+
+    @Override
+    public Statement createStatement() throws SQLException {
+        return new StubStatement(users);
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql) throws SQLException {
+        return new StubPreparedStatement(users, sql);
+    }
+
+    // Required Connection interface methods with stub implementations
+    @Override
+    public CallableStatement prepareCall(String sql) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public String nativeSQL(String sql) throws SQLException {
+        return sql;
+    }
+
+    @Override
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public boolean getAutoCommit() throws SQLException {
+        return true;
+    }
+
+    @Override
+    public void commit() throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public void rollback() throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public void close() throws SQLException {
+        closed = true;
+    }
+
+    @Override
+    public boolean isClosed() throws SQLException {
+        return closed;
+    }
+
+    @Override
+    public DatabaseMetaData getMetaData() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public void setReadOnly(boolean readOnly) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public boolean isReadOnly() throws SQLException {
+        return false;
+    }
+
+    @Override
+    public void setCatalog(String catalog) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public String getCatalog() throws SQLException {
+        return "stub_db";
+    }
+
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public int getTransactionIsolation() throws SQLException {
+        return Connection.TRANSACTION_NONE;
+    }
+
+    @Override
+    public SQLWarning getWarnings() throws SQLException {
+        return null;
+    }
+
+    @Override
+    public void clearWarnings() throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+        return createStatement();
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public Map<String, Class<?>> getTypeMap() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public void setHoldability(int holdability) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public int getHoldability() throws SQLException {
+        return ResultSet.HOLD_CURSORS_OVER_COMMIT;
+    }
+
+    @Override
+    public Savepoint setSavepoint() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public Savepoint setSavepoint(String name) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public void rollback(Savepoint savepoint) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+        return createStatement();
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public Clob createClob() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public Blob createBlob() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public NClob createNClob() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public SQLXML createSQLXML() throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public boolean isValid(int timeout) throws SQLException {
+        return !closed;
+    }
+
+    @Override
+    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+        // No-op for stub
+    }
+
+    @Override
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+        // No-op for stub
+    }
+
+    @Override
+    public String getClientInfo(String name) throws SQLException {
+        return null;
+    }
+
+    @Override
+    public Properties getClientInfo() throws SQLException {
+        return new Properties();
+    }
+
+    @Override
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+        throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public void setSchema(String schema) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public String getSchema() throws SQLException {
+        return "public";
+    }
+
+    @Override
+    public void abort(Executor executor) throws SQLException {
+        close();
+    }
+
+    @Override
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+        // No-op for stub
+    }
+
+    @Override
+    public int getNetworkTimeout() throws SQLException {
+        return 0;
+    }
+
+	@Override
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		// TODO Auto-generated method stub
+		return false;
+	}
+} 

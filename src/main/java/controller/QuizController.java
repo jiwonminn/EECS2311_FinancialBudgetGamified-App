@@ -54,6 +54,11 @@ public class QuizController {
      * @return true if the answer is correct, false otherwise
      */
     public boolean submitAnswer(int selectedAnswerIndex) {
+        // Check if an answer is selected
+        if (selectedAnswerIndex < 0) {
+            return false;
+        }
+        
         boolean isCorrect = quiz.checkAnswer(selectedAnswerIndex);
 
         // If the answer is correct, award points to the user
@@ -77,11 +82,12 @@ public class QuizController {
     }
 
     /**
-     * Starts a new quiz by resetting the current quiz and shuffling questions.
+     * Starts a new quiz with the current questions.
      */
     public void startNewQuiz() {
-        quiz.reset();
-        quiz.shuffleQuestions();
+        if (quiz != null) {
+            quiz.reset();
+        }
     }
 
     /**
@@ -115,7 +121,6 @@ public class QuizController {
                 "Budgeting"
         ));
 
-        // Adding more Budgeting questions
         quiz.addQuestion(new QuizQuestion(
                 "What is zero-based budgeting?",
                 Arrays.asList(
@@ -139,6 +144,19 @@ public class QuizController {
                 ),
                 1, 10,
                 "The envelope budgeting system involves placing cash in physical envelopes labeled for different budget categories, helping to limit spending to the allocated amount in each category.",
+                "Budgeting"
+        ));
+
+        quiz.addQuestion(new QuizQuestion(
+                "What is a discretionary expense?",
+                Arrays.asList(
+                        "A bill that must be paid every month",
+                        "An expense that can be reduced or eliminated if needed",
+                        "A tax-deductible business expense",
+                        "A recurring subscription service"
+                ),
+                1, 10,
+                "A discretionary expense is one that can be reduced or eliminated if needed, such as entertainment, dining out, or non-essential shopping.",
                 "Budgeting"
         ));
 
@@ -169,7 +187,6 @@ public class QuizController {
                 "Saving"
         ));
 
-        // Adding more Saving questions
         quiz.addQuestion(new QuizQuestion(
                 "What is the Rule of 72 in savings?",
                 Arrays.asList(
@@ -193,6 +210,19 @@ public class QuizController {
                 ),
                 1, 10,
                 "A High-Yield Savings Account is a type of savings account that pays a higher interest rate than a standard savings account, allowing your money to grow faster while remaining liquid and FDIC-insured.",
+                "Saving"
+        ));
+
+        quiz.addQuestion(new QuizQuestion(
+                "What is the difference between simple interest and compound interest?",
+                Arrays.asList(
+                        "Simple interest is better than compound interest",
+                        "Simple interest is calculated only on the principal, while compound interest is calculated on principal plus accumulated interest",
+                        "Compound interest is only used for loans, while simple interest is used for savings",
+                        "There is no difference between them"
+                ),
+                1, 12,
+                "Simple interest is calculated only on the initial principal amount, while compound interest is calculated on the principal plus any previously earned interest, leading to exponential growth over time.",
                 "Saving"
         ));
 
@@ -223,7 +253,6 @@ public class QuizController {
                 "Investing"
         ));
 
-        // Adding more Investing questions
         quiz.addQuestion(new QuizQuestion(
                 "What is diversification in investing?",
                 Arrays.asList(
@@ -290,7 +319,6 @@ public class QuizController {
                 "Credit"
         ));
 
-        // Adding more Credit questions
         quiz.addQuestion(new QuizQuestion(
                 "What is a secured credit card?",
                 Arrays.asList(
@@ -357,7 +385,6 @@ public class QuizController {
                 "Taxes"
         ));
 
-        // Adding more Taxes questions
         quiz.addQuestion(new QuizQuestion(
                 "What is the difference between a marginal tax rate and an effective tax rate?",
                 Arrays.asList(
@@ -384,7 +411,20 @@ public class QuizController {
                 "Taxes"
         ));
 
-        // New Category: Financial Planning
+        quiz.addQuestion(new QuizQuestion(
+                "What is the purpose of Form W-4?",
+                Arrays.asList(
+                        "To report your annual income to the IRS",
+                        "To tell your employer how much tax to withhold from your paycheck",
+                        "To claim tax deductions and credits",
+                        "To report investment income"
+                ),
+                1, 12,
+                "Form W-4 is used to tell your employer how much federal income tax to withhold from your paycheck based on your filing status, number of dependents, and other factors.",
+                "Taxes"
+        ));
+
+        // Category: Financial Planning
         quiz.addQuestion(new QuizQuestion(
                 "What is the purpose of a will in financial planning?",
                 Arrays.asList(
@@ -423,6 +463,32 @@ public class QuizController {
                 "Term life insurance provides coverage for a specific period (e.g., 10, 20 years) with no cash value, while whole life insurance provides permanent coverage and includes a cash value component that grows over time.",
                 "Financial Planning"
         ));
+
+        quiz.addQuestion(new QuizQuestion(
+                "What is a power of attorney in financial planning?",
+                Arrays.asList(
+                        "A document that gives someone the legal authority to act on your behalf",
+                        "A type of investment account",
+                        "A legal document for transferring property ownership",
+                        "A form for reporting financial crimes"
+                ),
+                0, 12,
+                "A power of attorney is a legal document that gives someone else the authority to make financial decisions on your behalf if you become unable to do so yourself.",
+                "Financial Planning"
+        ));
+
+        quiz.addQuestion(new QuizQuestion(
+                "What is estate planning?",
+                Arrays.asList(
+                        "The process of buying and selling real estate",
+                        "The process of planning for the management and distribution of your assets after death",
+                        "A method for calculating property taxes",
+                        "A strategy for investing in real estate"
+                ),
+                1, 12,
+                "Estate planning is the process of arranging for the management and disposal of your estate during your life and after death, including wills, trusts, and other legal documents.",
+                "Financial Planning"
+        ));
     }
 
     /**
@@ -447,21 +513,24 @@ public class QuizController {
      * @param category The category to filter by, or null for all categories
      */
     public void filterByCategory(String category) {
+        // Create a new quiz instance
+        Quiz newQuiz = new Quiz();
+        
         if (category == null || category.isEmpty()) {
             // Reset to all questions by creating a new quiz and reloading default questions
             this.quiz = new Quiz();
             loadDefaultQuestions();
-            return;
-        }
-
-        Quiz filteredQuiz = new Quiz();
-        // Add only questions from the selected category
-        for (QuizQuestion question : this.quiz.getQuestions()) {
-            if (question.getCategory().equals(category)) {
-                filteredQuiz.addQuestion(question);
+            this.quiz.reset();  // Reset the quiz state
+        } else {
+            // Add only questions from the selected category
+            for (QuizQuestion question : this.quiz.getQuestions()) {
+                if (question.getCategory().equals(category)) {
+                    newQuiz.addQuestion(question);
+                }
             }
+            this.quiz = newQuiz;
+            this.quiz.reset();  // Reset the quiz state
         }
-        this.quiz = filteredQuiz;
     }
 
     /**
