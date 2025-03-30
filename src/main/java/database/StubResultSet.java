@@ -29,7 +29,9 @@ public class StubResultSet implements ResultSet {
         if (userId != null) {
             if (isBeforeFirst) {
                 isBeforeFirst = false;
-                return users.containsKey(userId);
+                if (users.containsKey(userId)) {
+                    return true;
+                }
             }
             isAfterLast = true;
             return false;
@@ -63,6 +65,10 @@ public class StubResultSet implements ResultSet {
                 return (String) userData.get("email");
             case 3: // password
                 return (String) userData.get("password");
+            case 4: // points
+                return String.valueOf(userData.get("points"));
+            case 5: // balance
+                return String.valueOf(userData.get("balance"));
             default:
                 throw new SQLException("Invalid column index: " + columnIndex);
         }

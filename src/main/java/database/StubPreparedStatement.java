@@ -26,6 +26,9 @@ public class StubPreparedStatement extends StubStatement implements PreparedStat
                         resultSet = new StubResultSet(users, userId);
                         return resultSet;
                     }
+                    // Return empty result set if user not found
+                    resultSet = new StubResultSet(users);
+                    return resultSet;
                 } else if (sql.toLowerCase().contains("email = ?")) {
                     // Handle SELECT * FROM users WHERE email = ?
                     String email = (String) parameters[0];
@@ -35,6 +38,23 @@ public class StubPreparedStatement extends StubStatement implements PreparedStat
                             return resultSet;
                         }
                     }
+                    // Return empty result set if user not found
+                    resultSet = new StubResultSet(users);
+                    return resultSet;
+                } else if (sql.toLowerCase().contains("email = ? and password = ?")) {
+                    // Handle SELECT id FROM users WHERE email = ? AND password = ?
+                    String email = (String) parameters[0];
+                    String password = (String) parameters[1];
+                    for (Map.Entry<Integer, Map<String, Object>> entry : users.entrySet()) {
+                        if (email.equals(entry.getValue().get("email")) && 
+                            password.equals(entry.getValue().get("password"))) {
+                            resultSet = new StubResultSet(users, entry.getKey());
+                            return resultSet;
+                        }
+                    }
+                    // Return empty result set if user not found
+                    resultSet = new StubResultSet(users);
+                    return resultSet;
                 }
             }
         }
@@ -64,6 +84,9 @@ public class StubPreparedStatement extends StubStatement implements PreparedStat
                 userData.put("balance", 0.0);
                 userData.put("points", 0);
                 users.put(newId, userData);
+                
+                // Set the generated key in the result set
+                resultSet = new StubResultSet(users, newId);
                 return 1;
             }
         } else if (sql.toLowerCase().contains("delete")) {
@@ -349,5 +372,16 @@ public class StubPreparedStatement extends StubStatement implements PreparedStat
     @Override
     public void setNClob(int parameterIndex, java.io.Reader reader) throws SQLException {
         throw new SQLException("Not supported in stub implementation");
+    }
+
+    @Override
+    public ResultSet getGeneratedKeys() throws SQLException {
+        if (sql.toLowerCase().contains("insert") && sql.toLowerCase().contains("users")) {
+            // For user registration, return the newly created user's ID
+            int newId = users.size();
+            resultSet = new StubResultSet(users, newId);
+            return resultSet;
+        }
+        return new StubResultSet(users);
     }
 } 
