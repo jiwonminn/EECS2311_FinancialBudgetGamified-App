@@ -193,3 +193,70 @@ Andy
 - Added more test cases to new features added over night
 - Wrote the wiki for Iteration 2
 - Time took around 3 hours
+
+
+
+March 23th, 2025
+
+- Khalifa
+- Docker.
+- Implemented automated database initialization and ensured that the application connects reliably to PostgreSQL using Docker Compose.
+- Secured resources for a containerized database.
+- Updated project configuration with the new database.
+- Integrated database connection into the application.
+- Streamlined setup for easier future management.
+- Time spent: 5 hours
+
+
+
+
+March 25th, 2025
+
+- Khalifa
+-Organized and refactored the code to clearly separate user interactions from data operations.
+-Moved all database tasks into dedicated modules, which makes the system easier to maintain and update.
+-Implemented a process to automatically create and manage database tables.
+-Improved the overall structure for better testing and future development.
+- Time spent: 4 hours
+
+
+
+
+
+March 26th, 2025
+
+- Khalifa
+- Modified almost all the controllers classes to use the new database modules.
+- Time spent: 3 hours
+
+
+
+
+
+March 27th, 2025
+
+- Khalifa
+-Developed a leaderboard page to showcase user rankings.
+-Designed the leaderboard to match the look and feel of our other screens.
+-Created a modular system to fetch and display user performance data.
+-Time spent: 4 hours
+
+-Improved the design of both the login and registration screens.
+-Organized the code by separating shared elements into a common base.
+-Removed repetitive steps to make future updates easier.
+-Time spent: 3 hours
+
+
+
+March 28th, 2025
+
+- Khalifa
+-Added a user profile feature that allows users to view their email and update their password.
+-Integrated a profile icon into the main dashboard for easy access to the user profile.
+-Improved the application's responsiveness by moving time-consuming tasks to run in the background.
+-Time spent: 4 hours
+
+-Developed automated tests for key modules to ensure the application's functionality.
+-Updated the project setup to support testing without relying on external systems.
+-Documented all changes with clear commit messages.
+-Time spent: 3 hours

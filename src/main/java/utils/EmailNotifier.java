@@ -178,7 +178,7 @@ public class EmailNotifier {
         }
     }
 
-    public static boolean sendNegativeBalanceEmail(String recipientEmail, String username, double balance) {
+    public boolean sendNegativeBalanceEmail(String recipientEmail, String username, double balance) {
         // Ensure we only send an email if the balance is negative
         if (balance >= 0) {
             System.out.println("Balance is non-negative; no negative balance email sent.");
