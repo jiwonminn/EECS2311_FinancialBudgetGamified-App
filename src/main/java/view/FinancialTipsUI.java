@@ -3,6 +3,9 @@ package view;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.RenderingHints;
+import java.awt.BasicStroke;
 import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
@@ -194,26 +197,62 @@ public class FinancialTipsUI extends JPanel {
         ));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Category icon
-        JLabel iconLabel = new JLabel(getCategoryIcon(category));
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Category icon - replace emoji with custom drawn icon
+        JPanel iconPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw circular background
+                Color iconColor = getCategoryColor(category);
+                g2d.setColor(iconColor);
+                int size = Math.min(getWidth(), getHeight()) - 10;
+                g2d.fillOval((getWidth() - size) / 2, (getHeight() - size) / 2, size, size);
+                
+                // Draw the icon
+                g2d.setColor(Color.WHITE);
+                drawCategoryIcon(g2d, category, getWidth()/2, getHeight()/2, size - 10);
+                
+                g2d.dispose();
+            }
+            
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(64, 64);
+            }
+            
+            @Override
+            public Dimension getMinimumSize() {
+                return new Dimension(64, 64);
+            }
+            
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(64, 64);
+            }
+        };
+        iconPanel.setOpaque(false);
+        iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Category name
+        // Category name - ensure it's centered
         JLabel nameLabel = new JLabel(category);
         nameLabel.setForeground(TEXT_COLOR);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
-        // Description
-        JLabel descLabel = new JLabel("<html><div style='width: 200px; text-align: center'>" + 
+        // Description - ensure it's centered
+        JLabel descLabel = new JLabel("<html><div style='text-align: center; width: 200px'>" + 
             getCategoryDescription(category) + "</div></html>");
         descLabel.setForeground(new Color(180, 180, 180));
         descLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        descLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
         // Add components
-        card.add(iconLabel);
+        card.add(iconPanel);
         card.add(Box.createRigidArea(new Dimension(0, 10)));
         card.add(nameLabel);
         card.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -241,6 +280,105 @@ public class FinancialTipsUI extends JPanel {
     }
     
     /**
+     * Draws a custom icon for a category.
+     */
+    private void drawCategoryIcon(Graphics2D g2d, String category, int x, int y, int size) {
+        int iconSize = size / 2;
+        g2d.setStroke(new BasicStroke(2f));
+        
+        switch (category) {
+            case "Budgeting":
+                // Budget/Money management icon
+                g2d.drawLine(x, y - iconSize/2, x, y + iconSize/2); // Dollar sign vertical
+                g2d.drawLine(x - iconSize/3, y - iconSize/3, x + iconSize/3, y - iconSize/3); // Dollar sign top
+                g2d.drawLine(x - iconSize/3, y + iconSize/3, x + iconSize/3, y + iconSize/3); // Dollar sign bottom
+                break;
+                
+            case "Saving":
+                // Piggy bank
+                // Body
+                g2d.fillOval(x - iconSize, y - iconSize/2, iconSize*2, iconSize);
+                // Ear
+                g2d.fillOval(x - iconSize/2, y - iconSize/2 - iconSize/4, iconSize/3, iconSize/3);
+                // Slot on top
+                g2d.setColor(PANEL_COLOR);
+                g2d.fillRect(x - iconSize/4, y - iconSize/2, iconSize/2, iconSize/6);
+                break;
+                
+            case "Investing":
+                // Growth chart
+                g2d.drawLine(x - iconSize, y + iconSize/2, x + iconSize, y + iconSize/2); // X-axis
+                g2d.drawLine(x - iconSize, y + iconSize/2, x - iconSize, y - iconSize/2); // Y-axis
+                
+                // Growth line
+                int[] xPoints = {x - iconSize + iconSize/4, x, x + iconSize/2, x + iconSize};
+                int[] yPoints = {y + iconSize/4, y, y - iconSize/3, y - iconSize/2};
+                g2d.drawPolyline(xPoints, yPoints, 4);
+                
+                // Arrow at end of line
+                g2d.drawLine(x + iconSize, y - iconSize/2, x + iconSize - iconSize/4, y - iconSize/4);
+                g2d.drawLine(x + iconSize, y - iconSize/2, x + iconSize - iconSize/4, y - iconSize/2 - iconSize/4);
+                break;
+                
+            case "Credit":
+                // Credit card
+                g2d.drawRoundRect(x - iconSize, y - iconSize/2, iconSize*2, iconSize, 10, 10);
+                
+                // Magnetic stripe
+                g2d.drawLine(x - iconSize, y - iconSize/6, x + iconSize, y - iconSize/6);
+                
+                // Chip
+                g2d.drawRect(x - iconSize + iconSize/4, y - iconSize/3, iconSize/2, iconSize/3);
+                
+                // Card details
+                g2d.drawLine(x - iconSize/2, y + iconSize/4, x + iconSize/2, y + iconSize/4);
+                break;
+                
+            case "Financial Planning":
+                // Calendar/planner
+                g2d.drawRect(x - iconSize, y - iconSize/2, iconSize*2, iconSize);
+                
+                // Top bar
+                g2d.drawLine(x - iconSize, y - iconSize/4, x + iconSize, y - iconSize/4);
+                
+                // Grid lines
+                g2d.drawLine(x - iconSize/3, y - iconSize/4, x - iconSize/3, y + iconSize/2);
+                g2d.drawLine(x + iconSize/3, y - iconSize/4, x + iconSize/3, y + iconSize/2);
+                g2d.drawLine(x - iconSize, y + iconSize/8, x + iconSize, y + iconSize/8);
+                
+                // Checkmark
+                g2d.drawLine(x - iconSize/2, y, x - iconSize/4, y + iconSize/4);
+                g2d.drawLine(x - iconSize/4, y + iconSize/4, x, y - iconSize/8);
+                break;
+                
+            default:
+                // Light bulb
+                // Bulb
+                g2d.fillOval(x - iconSize/2, y - iconSize/2, iconSize, iconSize);
+                // Base
+                g2d.setColor(PANEL_COLOR);
+                g2d.fillRect(x - iconSize/6, y + iconSize/2 - iconSize/8, iconSize/3, iconSize/4);
+                g2d.setColor(Color.WHITE);
+                g2d.drawRect(x - iconSize/6, y + iconSize/2 - iconSize/8, iconSize/3, iconSize/4);
+                break;
+        }
+    }
+    
+    /**
+     * Gets the color for a category.
+     */
+    private Color getCategoryColor(String category) {
+        switch (category) {
+            case "Budgeting": return new Color(90, 140, 255); // Blue
+            case "Saving": return new Color(39, 174, 96);     // Green
+            case "Investing": return new Color(155, 89, 182); // Purple
+            case "Credit": return new Color(231, 76, 60);     // Red
+            case "Financial Planning": return new Color(241, 196, 15); // Yellow
+            default: return ACCENT_COLOR;
+        }
+    }
+    
+    /**
      * Shows tips for a specific category.
      */
     private void showCategoryTips(String category) {
@@ -261,10 +399,54 @@ public class FinancialTipsUI extends JPanel {
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
         
-        JLabel titleLabel = new JLabel(getCategoryIcon(category) + " " + category + " Tips");
+        // Create icon panel for category
+        JPanel iconPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw circular background
+                Color iconColor = getCategoryColor(category);
+                g2d.setColor(iconColor);
+                int size = Math.min(getWidth(), getHeight()) - 4;
+                g2d.fillOval(0, 0, size, size);
+                
+                // Draw the icon
+                g2d.setColor(Color.WHITE);
+                drawCategoryIcon(g2d, category, size/2, size/2, size - 8);
+                
+                g2d.dispose();
+            }
+            
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(32, 32);
+            }
+            
+            @Override
+            public Dimension getMinimumSize() {
+                return new Dimension(32, 32);
+            }
+            
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(32, 32);
+            }
+        };
+        iconPanel.setOpaque(false);
+        
+        JLabel titleLabel = new JLabel(" " + category + " Tips");
         titleLabel.setForeground(TEXT_COLOR);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        titlePanel.setBackground(BACKGROUND_COLOR);
+        titlePanel.add(iconPanel);
+        titlePanel.add(titleLabel);
+        
+        headerPanel.add(titlePanel, BorderLayout.WEST);
         headerPanel.add(backButton, BorderLayout.EAST);
         
         mainPanel.add(headerPanel);
