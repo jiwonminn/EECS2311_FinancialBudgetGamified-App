@@ -201,6 +201,9 @@
                     int size = Math.min(getWidth(), getHeight()) - 20;
                     g2d.fillOval((getWidth() - size) / 2, (getHeight() - size) / 2, size, size);
                     
+                    // Draw the category icon
+                    drawCategoryIcon(g2d, category, getWidth(), getHeight());
+                    
                     g2d.dispose();
                 }
                 
@@ -208,17 +211,20 @@
                 public Dimension getPreferredSize() {
                     return new Dimension(80, 80);
                 }
+                
+                @Override
+                public Dimension getMinimumSize() {
+                    return new Dimension(80, 80);
+                }
+                
+                @Override
+                public Dimension getMaximumSize() {
+                    return new Dimension(80, 80);
+                }
             };
             iconPanel.setOpaque(false);
             iconPanel.setBackground(PANEL_COLOR);
             iconPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            
-            // Icon text
-            JLabel iconLabel = new JLabel(getCategoryIcon(category));
-            iconLabel.setForeground(Color.WHITE);
-            iconLabel.setFont(new Font("Arial", Font.BOLD, 24));
-            iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            iconPanel.add(iconLabel);
             
             // Category name
             JLabel nameLabel = new JLabel(category);
@@ -312,6 +318,128 @@
             });
             
             return card;
+        }
+        
+        /**
+         * Draws the icon for a category inside the provided Graphics context.
+         */
+        private void drawCategoryIcon(Graphics2D g2d, String category, int width, int height) {
+            g2d.setColor(Color.WHITE);
+            
+            int x = width / 2;
+            int y = height / 2;
+            int size = Math.min(width, height) - 30; // Keep consistent size
+            
+            switch (category) {
+                case "Budgeting":
+                    // Dollar sign in circle
+                    g2d.setFont(new Font("Arial", Font.BOLD, size / 2));
+                    FontMetrics fm = g2d.getFontMetrics();
+                    g2d.drawString("$", x - fm.stringWidth("$")/2, y + fm.getAscent()/2 - fm.getDescent()/2);
+                    break;
+                    
+                case "Saving":
+                    // Piggy bank icon
+                    int pigSize = size / 2;
+                    // Body
+                    g2d.fillOval(x - pigSize, y - pigSize/2, pigSize*2, pigSize);
+                    // Snout
+                    g2d.fillOval(x + pigSize/2, y, pigSize/2, pigSize/3);
+                    // Ear
+                    g2d.fillOval(x - pigSize/2, y - pigSize/2 - pigSize/4, pigSize/3, pigSize/3);
+                    // Leg
+                    g2d.fillRect(x - pigSize/2, y + pigSize/3, pigSize/4, pigSize/3);
+                    g2d.fillRect(x + pigSize/4, y + pigSize/3, pigSize/4, pigSize/3);
+                    break;
+                    
+                case "Investing":
+                    // Stock chart icon
+                    int chartWidth = size/2;
+                    int chartHeight = size/2;
+                    
+                    // Draw growing chart line
+                    g2d.setStroke(new BasicStroke(3));
+                    int[] xPoints = {x - chartWidth/2, x - chartWidth/4, x, x + chartWidth/2};
+                    int[] yPoints = {y + chartHeight/3, y, y + chartHeight/4, y - chartHeight/3};
+                    g2d.drawPolyline(xPoints, yPoints, 4);
+                    
+                    // Draw arrow head
+                    g2d.drawLine(x + chartWidth/2, y - chartHeight/3, x + chartWidth/3, y - chartHeight/6);
+                    g2d.drawLine(x + chartWidth/2, y - chartHeight/3, x + chartWidth/3, y - chartHeight/2);
+                    break;
+                    
+                case "Credit":
+                    // Credit card icon
+                    g2d.setStroke(new BasicStroke(2));
+                    g2d.drawRoundRect(x - size/3, y - size/4, 2*size/3, size/2, 10, 10);
+                    
+                    // Magnetic stripe
+                    g2d.drawLine(x - size/3, y - size/8, x + size/3, y - size/8);
+                    
+                    // Card details
+                    g2d.setStroke(new BasicStroke(1));
+                    g2d.drawLine(x - size/4, y + size/8, x + size/6, y + size/8);
+                    break;
+                    
+                case "Taxes":
+                    // Tax form icon
+                    g2d.setStroke(new BasicStroke(2));
+                    // Form outline
+                    g2d.drawRect(x - size/3, y - size/3, 2*size/3, 2*size/3);
+                    
+                    // Form lines
+                    g2d.setStroke(new BasicStroke(1));
+                    for (int i = 1; i <= 3; i++) {
+                        int lineY = y - size/3 + i * (2*size/3)/4;
+                        g2d.drawLine(x - size/4, lineY, x + size/4, lineY);
+                    }
+                    
+                    // Dollar sign
+                    g2d.setFont(new Font("Arial", Font.BOLD, size/6));
+                    FontMetrics fm2 = g2d.getFontMetrics();
+                    g2d.drawString("$", x - size/4 - fm2.stringWidth("$")/2, y - size/6);
+                    break;
+                    
+                case "Financial Planning":
+                    // Calendar or planner icon
+                    g2d.setStroke(new BasicStroke(2));
+                    // Calendar outline
+                    g2d.drawRect(x - size/3, y - size/3, 2*size/3, 2*size/3);
+                    
+                    // Top bar for dates
+                    g2d.drawLine(x - size/3, y - size/6, x + size/3, y - size/6);
+                    
+                    // Grid lines (3x3)
+                    int cellSize = 2*size/9;
+                    for (int i = 1; i < 3; i++) {
+                        // Vertical lines
+                        g2d.drawLine(x - size/3 + i*cellSize, y - size/6, x - size/3 + i*cellSize, y + size/3);
+                        // Horizontal lines
+                        g2d.drawLine(x - size/3, y - size/6 + i*cellSize, x + size/3, y - size/6 + i*cellSize);
+                    }
+                    break;
+                    
+                case "All Categories":
+                    // Star or asterisk
+                    g2d.setStroke(new BasicStroke(3));
+                    int starSize = size/3;
+                    
+                    // Draw asterisk/star
+                    g2d.drawLine(x, y - starSize, x, y + starSize); // Vertical
+                    g2d.drawLine(x - starSize, y, x + starSize, y); // Horizontal
+                    g2d.drawLine(x - (int)(starSize*0.7), y - (int)(starSize*0.7), 
+                                x + (int)(starSize*0.7), y + (int)(starSize*0.7)); // Diagonal 1
+                    g2d.drawLine(x - (int)(starSize*0.7), y + (int)(starSize*0.7), 
+                                x + (int)(starSize*0.7), y - (int)(starSize*0.7)); // Diagonal 2
+                    break;
+                    
+                default:
+                    // Question mark
+                    g2d.setFont(new Font("Arial", Font.BOLD, size / 2));
+                    FontMetrics fmDef = g2d.getFontMetrics();
+                    g2d.drawString("?", x - fmDef.stringWidth("?")/2, y + fmDef.getAscent()/2 - fmDef.getDescent()/2);
+                    break;
+            }
         }
         
         /**

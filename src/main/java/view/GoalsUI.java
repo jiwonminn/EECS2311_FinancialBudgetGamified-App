@@ -24,6 +24,9 @@ import java.util.Arrays;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import java.awt.BasicStroke;
 
 public class GoalsUI extends JPanel {
     // Define colors to match the existing UI
@@ -420,7 +423,10 @@ public class GoalsUI extends JPanel {
         JComboBox<String> categoryComboBox = new JComboBox<>(displayCategories);
         categoryComboBox.setBackground(FIELD_BACKGROUND);
         categoryComboBox.setForeground(TEXT_COLOR);
-        ((JComponent) categoryComboBox.getRenderer()).setOpaque(true);
+        
+        // Use custom renderer to display icons for categories
+        categoryComboBox.setRenderer(new CategoryComboBoxRenderer());
+        
         categoryPanel.add(categoryComboBox, BorderLayout.CENTER);
 
         // Add listener for custom category creation
@@ -539,7 +545,8 @@ public class GoalsUI extends JPanel {
                 try {
                     goalController.createGoal(newGoal);
 
-                    // Add the category to the CategoryManager so it appears in transaction dropdown
+                    // Generate an icon and add the category to the CategoryManager
+                    categoryManager.generateIconForCategory(category);
                     categoryManager.addCategory(category);
 
                     addGoalDialog.dispose();
@@ -799,5 +806,214 @@ public class GoalsUI extends JPanel {
         g2d.dispose();
 
         return new ImageIcon(image);
+    }
+
+    /**
+     * Custom renderer for category dropdown that displays icons
+     */
+    private class CategoryComboBoxRenderer extends DefaultListCellRenderer {
+        private final int ICON_SIZE = 20;
+        
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JPanel panel = new JPanel(new BorderLayout(10, 0));
+            panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            
+            if (isSelected) {
+                panel.setBackground(ACCENT_COLOR);
+            } else {
+                panel.setBackground(FIELD_BACKGROUND);
+            }
+            
+            if (value != null) {
+                String category = value.toString();
+                
+                // Create icon panel
+                CategoryIconPanel iconPanel = new CategoryIconPanel(category, ICON_SIZE);
+                panel.add(iconPanel, BorderLayout.WEST);
+                
+                // Create text label
+                JLabel label = new JLabel(category);
+                label.setForeground(TEXT_COLOR);
+                label.setFont(new Font("Arial", Font.PLAIN, 14));
+                panel.add(label, BorderLayout.CENTER);
+            }
+            
+            return panel;
+        }
+    }
+    
+    /**
+     * Panel for drawing category icons
+     */
+    private class CategoryIconPanel extends JPanel {
+        private final String category;
+        private final int size;
+        
+        public CategoryIconPanel(String category, int size) {
+            this.category = category;
+            this.size = size;
+            setPreferredSize(new Dimension(size, size));
+            setOpaque(false);
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Get the icon information
+            CategoryManager.CategoryIcon icon = categoryManager.getCategoryIcon(category);
+            
+            // Draw the circular background
+            g2d.setColor(icon.getColor());
+            g2d.fillOval(0, 0, size, size);
+            
+            // Draw the icon
+            drawCategoryIcon(g2d, icon.getType(), size/2, size/2, size - 4);
+            
+            g2d.dispose();
+        }
+        
+        /**
+         * Draws a specific icon for a category type
+         */
+        private void drawCategoryIcon(Graphics2D g2d, CategoryManager.IconType type, int x, int y, int size) {
+            g2d.setColor(Color.WHITE);
+            g2d.setStroke(new BasicStroke(1.5f));
+            
+            int iconSize = size / 2;
+            
+            switch (type) {
+                case HOME:
+                    // House icon
+                    int[] xPoints = {x, x - iconSize, x + iconSize};
+                    int[] yPoints = {y - iconSize, y + iconSize/2, y + iconSize/2};
+                    g2d.fillPolygon(xPoints, yPoints, 3);
+                    g2d.fillRect(x - iconSize/2, y, iconSize, iconSize/2);
+                    break;
+                    
+                case FOOD:
+                    // Fork and knife
+                    g2d.drawLine(x - iconSize/3, y - iconSize/2, x - iconSize/3, y + iconSize/2);
+                    g2d.drawLine(x + iconSize/3, y - iconSize/2, x + iconSize/3, y + iconSize/2);
+                    g2d.drawLine(x, y - iconSize/2, x, y + iconSize/2);
+                    break;
+                    
+                case CAR:
+                    // Car icon
+                    g2d.fillRoundRect(x - iconSize, y - iconSize/3, iconSize*2, iconSize*2/3, 5, 5);
+                    g2d.fillOval(x - iconSize/2, y + iconSize/3, iconSize/3, iconSize/3);
+                    g2d.fillOval(x + iconSize/4, y + iconSize/3, iconSize/3, iconSize/3);
+                    break;
+                    
+                case ENTERTAINMENT:
+                    // Comedy/tragedy masks or music note
+                    g2d.fillOval(x - iconSize/2, y - iconSize/2, iconSize/2, iconSize/2);
+                    g2d.fillOval(x, y - iconSize/2, iconSize/2, iconSize/2);
+                    g2d.drawLine(x, y, x, y + iconSize/2);
+                    break;
+                    
+                case HEALTH:
+                    // Plus sign (medical cross)
+                    g2d.setStroke(new BasicStroke(3f));
+                    g2d.drawLine(x, y - iconSize/2, x, y + iconSize/2);
+                    g2d.drawLine(x - iconSize/2, y, x + iconSize/2, y);
+                    break;
+                    
+                case EDUCATION:
+                    // Graduation cap
+                    g2d.fillRect(x - iconSize/2, y, iconSize, iconSize/4);
+                    g2d.fillPolygon(
+                        new int[] {x - iconSize/2, x, x + iconSize/2},
+                        new int[] {y, y - iconSize/2, y},
+                        3
+                    );
+                    break;
+                    
+                case SAVINGS:
+                    // Piggy bank or coins
+                    g2d.fillOval(x - iconSize/2, y - iconSize/4, iconSize, iconSize/2);
+                    g2d.fillOval(x - iconSize/3, y - iconSize/2, iconSize/4, iconSize/4);
+                    break;
+                    
+                case INCOME:
+                    // Dollar sign or upward arrow
+                    g2d.drawLine(x, y - iconSize/2, x, y + iconSize/2);
+                    g2d.drawLine(x - iconSize/4, y - iconSize/4, x, y - iconSize/2);
+                    g2d.drawLine(x + iconSize/4, y - iconSize/4, x, y - iconSize/2);
+                    break;
+                    
+                case SHOPPING:
+                    // Shopping bag
+                    g2d.drawRect(x - iconSize/2, y - iconSize/4, iconSize, iconSize*3/4);
+                    g2d.drawLine(x - iconSize/3, y - iconSize/4, x - iconSize/3, y - iconSize/2);
+                    g2d.drawLine(x + iconSize/3, y - iconSize/4, x + iconSize/3, y - iconSize/2);
+                    break;
+                    
+                case BILL:
+                    // Bill/receipt
+                    g2d.drawRect(x - iconSize/2, y - iconSize/2, iconSize, iconSize);
+                    g2d.drawLine(x - iconSize/3, y - iconSize/4, x + iconSize/3, y - iconSize/4);
+                    g2d.drawLine(x - iconSize/3, y, x + iconSize/3, y);
+                    g2d.drawLine(x - iconSize/3, y + iconSize/4, x + iconSize/3, y + iconSize/4);
+                    break;
+                    
+                case GIFT:
+                    // Gift box
+                    g2d.drawRect(x - iconSize/2, y - iconSize/4, iconSize, iconSize/2);
+                    g2d.drawLine(x, y - iconSize/4, x, y + iconSize/4);
+                    g2d.drawArc(x - iconSize/4, y - iconSize/2, iconSize/2, iconSize/2, 0, 180);
+                    break;
+                    
+                case TRAVEL:
+                    // Suitcase or plane
+                    g2d.fillRect(x - iconSize/2, y - iconSize/4, iconSize, iconSize/2);
+                    g2d.fillRect(x - iconSize/4, y - iconSize/2, iconSize/2, iconSize/4);
+                    break;
+                    
+                case FITNESS:
+                    // Dumbbell
+                    g2d.fillRect(x - iconSize*2/3, y, iconSize*4/3, iconSize/4);
+                    g2d.fillOval(x - iconSize*2/3, y - iconSize/4, iconSize/2, iconSize/2);
+                    g2d.fillOval(x + iconSize/6, y - iconSize/4, iconSize/2, iconSize/2);
+                    break;
+                    
+                case TECHNOLOGY:
+                    // Computer/phone
+                    g2d.drawRect(x - iconSize/2, y - iconSize/2, iconSize, iconSize*3/4);
+                    g2d.drawLine(x - iconSize/4, y + iconSize/4, x + iconSize/4, y + iconSize/4);
+                    break;
+                    
+                case CUSTOM:
+                    // Star
+                    drawStar(g2d, x, y, iconSize);
+                    break;
+                    
+                case OTHER:
+                default:
+                    // Generic circle with dot
+                    g2d.drawOval(x - iconSize/2, y - iconSize/2, iconSize, iconSize);
+                    g2d.fillOval(x - iconSize/6, y - iconSize/6, iconSize/3, iconSize/3);
+                    break;
+            }
+        }
+        
+        private void drawStar(Graphics2D g2d, int x, int y, int size) {
+            int nPoints = 5;
+            int[] xPoints = new int[nPoints * 2];
+            int[] yPoints = new int[nPoints * 2];
+            
+            double angle = Math.PI / nPoints;
+            
+            for (int i = 0; i < nPoints * 2; i++) {
+                double r = (i % 2 == 0) ? size/2 : size/4;
+                xPoints[i] = (int)(x + r * Math.sin(i * angle));
+                yPoints[i] = (int)(y - r * Math.cos(i * angle));
+            }
+            
+            g2d.fillPolygon(xPoints, yPoints, nPoints * 2);
+        }
     }
 } 
