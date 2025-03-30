@@ -27,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 import controller.LeaderboardController;
 import model.LeaderboardEntry;
 
-public class LeaderboardUI extends JPanel {
+public class NewLeaderboardUI extends JPanel {
     private LeaderboardController controller;
     private JPanel podiumPanel;
     private JPanel contendersPanel;
@@ -41,7 +41,7 @@ public class LeaderboardUI extends JPanel {
     private final Color TEXT_COLOR = new Color(255, 255, 255);     // White text
     private final Color DARKER_PURPLE = new Color(39, 20, 83);     // Darker purple for contenders panel
 
-    public LeaderboardUI(int userId) {
+    public NewLeaderboardUI(int userId) {
         try {
             controller = new LeaderboardController(userId);
             initializeUI();
@@ -249,7 +249,7 @@ public class LeaderboardUI extends JPanel {
 
     private void displayContenders(List<LeaderboardEntry> entries) {
         // Get the content panel (second component in contendersPanel)
-        JPanel contentPanel = (JPanel) ((JPanel) contendersPanel.getComponent(0)).getComponent(1);
+        JPanel contentPanel = (JPanel) ((BorderLayout) contendersPanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         contentPanel.removeAll();
         
         if (entries.size() <= 3) {
@@ -549,4 +549,4 @@ public class LeaderboardUI extends JPanel {
     public void refresh() {
         loadLeaderboard();
     }
-}
+} 

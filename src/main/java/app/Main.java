@@ -7,6 +7,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import view.LoginScreen;
 //import database.DatabaseUpdater;
 
@@ -26,7 +28,9 @@ public class Main {
     public static void main(String[] args) throws SQLException {
 
         try {
-
+            // Initialize JavaFX toolkit
+            new JFXPanel(); // This initializes JavaFX platform
+            
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             // Add custom styling to UI defaults
             UIManager.put("OptionPane.background", new Color(40, 24, 69));

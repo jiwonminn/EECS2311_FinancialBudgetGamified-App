@@ -35,6 +35,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 import database.DatabaseManager;
 import view.LevelProgressPanel;
+import view.NewLeaderboardUI;
 
 public class CalendarUI extends JFrame implements CategoryChangeListener {
     // Define colors
@@ -424,9 +425,14 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
                 break;
                 
             case "Leaderboard":
-                // For now, show a placeholder message
-                LeaderboardUI leaderboardPlaceholderPanel = new LeaderboardUI(userId);
-                add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
+                // Create and add the Leaderboard tab
+                JPanel leaderboardTab = new JPanel(new BorderLayout());
+                leaderboardTab.setBackground(BACKGROUND_COLOR);
+                
+                NewLeaderboardUI leaderboardPlaceholderPanel = new NewLeaderboardUI(userId);
+                leaderboardTab.add(leaderboardPlaceholderPanel, BorderLayout.CENTER);
+                
+                add(leaderboardTab, BorderLayout.CENTER);
                 break;
                 
             case "Transaction Log":
