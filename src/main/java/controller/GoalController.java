@@ -22,6 +22,9 @@ public class GoalController {
     }
 
     public int createGoal(Goal goal) throws SQLException {
+        if (isDuplicateGoalName(goal.getUserId(), goal.getTitle())) {
+            throw new IllegalArgumentException("A goal with the same name already exists for this user.");
+        }
         return goalDao.createGoal(goal);
     }
 
@@ -68,5 +71,15 @@ public class GoalController {
 
     private LocalDate convertToLocalDate(Date date) {
         return new java.sql.Date(date.getTime()).toLocalDate();
+    }
+
+    private boolean isDuplicateGoalName(int userId, String goalName) throws SQLException {
+        List<Goal> goals = goalDao.getGoalsByUserId(userId);
+        for (Goal existingGoal : goals) {
+            if (existingGoal.getTitle().equalsIgnoreCase(goalName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

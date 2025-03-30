@@ -32,7 +32,7 @@ public class GoalsUI extends JPanel {
     private final Color TEXT_COLOR = new Color(255, 255, 255);
     private final Color ACCENT_COLOR = new Color(128, 90, 213);
     private final Color SUCCESS_COLOR = new Color(39, 174, 96);
-    private final Color WARNING_COLOR = new Color(235, 149, 50); 
+    private final Color WARNING_COLOR = new Color(235, 149, 50);
     private final Color DANGER_COLOR = new Color(215, 38, 61);
     private final Color FIELD_BACKGROUND = new Color(50, 35, 80);
 
@@ -43,17 +43,17 @@ public class GoalsUI extends JPanel {
     private String userName;
     private String userEmail;
     private JDialog addGoalDialog;
-    
+
     // Common categories for goals
     private final String[] goalCategories = {
-        "Savings", "Housing", "Food", "Transportation", "Entertainment", 
-        "Healthcare", "Education", "Investment", "Travel", "All Categories"
+            "Savings", "Housing", "Food", "Transportation", "Entertainment",
+            "Healthcare", "Education", "Investment", "Travel", "All Categories"
     };
-    
+
     public GoalsUI(int userId) {
         this(userId, "User", "");
     }
-    
+
     public GoalsUI(int userId, String userName, String userEmail) {
         this.userId = userId;
         this.userName = userName;
@@ -65,7 +65,7 @@ public class GoalsUI extends JPanel {
 
         initializeUI();
     }
-    
+
     /**
      * Initialize the UI components
      */
@@ -73,63 +73,63 @@ public class GoalsUI extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         setBorder(new EmptyBorder(20, 20, 20, 20));
-        
+
         // Add title at top
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(BACKGROUND_COLOR);
         titlePanel.setBorder(new EmptyBorder(0, 0, 20, 0));
-        
+
         JLabel titleLabel = new JLabel("Financial Goals");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(TEXT_COLOR);
         titlePanel.add(titleLabel, BorderLayout.WEST);
-        
+
         // Create a panel for the buttons
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setBackground(BACKGROUND_COLOR);
-        
+
         // Add Email Progress Report button
         JButton emailReportButton = new JButton("Email Progress Report");
         styleButton(emailReportButton);
         emailReportButton.setIcon(createEmailIcon());
         emailReportButton.addActionListener(e -> sendGoalProgressEmail());
         buttonsPanel.add(emailReportButton);
-        
+
         // Add New Goal button
         JButton addGoalButton = new JButton("Add New Goal");
         styleButton(addGoalButton);
         addGoalButton.addActionListener(e -> showAddGoalDialog());
         buttonsPanel.add(addGoalButton);
-        
+
         titlePanel.add(buttonsPanel, BorderLayout.EAST);
-        
+
         add(titlePanel, BorderLayout.NORTH);
-        
+
         // Goals container with scroll
         goalsPanel = new JPanel();
         goalsPanel.setLayout(new BoxLayout(goalsPanel, BoxLayout.Y_AXIS));
         goalsPanel.setBackground(BACKGROUND_COLOR);
-        
+
         JScrollPane scrollPane = new JScrollPane(goalsPanel);
         scrollPane.setBorder(null);
         scrollPane.setBackground(BACKGROUND_COLOR);
         scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
-        
+
         add(scrollPane, BorderLayout.CENTER);
-        
+
         // Load goals
         loadGoals();
     }
-    
+
     /**
      * Load and display goals for the current user
      */
     private void loadGoals() {
         goalsPanel.removeAll();
-        
+
         try {
             List<Goal> goals = goalController.getGoalsByUserId(userId);
-            
+
             if (goals.isEmpty()) {
                 // Show empty state
                 JPanel emptyStatePanel = new JPanel();
@@ -137,26 +137,26 @@ public class GoalsUI extends JPanel {
                 emptyStatePanel.setBackground(BACKGROUND_COLOR);
                 emptyStatePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 emptyStatePanel.setBorder(new EmptyBorder(50, 0, 0, 0));
-                
+
                 JLabel emptyIcon = new JLabel("🎯");
                 emptyIcon.setFont(new Font("Arial", Font.PLAIN, 48));
                 emptyIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
-                
+
                 JLabel emptyLabel = new JLabel("No financial goals yet");
                 emptyLabel.setFont(new Font("Arial", Font.BOLD, 18));
                 emptyLabel.setForeground(TEXT_COLOR);
                 emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                
+
                 JLabel emptyHintLabel = new JLabel("Create your first financial goal to start tracking your progress");
                 emptyHintLabel.setFont(new Font("Arial", Font.PLAIN, 14));
                 emptyHintLabel.setForeground(new Color(180, 180, 180));
                 emptyHintLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                
+
                 JButton createGoalButton = new JButton("Create a Goal");
                 styleButton(createGoalButton);
                 createGoalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                 createGoalButton.addActionListener(e -> showAddGoalDialog());
-                
+
                 emptyStatePanel.add(emptyIcon);
                 emptyStatePanel.add(Box.createRigidArea(new Dimension(0, 15)));
                 emptyStatePanel.add(emptyLabel);
@@ -164,7 +164,7 @@ public class GoalsUI extends JPanel {
                 emptyStatePanel.add(emptyHintLabel);
                 emptyStatePanel.add(Box.createRigidArea(new Dimension(0, 20)));
                 emptyStatePanel.add(createGoalButton);
-                
+
                 goalsPanel.add(emptyStatePanel);
             } else {
                 // Display goals
@@ -174,10 +174,10 @@ public class GoalsUI extends JPanel {
                     goalsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
                 }
             }
-            
+
             revalidate();
             repaint();
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
@@ -186,7 +186,7 @@ public class GoalsUI extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     /**
      * Creates a visual card for a goal
      */
@@ -196,34 +196,34 @@ public class GoalsUI extends JPanel {
         cardPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(PANEL_COLOR.getRed() + 15, PANEL_COLOR.getGreen() + 15, PANEL_COLOR.getBlue() + 15), 1),
                 new EmptyBorder(15, 15, 15, 15)));
-        
+
         // Goal title and amount section
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(PANEL_COLOR);
         headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JLabel titleLabel = new JLabel(goal.getTitle());
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(TEXT_COLOR);
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        
+
         JLabel amountLabel = new JLabel(String.format("$%.2f / $%.2f", goal.getCurrentAmount(), goal.getTargetAmount()));
         amountLabel.setFont(new Font("Arial", Font.BOLD, 16));
         amountLabel.setForeground(TEXT_COLOR);
         headerPanel.add(amountLabel, BorderLayout.EAST);
-        
+
         cardPanel.add(headerPanel, BorderLayout.NORTH);
-        
+
         // Goal details section
         JPanel detailsPanel = new JPanel(new BorderLayout());
         detailsPanel.setBackground(PANEL_COLOR);
         detailsPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         // Left side with description and dates
         JPanel leftDetailsPanel = new JPanel();
         leftDetailsPanel.setLayout(new BoxLayout(leftDetailsPanel, BoxLayout.Y_AXIS));
         leftDetailsPanel.setBackground(PANEL_COLOR);
-        
+
         // Description
         if (goal.getDescription() != null && !goal.getDescription().isEmpty()) {
             JLabel descLabel = new JLabel(goal.getDescription());
@@ -232,31 +232,31 @@ public class GoalsUI extends JPanel {
             leftDetailsPanel.add(descLabel);
             leftDetailsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         }
-        
+
         // Date range
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
-        JLabel dateRangeLabel = new JLabel("Timeline: " + dateFormat.format(goal.getStartDate()) + 
+        JLabel dateRangeLabel = new JLabel("Timeline: " + dateFormat.format(goal.getStartDate()) +
                 " to " + dateFormat.format(goal.getTargetDate()));
         dateRangeLabel.setFont(new Font("Arial", Font.ITALIC, 12));
         dateRangeLabel.setForeground(new Color(180, 180, 180));
         leftDetailsPanel.add(dateRangeLabel);
-        
+
         // Days remaining
         long daysRemaining = goal.getDaysRemaining();
-        String timeText = daysRemaining > 0 ? 
+        String timeText = daysRemaining > 0 ?
                 daysRemaining + " days remaining" :
                 "Goal period ended";
         JLabel timeRemainingLabel = new JLabel(timeText);
         timeRemainingLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         timeRemainingLabel.setForeground(daysRemaining > 0 ? new Color(180, 180, 180) : WARNING_COLOR);
         leftDetailsPanel.add(timeRemainingLabel);
-        
+
         detailsPanel.add(leftDetailsPanel, BorderLayout.WEST);
-        
+
         // Right side with category
         JPanel rightDetailsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightDetailsPanel.setBackground(PANEL_COLOR);
-        
+
         JLabel categoryLabel = new JLabel(goal.getCategory());
         categoryLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         categoryLabel.setForeground(TEXT_COLOR);
@@ -264,21 +264,21 @@ public class GoalsUI extends JPanel {
         categoryLabel.setBackground(ACCENT_COLOR);
         categoryLabel.setBorder(new EmptyBorder(3, 8, 3, 8));
         rightDetailsPanel.add(categoryLabel);
-        
+
         detailsPanel.add(rightDetailsPanel, BorderLayout.EAST);
-        
+
         cardPanel.add(detailsPanel, BorderLayout.CENTER);
-        
+
         // Progress bar section
         JPanel progressPanel = new JPanel(new BorderLayout(10, 0));
         progressPanel.setBackground(PANEL_COLOR);
-        
+
         // Progress bar
         JProgressBar progressBar = new JProgressBar(0, 100);
         progressBar.setValue((int) goal.getProgressPercentage());
         progressBar.setStringPainted(false);
         progressBar.setBackground(new Color(60, 45, 90));
-        
+
         // Set color based on progress and status
         if (goal.isCompleted()) {
             progressBar.setForeground(SUCCESS_COLOR);
@@ -287,17 +287,17 @@ public class GoalsUI extends JPanel {
         } else {
             progressBar.setForeground(ACCENT_COLOR);
         }
-        
+
         JPanel barWrapperPanel = new JPanel(new BorderLayout());
         barWrapperPanel.setBackground(PANEL_COLOR);
         barWrapperPanel.add(progressBar, BorderLayout.CENTER);
-        
+
         progressPanel.add(barWrapperPanel, BorderLayout.CENTER);
-        
+
         // Progress percentage
         JLabel progressLabel = new JLabel(String.format("%.0f%%", goal.getProgressPercentage()));
         progressLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        
+
         if (goal.isCompleted()) {
             progressLabel.setForeground(SUCCESS_COLOR);
         } else if (goal.isAtRisk()) {
@@ -305,29 +305,29 @@ public class GoalsUI extends JPanel {
         } else {
             progressLabel.setForeground(TEXT_COLOR);
         }
-        
+
         progressPanel.add(progressLabel, BorderLayout.EAST);
-        
+
         cardPanel.add(progressPanel, BorderLayout.SOUTH);
-        
+
         // Add action buttons
         JPopupMenu popupMenu = new JPopupMenu();
-        
+
         JMenuItem updateProgressItem = new JMenuItem("Update Progress");
         updateProgressItem.addActionListener(e -> updateGoalProgress(goal));
         popupMenu.add(updateProgressItem);
-        
+
         JMenuItem editItem = new JMenuItem("Edit Goal");
         editItem.addActionListener(e -> editGoal(goal));
         popupMenu.add(editItem);
-        
+
         popupMenu.addSeparator();
-        
+
         JMenuItem deleteItem = new JMenuItem("Delete");
         deleteItem.setForeground(DANGER_COLOR);
         deleteItem.addActionListener(e -> deleteGoal(goal));
         popupMenu.add(deleteItem);
-        
+
         // Add right-click menu
         cardPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -337,10 +337,10 @@ public class GoalsUI extends JPanel {
                 }
             }
         });
-        
+
         return cardPanel;
     }
-    
+
     /**
      * Show dialog to add a new goal
      */
@@ -349,90 +349,90 @@ public class GoalsUI extends JPanel {
             addGoalDialog.toFront();
             return;
         }
-        
+
         addGoalDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add New Goal", true);
         addGoalDialog.setLayout(new BorderLayout());
         addGoalDialog.getContentPane().setBackground(PANEL_COLOR);
-        
+
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBackground(PANEL_COLOR);
         formPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        
+
         // Title field
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(PANEL_COLOR);
         titlePanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JLabel titleLabel = new JLabel("Goal Title:");
         titleLabel.setForeground(TEXT_COLOR);
         titlePanel.add(titleLabel, BorderLayout.NORTH);
-        
+
         JTextField titleField = new JTextField(20);
         styleTextField(titleField);
         titlePanel.add(titleField, BorderLayout.CENTER);
-        
+
         formPanel.add(titlePanel);
-        
+
         // Description field
         JPanel descPanel = new JPanel(new BorderLayout());
         descPanel.setBackground(PANEL_COLOR);
         descPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JLabel descLabel = new JLabel("Description (optional):");
         descLabel.setForeground(TEXT_COLOR);
         descPanel.add(descLabel, BorderLayout.NORTH);
-        
+
         JTextField descField = new JTextField(20);
         styleTextField(descField);
         descPanel.add(descField, BorderLayout.CENTER);
-        
+
         formPanel.add(descPanel);
-        
+
         // Target amount field
         JPanel amountPanel = new JPanel(new BorderLayout());
         amountPanel.setBackground(PANEL_COLOR);
         amountPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JLabel amountLabel = new JLabel("Target Amount ($):");
         amountLabel.setForeground(TEXT_COLOR);
         amountPanel.add(amountLabel, BorderLayout.NORTH);
-        
+
         JTextField amountField = new JTextField(20);
         styleTextField(amountField);
         amountPanel.add(amountField, BorderLayout.CENTER);
-        
+
         formPanel.add(amountPanel);
-        
+
         // Category field
         JPanel categoryPanel = new JPanel(new BorderLayout());
         categoryPanel.setBackground(PANEL_COLOR);
         categoryPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JLabel categoryLabel = new JLabel("Category");
         categoryLabel.setForeground(TEXT_COLOR);
         categoryPanel.add(categoryLabel, BorderLayout.NORTH);
-        
+
         // Add "Create Custom Category" option to the goal categories
         String[] displayCategories = Arrays.copyOf(goalCategories, goalCategories.length + 1);
         displayCategories[displayCategories.length - 1] = "Create Custom Category...";
-        
+
         JComboBox<String> categoryComboBox = new JComboBox<>(displayCategories);
         categoryComboBox.setBackground(FIELD_BACKGROUND);
         categoryComboBox.setForeground(TEXT_COLOR);
         ((JComponent) categoryComboBox.getRenderer()).setOpaque(true);
         categoryPanel.add(categoryComboBox, BorderLayout.CENTER);
-        
+
         // Add listener for custom category creation
         categoryComboBox.addActionListener(e -> {
             if ("Create Custom Category...".equals(categoryComboBox.getSelectedItem())) {
                 String customCategory = JOptionPane.showInputDialog(
-                    addGoalDialog, 
-                    "Enter a custom category name:",
-                    "Create Custom Category",
-                    JOptionPane.PLAIN_MESSAGE
+                        addGoalDialog,
+                        "Enter a custom category name:",
+                        "Create Custom Category",
+                        JOptionPane.PLAIN_MESSAGE
                 );
-                
+
                 if (customCategory != null && !customCategory.trim().isEmpty()) {
                     // Add to combo box and select it
                     categoryComboBox.removeItem("Create Custom Category...");
@@ -445,54 +445,54 @@ public class GoalsUI extends JPanel {
                 }
             }
         });
-        
+
         formPanel.add(categoryPanel);
-        
+
         // Date pickers
         JPanel datesPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         datesPanel.setBackground(PANEL_COLOR);
         datesPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         // Start date
         JPanel startDatePanel = new JPanel(new BorderLayout());
         startDatePanel.setBackground(PANEL_COLOR);
-        
+
         JLabel startDateLabel = new JLabel("Start Date:");
         startDateLabel.setForeground(TEXT_COLOR);
         startDatePanel.add(startDateLabel, BorderLayout.NORTH);
-        
+
         // Create a custom calendar picker for start date
         CustomCalendarPicker startDatePicker = new CustomCalendarPicker();
         startDatePanel.add(startDatePicker, BorderLayout.CENTER);
-        
+
         datesPanel.add(startDatePanel);
-        
+
         // Target date
         JPanel targetDatePanel = new JPanel(new BorderLayout());
         targetDatePanel.setBackground(PANEL_COLOR);
-        
+
         JLabel targetDateLabel = new JLabel("Target Date:");
         targetDateLabel.setForeground(TEXT_COLOR);
         targetDatePanel.add(targetDateLabel, BorderLayout.NORTH);
-        
+
         // Create a custom calendar picker for target date
         Calendar targetCal = Calendar.getInstance();
         targetCal.add(Calendar.MONTH, 1); // Default to one month from now
         CustomCalendarPicker targetDatePicker = new CustomCalendarPicker(targetCal);
         targetDatePanel.add(targetDatePicker, BorderLayout.CENTER);
-        
+
         datesPanel.add(targetDatePanel);
-        
+
         formPanel.add(datesPanel);
-        
+
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(PANEL_COLOR);
-        
+
         JButton cancelButton = new JButton("Cancel");
         styleButton(cancelButton);
         cancelButton.addActionListener(e -> addGoalDialog.dispose());
-        
+
         JButton saveButton = new JButton("Create Goal");
         styleButton(saveButton);
         saveButton.setBackground(SUCCESS_COLOR);
@@ -506,12 +506,12 @@ public class GoalsUI extends JPanel {
                 String category = (String) categoryComboBox.getSelectedItem();
                 Date startDate = startDatePicker.getDate();
                 Date targetDate = targetDatePicker.getDate();
-                
+
                 if (title.isEmpty()) {
                     JOptionPane.showMessageDialog(addGoalDialog, "Please enter a title for your goal.");
                     return;
                 }
-                
+
                 double amount;
                 try {
                     amount = Double.parseDouble(amountText);
@@ -522,28 +522,31 @@ public class GoalsUI extends JPanel {
                     JOptionPane.showMessageDialog(addGoalDialog, "Please enter a valid positive amount.");
                     return;
                 }
-                
+
                 if (targetDate.before(startDate)) {
                     JOptionPane.showMessageDialog(addGoalDialog, "Target date must be after start date.");
                     return;
                 }
-                
+
                 // Get the selected category
                 if (category == null || category.equals("Create Custom Category...")) {
                     category = "Other";
                 }
-                
+
                 // Create the goal
                 Goal newGoal = new Goal(userId, title, description, amount, startDate, targetDate, category);
-                
+
                 try {
                     goalController.createGoal(newGoal);
-                    
+
                     // Add the category to the CategoryManager so it appears in transaction dropdown
                     categoryManager.addCategory(category);
-                    
+
                     addGoalDialog.dispose();
                     loadGoals(); // Refresh the list
+                } catch (IllegalArgumentException ex) {
+                    // Show pop-up message for duplicate goal name
+                    JOptionPane.showMessageDialog(addGoalDialog, ex.getMessage(), "Please create a unique goal name. ", JOptionPane.WARNING_MESSAGE);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(addGoalDialog,
@@ -553,18 +556,18 @@ public class GoalsUI extends JPanel {
                 }
             }
         });
-        
+
         buttonPanel.add(cancelButton);
         buttonPanel.add(saveButton);
-        
+
         formPanel.add(buttonPanel);
-        
+
         addGoalDialog.add(formPanel, BorderLayout.CENTER);
         addGoalDialog.pack();
         addGoalDialog.setLocationRelativeTo(this);
         addGoalDialog.setVisible(true);
     }
-    
+
     /**
      * Update a goal's progress
      */
@@ -572,7 +575,7 @@ public class GoalsUI extends JPanel {
         try {
             // Automatically update based on transactions
             boolean success = goalController.updateGoalProgress(goal.getId());
-            
+
             if (success) {
                 JOptionPane.showMessageDialog(this,
                         "Goal progress updated successfully!",
@@ -593,7 +596,7 @@ public class GoalsUI extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     /**
      * Edit an existing goal
      */
@@ -604,7 +607,7 @@ public class GoalsUI extends JPanel {
                 "Coming Soon",
                 JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     /**
      * Delete a goal
      */
@@ -614,11 +617,11 @@ public class GoalsUI extends JPanel {
                 "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
-                
+
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = goalController.deleteGoal(goal.getId());
-                
+
                 if (success) {
                     loadGoals(); // Refresh the view
                 } else {
@@ -636,7 +639,7 @@ public class GoalsUI extends JPanel {
             }
         }
     }
-    
+
     /**
      * Style a button to match the UI
      */
@@ -648,7 +651,7 @@ public class GoalsUI extends JPanel {
         button.setBorder(new EmptyBorder(8, 15, 8, 15));
         button.setFont(new Font("Arial", Font.BOLD, 14));
     }
-    
+
     /**
      * Style a text field to match the UI
      */
@@ -661,7 +664,7 @@ public class GoalsUI extends JPanel {
                 new EmptyBorder(8, 10, 8, 10)));
         textField.setFont(new Font("Arial", Font.PLAIN, 14));
     }
-    
+
     /**
      * Send an email with the goal progress report
      */
@@ -669,52 +672,52 @@ public class GoalsUI extends JPanel {
         try {
             // Get all goals for the user
             List<Goal> goals = goalController.getGoalsByUserId(userId);
-            
+
             if (goals.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                    "You don't have any goals to report on yet.",
-                    "No Goals Found",
-                    JOptionPane.INFORMATION_MESSAGE);
+                        "You don't have any goals to report on yet.",
+                        "No Goals Found",
+                        JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            
+
             // Get the user's email address
             String userEmailInput = getUserEmail();
             if (userEmailInput == null || userEmailInput.trim().isEmpty()) {
                 userEmailInput = JOptionPane.showInputDialog(this,
-                    "Please enter your email address to receive the report:",
-                    "Email Address Required",
-                    JOptionPane.PLAIN_MESSAGE);
-                
+                        "Please enter your email address to receive the report:",
+                        "Email Address Required",
+                        JOptionPane.PLAIN_MESSAGE);
+
                 if (userEmailInput == null || userEmailInput.trim().isEmpty()) {
                     return; // User canceled
                 }
-                
+
                 // Optional: Validate email format
                 if (!userEmailInput.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
                     JOptionPane.showMessageDialog(this,
-                        "Please enter a valid email address.",
-                        "Invalid Email",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Please enter a valid email address.",
+                            "Invalid Email",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }
-            
+
             // Create a final copy of the email for use in the lambda
             final String userEmail = userEmailInput;
             final String userName = getUserName();
-            
+
             // Show a progress dialog
             JDialog progressDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sending Email", true);
             progressDialog.setLayout(new BorderLayout());
             progressDialog.setSize(300, 100);
             progressDialog.setLocationRelativeTo(this);
-            
+
             JLabel progressLabel = new JLabel("Sending progress report to " + userEmail + "...");
             progressLabel.setBorder(new EmptyBorder(15, 15, 15, 15));
             progressLabel.setHorizontalAlignment(JLabel.CENTER);
             progressDialog.add(progressLabel, BorderLayout.CENTER);
-            
+
             // Start email sending in a background thread
             new Thread(() -> {
                 boolean success = false;
@@ -726,45 +729,45 @@ public class GoalsUI extends JPanel {
                         progressDialog.dispose();
                         if (finalSuccess) {
                             JOptionPane.showMessageDialog(this,
-                                "Goal progress report sent to " + userEmail,
-                                "Email Sent",
-                                JOptionPane.INFORMATION_MESSAGE);
+                                    "Goal progress report sent to " + userEmail,
+                                    "Email Sent",
+                                    JOptionPane.INFORMATION_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(this,
-                                "Failed to send the progress report. Please try again later.",
-                                "Email Error",
-                                JOptionPane.ERROR_MESSAGE);
+                                    "Failed to send the progress report. Please try again later.",
+                                    "Email Error",
+                                    JOptionPane.ERROR_MESSAGE);
                         }
                     });
                 }
             }).start();
-            
+
             // Show the progress dialog
             progressDialog.setVisible(true);
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Error retrieving goals: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error retrieving goals: " + e.getMessage(),
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     /**
      * Get the user's email address
      */
     private String getUserEmail() {
         return userEmail;
     }
-    
+
     /**
      * Get the user's name
      */
     private String getUserName() {
         return userName;
     }
-    
+
     /**
      * Create an email icon for the button
      */
@@ -772,29 +775,29 @@ public class GoalsUI extends JPanel {
         // Create a 16x16 image for the icon
         BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
-        
+
         // Set rendering hints for better quality
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
+
         // Draw envelope body
         g2d.setColor(Color.WHITE);
         g2d.fillRect(1, 3, 14, 10);
-        
+
         // Draw envelope border
         g2d.setColor(Color.WHITE);
         g2d.drawRect(1, 3, 14, 10);
-        
+
         // Draw envelope flap
         int[] xPoints = {1, 8, 15};
         int[] yPoints = {3, 9, 3};
         g2d.fillPolygon(xPoints, yPoints, 3);
-        
+
         // Draw line at bottom of flap
         g2d.setColor(Color.WHITE);
         g2d.drawLine(1, 3, 15, 3);
-        
+
         g2d.dispose();
-        
+
         return new ImageIcon(image);
     }
 } 
