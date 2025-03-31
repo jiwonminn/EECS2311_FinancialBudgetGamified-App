@@ -338,3 +338,10 @@ Jiwon
 - Worked additional bugs related to CSV file, as well 
 - Time spent 3 hours 
 
+March 31st, 2025
+As a group, we dicussed what to talk during the presentation. Andy created the slides and we edited the slides all together.
+
+Jiwon
+- Finalizing the reported issue docuemnt by making sure all bugs are closed and they are all written in the document, as well
+- Edited the log
+- Time spent 1 hour
