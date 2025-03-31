@@ -37,8 +37,8 @@ public class TransactionController {
         if(description == null) {
             throw new NullPointerException("Description can not be null");
         }
-        if(description.length() <= 0) {
-            throw new IllegalArgumentException("Description can not be empty");
+        if(description.isEmpty()) {
+            description = category;
         }
         if(type == null) {
             throw new NullPointerException("Type can not be null");

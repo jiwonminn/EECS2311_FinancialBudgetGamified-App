@@ -53,24 +53,46 @@ public class QuestDaoImpl implements QuestDao {
 
     @Override
     public boolean updateQuest(Quest quest) throws SQLException {
-        String sql = "UPDATE quests SET title = ?, description = ?, quest_type = ?, xp_reward = ?, required_amount = ?, completion_status = ?, deadline = ? " +
-                "WHERE id = ? AND user_id = ?";
+        String sql = "UPDATE quests SET " +
+                    "title = ?, " +
+                    "description = ?, " +
+                    "quest_type = ?, " +
+                    "xp_reward = ?, " +
+                    "required_amount = ?, " +
+                    "completion_status = ?, " +
+                    "deadline = ? " +
+                    "WHERE id = ? AND user_id = ?";
+        
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, quest.getTitle());
             pstmt.setString(2, quest.getDescription());
             pstmt.setString(3, quest.getQuestType());
             pstmt.setInt(4, quest.getXpReward());
             pstmt.setDouble(5, quest.getRequiredAmount());
             pstmt.setBoolean(6, quest.isCompleted());
+            
             if (quest.getDeadline() != null) {
                 pstmt.setDate(7, java.sql.Date.valueOf(quest.getDeadline()));
             } else {
-                pstmt.setNull(7, Types.DATE);
+                pstmt.setNull(7, java.sql.Types.DATE);
             }
+            
             pstmt.setInt(8, quest.getId());
             pstmt.setInt(9, quest.getUserId());
-            return pstmt.executeUpdate() > 0;
+            
+            int affectedRows = pstmt.executeUpdate();
+            
+            // If the update was successful and the quest is completed, consider triggering XP updates
+            if (affectedRows > 0 && quest.isCompleted()) {
+                System.out.println("Quest updated successfully: " + quest.getTitle());
+            }
+            
+            return affectedRows > 0;
+        } catch (Exception e) {
+            System.out.println("Error updating quest: " + e.getMessage());
+            return false;
         }
     }
 

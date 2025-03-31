@@ -15,11 +15,13 @@ public class Quest {
     private boolean completed;
     private LocalDate deadline;
     private int userId;
+    private int progress; // Progress value from 0-100
     
     /**
      * Default constructor
      */
     public Quest() {
+        this.progress = 0; // Default progress to 0
     }
     
     /**
@@ -36,6 +38,7 @@ public class Quest {
         this.completed = completed;
         this.deadline = deadline;
         this.userId = userId;
+        this.progress = completed ? 100 : 0; // Set progress to 100 if completed, 0 otherwise
     }
     
     // Getters and setters
@@ -94,6 +97,9 @@ public class Quest {
     
     public void setCompleted(boolean completed) {
         this.completed = completed;
+        if (completed) {
+            this.progress = 100; // Set progress to 100% when completed
+        }
     }
     
     public LocalDate getDeadline() {
@@ -112,6 +118,34 @@ public class Quest {
         this.userId = userId;
     }
     
+    /**
+     * Get the current progress of this quest (0-100)
+     * @return Progress percentage from 0 to 100
+     */
+    public int getProgress() {
+        return progress;
+    }
+    
+    /**
+     * Set the current progress of this quest
+     * @param progress Progress percentage from 0 to 100
+     */
+    public void setProgress(int progress) {
+        // Ensure progress is between 0 and 100
+        if (progress < 0) {
+            this.progress = 0;
+        } else if (progress > 100) {
+            this.progress = 100;
+        } else {
+            this.progress = progress;
+        }
+        
+        // Update completion status if progress is 100%
+        if (this.progress == 100) {
+            this.completed = true;
+        }
+    }
+    
     @Override
     public String toString() {
         return "Quest{" +
@@ -124,6 +158,7 @@ public class Quest {
                 ", completed=" + completed +
                 ", deadline=" + deadline +
                 ", userId=" + userId +
+                ", progress=" + progress +
                 '}';
     }
 } 

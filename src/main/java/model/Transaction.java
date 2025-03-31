@@ -20,6 +20,10 @@ public class Transaction {
     	if(description == null) {
     		throw new NullPointerException("Description can not be null");
     	}
+    	// If description is empty, use "Other" as default (matches the default category)
+    	if(description.isEmpty()) {
+    		description = "Other";
+    	}
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -37,6 +41,10 @@ public class Transaction {
     	
     	if(amount < 0.00) {
     		throw new IllegalArgumentException("Amount can not be negative");
+    	}
+    	// If description is empty, use category as description
+    	if(description.isEmpty()) {
+    		description = category;
     	}
         this.description = description;
         this.amount = amount;

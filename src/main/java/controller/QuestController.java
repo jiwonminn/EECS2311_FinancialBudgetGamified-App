@@ -318,75 +318,21 @@ public class QuestController {
             // Get all active quests for the user
             List<Quest> activeQuests = getActiveQuestsByUserId(userId);
             
-            // For each quest, check if it should be completed
+            // For each quest, calculate progress and check if it should be completed
             for (Quest quest : activeQuests) {
-                boolean shouldComplete = false;
+                // Calculate and update progress
+                int progress = calculateQuestProgress(quest, userId);
                 
-                // Check quest completion based on quest title or description
-                String title = quest.getTitle().toLowerCase();
-                String description = quest.getDescription().toLowerCase();
-                
-                // Get user transaction count for transaction-related quests
-                int transactionCount = getTransactionCountForUser(userId);
-                
-                // Quest for logging a transaction
-                if (title.contains("log a transaction") || description.contains("log a transaction") ||
-                    description.contains("log at least one transaction")) {
-                    if (transactionCount > 0) {
-                        shouldComplete = true;
-                    }
-                }
-                
-                // Quest for logging multiple transactions
-                if (title.contains("log transactions") || description.contains("log multiple transactions")) {
-                    // Check if they've met the required amount (usually the number of transactions)
-                    if (transactionCount >= quest.getRequiredAmount()) {
-                        shouldComplete = true;
-                    }
-                }
-                
-                // Quest for staying under budget
-                if (title.contains("stay under budget") || description.contains("stay under budget") ||
-                    description.contains("keep your expenses below")) {
-                    // Calculate the user's budget status
-                    boolean underBudget = checkIfUserIsUnderBudget(userId);
-                    if (underBudget) {
-                        shouldComplete = true;
-                    }
-                }
-                
-                // Quest for savings
-                if (title.contains("save money") || description.contains("save money") ||
-                    title.contains("savings") || description.contains("savings")) {
-                    // Calculate the user's savings
-                    double savings = calculateUserSavings(userId);
-                    if (savings >= quest.getRequiredAmount()) {
-                        shouldComplete = true;
-                    }
-                }
-                
-                // Quest for completing quizzes
-                if (title.contains("quiz") || description.contains("quiz") ||
-                    title.contains("complete 3 quizzes") || description.contains("finish at least 3 financial quizzes")) {
-                    int quizCount = getQuizCompletionCount(userId);
-                    System.out.println("User has completed " + quizCount + " quizzes for quest: " + title);
-                    
-                    // If this is a quest specifically about completing quizzes
-                    if (quest.getRequiredAmount() > 0) {
-                        if (quizCount >= quest.getRequiredAmount()) {
-                            shouldComplete = true;
-                            System.out.println("Quiz quest should be completed: " + title + " - " + quizCount + "/" + quest.getRequiredAmount());
-                        }
-                    } else if (quizCount > 0) {
-                        // If no specific amount is required, just check if any quiz has been completed
-                        shouldComplete = true;
-                    }
-                }
-                
-                // If quest should be completed, complete it
-                if (shouldComplete) {
+                // If progress is 100%, complete the quest
+                if (progress == 100 && !quest.isCompleted()) {
                     try {
                         System.out.println("Automatically completing quest: " + quest.getTitle());
+                        
+                        // Set progress to 100% and update in database
+                        quest.setProgress(100);
+                        QuestDao.updateQuest(quest);
+                        
+                        // Then mark it as completed and award XP
                         completeQuest(quest.getId(), userId);
                     } catch (Exception e) {
                         System.out.println("Error completing quest " + quest.getTitle() + ": " + e.getMessage());
@@ -460,29 +406,42 @@ public class QuestController {
      */
     public int calculateQuestProgress(Quest quest, int userId) throws SQLException {
         if (quest.isCompleted()) {
+            quest.setProgress(100);
             return 100;
         }
         
         String title = quest.getTitle().toLowerCase();
         String description = quest.getDescription().toLowerCase();
+        int progress = 0;
         
         // Quest for logging a transaction
         if (title.contains("daily log") || title.contains("log a transaction") || 
             description.contains("log a transaction") || description.contains("log all your expenses")) {
             int transactionCount = getTransactionCountForUser(userId);
-            return transactionCount > 0 ? 100 : 0;
+            progress = transactionCount > 0 ? 100 : 0;
         }
         
         // Quest for logging multiple transactions
-        if (title.contains("transaction master") || title.contains("log transactions") || 
+        else if (title.contains("transaction master") || title.contains("log transactions") || 
             description.contains("log multiple transactions") || description.contains("record at least")) {
             int transactionCount = getTransactionCountForUser(userId);
-            double requiredAmount = quest.getRequiredAmount() > 0 ? quest.getRequiredAmount() : 1;
-            return (int) Math.min(100, (transactionCount / requiredAmount) * 100);
+            int requiredAmount = (int)Math.ceil(quest.getRequiredAmount());
+            
+            // Fix for the progress bar calculation
+            if (transactionCount >= requiredAmount) {
+                // If requirement is met, show 100%
+                progress = 100;
+            } else {
+                // Calculate the percentage with proper double conversion to avoid integer division
+                progress = (int)((transactionCount * 100.0) / requiredAmount);
+            }
+            
+            System.out.println("Transaction Quest Progress: " + transactionCount + "/" + 
+                             requiredAmount + " = " + progress + "%");
         }
         
         // Quest for staying under budget
-        if (title.contains("budget guardian") || title.contains("budget streak") || 
+        else if (title.contains("budget guardian") || title.contains("budget streak") || 
             title.contains("stay under budget") || description.contains("stay under budget") ||
             description.contains("stay within your daily budget") || 
             description.contains("keep your expenses below")) {
@@ -492,55 +451,72 @@ public class QuestController {
             
             if (income > 0) {
                 double ratio = 1 - (expenses / income);
-                return (int) Math.min(100, Math.max(0, ratio * 100));
+                progress = (int) Math.min(100, Math.max(0, ratio * 100));
             } else {
-                return underBudget ? 80 : 20;
+                progress = underBudget ? 80 : 20;
             }
         }
         
         // Quest for savings
-        if (title.contains("save $") || title.contains("savings champion") ||
+        else if (title.contains("save $") || title.contains("savings champion") ||
             title.contains("save money") || description.contains("save money") ||
             description.contains("save at least") || description.contains("savings account")) {
             double savings = calculateUserSavings(userId);
             double requiredAmount = quest.getRequiredAmount() > 0 ? quest.getRequiredAmount() : 100;
-            return (int) Math.min(100, (savings / requiredAmount) * 100);
+            progress = (int) Math.min(100, (savings / requiredAmount) * 100);
         }
         
         // Quest for completing all goals
-        if (title.contains("complete all goals")) {
+        else if (title.contains("complete all goals")) {
             // This would require counting completed goals vs total goals
             // For now, we'll approximate with a 50% progress
-            return 50;
+            progress = 50;
         }
         
         // Quest for reaching a certain level
-        if (title.contains("reach level")) {
+        else if (title.contains("reach level")) {
             int[] userExp = getUserExperience(userId);
             int currentLevel = userExp[1];
             double requiredLevel = quest.getRequiredAmount() > 0 ? quest.getRequiredAmount() : 5;
-            return (int) Math.min(100, (currentLevel / requiredLevel) * 100);
+            progress = (int) Math.min(100, (currentLevel / requiredLevel) * 100);
         }
         
         // Quest for completing quizzes
-        if (title.contains("complete") && (title.contains("quiz") || title.contains("quizzes")) || 
+        else if (title.contains("complete") && (title.contains("quiz") || title.contains("quizzes")) || 
             description.contains("complete") && (description.contains("quiz") || description.contains("quizzes"))) {
             // Get quiz completion count from quiz tracker
             int quizCount = getQuizCompletionCount(userId);
             double requiredQuizzes = quest.getRequiredAmount() > 0 ? quest.getRequiredAmount() : 1;
-            return (int) Math.min(100, (quizCount / requiredQuizzes) * 100);
+            progress = (int) Math.min(100, (quizCount / requiredQuizzes) * 100);
         }
         
         // Daily log quest - check for transactions today
-        if (title.contains("daily log")) {
+        else if (title.contains("daily log")) {
             // Check if they've logged transactions today
             LocalDate today = LocalDate.now();
             int todaysTransactions = getTransactionCountForDay(userId, today);
-            return todaysTransactions > 0 ? 100 : 0;
+            progress = todaysTransactions > 0 ? 100 : 0;
         }
         
         // Default to 50% for unknown quest types
-        return 50;
+        else {
+            progress = 50;
+        }
+        
+        // Update the quest's progress
+        quest.setProgress(progress);
+        
+        // If progress is 100%, we should consider updating the quest in the database
+        if (progress == 100 && !quest.isCompleted()) {
+            // Just update progress here, completion will be handled by checkAndCompleteQuests
+            try {
+                QuestDao.updateQuest(quest);
+            } catch (Exception e) {
+                System.out.println("Error updating quest progress: " + e.getMessage());
+            }
+        }
+        
+        return progress;
     }
     
     /**
