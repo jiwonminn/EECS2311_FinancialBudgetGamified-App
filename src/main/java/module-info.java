@@ -11,6 +11,7 @@ module FBGApp {
     requires javafx.fxml;
     requires javafx.graphics;
     requires javafx.swing;
+    requires opencsv;
     exports view;
     exports app;
     //requires org.apache.commons.csv;
