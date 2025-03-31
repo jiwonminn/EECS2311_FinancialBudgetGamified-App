@@ -97,15 +97,19 @@ public class AnalyticsUI extends JPanel {
     }
 
     private void initializeUI() throws SQLException {
-        // Set up the main panel
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
+        
+        add(createHeaderPanel(), BorderLayout.NORTH);
+        add(createChartPanel(), BorderLayout.CENTER);
+    }
 
-        // Add header panel
+    private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(new EmptyBorder(20, 20, 10, 20));
 
+        // Create and configure analytics labels
         JLabel analyticsLabel = new JLabel("Analytics Dashboard");
         analyticsLabel.setForeground(TEXT_COLOR);
         analyticsLabel.setFont(new Font("Arial", Font.BOLD, 24));
@@ -116,16 +120,24 @@ public class AnalyticsUI extends JPanel {
         analyticsDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         analyticsDescriptionLabel.setHorizontalAlignment(JLabel.CENTER);
 
-        JPanel analyticsTextPanel = new JPanel();
-        analyticsTextPanel.setLayout(new BoxLayout(analyticsTextPanel, BoxLayout.Y_AXIS));
-        analyticsTextPanel.setBackground(BACKGROUND_COLOR);
-        analyticsTextPanel.add(analyticsLabel);
-        analyticsTextPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        analyticsTextPanel.add(analyticsDescriptionLabel);
-
+        JPanel analyticsTextPanel = createTextPanel(analyticsLabel, analyticsDescriptionLabel);
         headerPanel.add(analyticsTextPanel, BorderLayout.CENTER);
+        headerPanel.add(createImportButtonPanel(), BorderLayout.EAST);
 
-        // Add import button to the header
+        return headerPanel;
+    }
+
+    private JPanel createTextPanel(JLabel titleLabel, JLabel descriptionLabel) {
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setBackground(BACKGROUND_COLOR);
+        textPanel.add(titleLabel);
+        textPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        textPanel.add(descriptionLabel);
+        return textPanel;
+    }
+
+    private JPanel createImportButtonPanel() {
         JButton importButton = new JButton("Import CSV");
         importButton.setBackground(ACCENT_COLOR);
         importButton.setForeground(TEXT_COLOR);
@@ -137,65 +149,43 @@ public class AnalyticsUI extends JPanel {
         JPanel importPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         importPanel.setBackground(BACKGROUND_COLOR);
         importPanel.add(importButton);
-
-        headerPanel.add(importPanel, BorderLayout.EAST);
-        add(headerPanel, BorderLayout.NORTH);
-
-        // Create a panel for the charts
-        JPanel analyticsChartPanel = new JPanel(new GridLayout(2, 2, 15, 15));
-        analyticsChartPanel.setBackground(BACKGROUND_COLOR);
-        analyticsChartPanel.setBorder(new EmptyBorder(10, 20, 20, 20));
-
-        // Create and store chart panels
-        savingsChartPanel = new ChartPanel(createSavingsChart());
-        expensesCategoryChartPanel = new ChartPanel(createExpensesByCategoryChart());
-        pieChartPanel = new ChartPanel(createPieChart());
-        barChartPanel = new ChartPanel(createBarChart());
-
-        // Customize chart panels
-        for (ChartPanel panel : new ChartPanel[]{savingsChartPanel, expensesCategoryChartPanel, pieChartPanel, barChartPanel}) {
-            panel.setBackground(PANEL_COLOR);
-            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            panel.setPreferredSize(new Dimension(400, 300));
-            panel.setMinimumSize(new Dimension(300, 200));
-        }
-
-        // Add charts to the panel
-        analyticsChartPanel.add(savingsChartPanel);
-        analyticsChartPanel.add(expensesCategoryChartPanel);
-        analyticsChartPanel.add(pieChartPanel);
-        analyticsChartPanel.add(barChartPanel);
-
-        // Add the chart panel to the main panel
-        add(analyticsChartPanel, BorderLayout.CENTER);
+        return importPanel;
     }
 
-    // Create a monthly income vs expenses bar chart
+    private JPanel createChartPanel() throws SQLException {
+        JPanel chartPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        chartPanel.setBackground(BACKGROUND_COLOR);
+        chartPanel.setBorder(new EmptyBorder(10, 20, 20, 20));
+
+        // Initialize chart panels
+        savingsChartPanel = createStyledChartPanel(createSavingsChart());
+        expensesCategoryChartPanel = createStyledChartPanel(createExpensesByCategoryChart());
+        pieChartPanel = createStyledChartPanel(createPieChart());
+        barChartPanel = createStyledChartPanel(createBarChart());
+
+        // Add charts to the panel
+        chartPanel.add(savingsChartPanel);
+        chartPanel.add(expensesCategoryChartPanel);
+        chartPanel.add(pieChartPanel);
+        chartPanel.add(barChartPanel);
+
+        return chartPanel;
+    }
+
+    private ChartPanel createStyledChartPanel(JFreeChart chart) {
+        ChartPanel panel = new ChartPanel(chart);
+        panel.setBackground(PANEL_COLOR);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panel.setPreferredSize(new Dimension(400, 300));
+        panel.setMinimumSize(new Dimension(300, 200));
+        return panel;
+    }
+
     private JFreeChart createBarChart() throws SQLException {
-        // Create dataset
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        // Create and populate dataset
+        DefaultCategoryDataset dataset = createChartDataset();
 
-        // Get income and expense data
-        Map<LocalDate, Double> incomeData = controller.getIncomeData();
-        Map<LocalDate, Double> expenseData = controller.getExpenseData();
-
-        // Aggregate by month
-        Map<String, Double> monthlyIncome = aggregateByMonth(incomeData);
-        Map<String, Double> monthlyExpenses = aggregateByMonth(expenseData);
-
-        // Combine all unique months
-        Set<String> allMonths = new TreeSet<>(monthlyIncome.keySet());
-        allMonths.addAll(monthlyExpenses.keySet());
-
-        // Add income and expense data to the dataset in chronological order
-        for (String month : allMonths) {
-            double income = monthlyIncome.getOrDefault(month, 0.0);
-            double expense = monthlyExpenses.getOrDefault(month, 0.0);
-            dataset.addValue(income, "Income", month);
-            dataset.addValue(expense, "Expenses", month);
-        }
-
-        // Create BarChart
+        // Create base chart
         JFreeChart chart = ChartFactory.createBarChart(
                 "Monthly Income vs Expenses", // Chart title
                 "",                          // X-axis label
@@ -207,38 +197,72 @@ public class AnalyticsUI extends JPanel {
                 false                        // URLs
         );
 
+        // Apply styling and customization
+        customizeChartAppearance(chart);
+
+        return chart;
+    }
+
+    private DefaultCategoryDataset createChartDataset() throws SQLException {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        // Get and aggregate data
+        Map<String, Double> monthlyIncome = aggregateByMonth(controller.getIncomeData());
+        Map<String, Double> monthlyExpenses = aggregateByMonth(controller.getExpenseData());
+
+        // Combine all unique months in sorted order
+        Set<String> allMonths = new TreeSet<>(monthlyIncome.keySet());
+        allMonths.addAll(monthlyExpenses.keySet());
+
+        // Populate dataset
+        for (String month : allMonths) {
+            dataset.addValue(monthlyIncome.getOrDefault(month, 0.0), "Income", month);
+            dataset.addValue(monthlyExpenses.getOrDefault(month, 0.0), "Expenses", month);
+        }
+
+        return dataset;
+    }
+
+    private void customizeChartAppearance(JFreeChart chart) {
         // Apply dark theme
         applyDarkTheme(chart);
 
-        // Customize the plot
         CategoryPlot plot = chart.getCategoryPlot();
 
-        // Customize renderer
+        // Configure renderer
+        configureBarRenderer(plot);
+        
+        // Configure axes
+        configureRangeAxis(plot);
+        configureDomainAxis(plot);
+    }
+
+    private void configureBarRenderer(CategoryPlot plot) {
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        
+        // Set bar colors
         renderer.setSeriesPaint(0, CORRECT_COLOR);  // Income - green
         renderer.setSeriesPaint(1, INCORRECT_COLOR); // Expenses - red
 
-        // Improve bar spacing
-        renderer.setItemMargin(0.3);  // Increase space between bars in a category
+        // Configure bar spacing
+        renderer.setItemMargin(0.3);
 
-        // Add dollar value labels on top of the bars
-        renderer.setDefaultItemLabelGenerator(new org.jfree.chart.labels.StandardCategoryItemLabelGenerator(
+        // Configure value labels
+        renderer.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator(
                 "${2}", new DecimalFormat("0.00")));
         renderer.setDefaultItemLabelsVisible(true);
         renderer.setDefaultItemLabelPaint(TEXT_COLOR);
+    }
 
-        // Adjust the range axis to provide more room for labels
+    private void configureRangeAxis(CategoryPlot plot) {
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setUpperMargin(0.25);  // Add more space at the top for labels
-
-        // Improve zero value display
+        rangeAxis.setUpperMargin(0.25);
         rangeAxis.setNumberFormatOverride(new DecimalFormat("$#,##0.00"));
+    }
 
-        // Adjust category axis
+    private void configureDomainAxis(CategoryPlot plot) {
         CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setCategoryMargin(0.4);  // More space between categories
-
-        return chart;
+        domainAxis.setCategoryMargin(0.4);
     }
 
     // Create a pie chart for income vs expenses
@@ -292,129 +316,170 @@ public class AnalyticsUI extends JPanel {
         return chart;
     }
 
-    // Create a line chart for savings over time
     private JFreeChart createSavingsChart() throws SQLException {
-        // Get savings data
         Map<LocalDate, Double> savingsData = controller.getSavingsOverTime();
-        boolean useMonthly = savingsData.size() > 60; // Use monthly aggregation if we have lots of data points
+        boolean useMonthly = savingsData.size() > 60;
+        
+        JFreeChart chart = useMonthly 
+                ? createMonthlySavingsChart(savingsData) 
+                : createDailySavingsChart(savingsData);
+        
+        applyChartStyling(chart);
+        return chart;
+    }
 
-        JFreeChart chart;
+    private JFreeChart createMonthlySavingsChart(Map<LocalDate, Double> savingsData) {
+        DefaultCategoryDataset dataset = createMonthlyDataset(savingsData);
+        
+        JFreeChart chart = ChartFactory.createLineChart(
+                "Monthly Savings Trend",
+                "",
+                "Amount ($)",
+                dataset,
+                PlotOrientation.VERTICAL,
+                false,
+                true,
+                false
+        );
+        
+        configureMonthlyRenderer(chart);
+        return chart;
+    }
 
-        if (useMonthly) {
-            // Aggregate by month for clarity with lots of data
-            Map<String, Double> monthlySavings = aggregateByMonth(savingsData);
-            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    private DefaultCategoryDataset createMonthlyDataset(Map<LocalDate, Double> savingsData) {
+        Map<String, Double> monthlySavings = aggregateByMonth(savingsData);
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        
+        new TreeSet<>(monthlySavings.entrySet()).forEach(entry -> 
+                dataset.addValue(entry.getValue(), "Savings", entry.getKey()));
+        
+        return dataset;
+    }
 
-            // Add to dataset
-            for (Map.Entry<String, Double> entry : new TreeSet<>(monthlySavings.entrySet())) {
-                dataset.addValue(entry.getValue(), "Savings", entry.getKey());
-            }
+    private void configureMonthlyRenderer(JFreeChart chart) {
+        CategoryPlot plot = chart.getCategoryPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        
+        renderer.setSeriesPaint(0, CORRECT_COLOR);
+        renderer.setSeriesStroke(0, new BasicStroke(2.5f));
+        renderer.setDefaultShapesVisible(true);
+        renderer.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator(
+                "${2}", new DecimalFormat("0.00")));
+        renderer.setDefaultItemLabelsVisible(true);
+        renderer.setDefaultItemLabelPaint(TEXT_COLOR);
+    }
 
-            // Create line chart
-            chart = ChartFactory.createLineChart(
-                    "Monthly Savings Trend",    // Chart title
-                    "",                         // X-axis label
-                    "Amount ($)",               // Y-axis label
-                    dataset,                    // Dataset
-                    PlotOrientation.VERTICAL,   // Orientation
-                    false,                      // Include legend
-                    true,                       // Tooltips
-                    false                       // URLs
-            );
+    private JFreeChart createDailySavingsChart(Map<LocalDate, Double> savingsData) {
+        TimeSeriesCollection dataset = createDailyDataset(savingsData);
+        
+        JFreeChart chart = ChartFactory.createTimeSeriesChart(
+                "Daily Savings Trend",
+                "Date",
+                "Amount ($)",
+                dataset,
+                false,
+                true,
+                false
+        );
+        
+        configureDailyRenderer(chart);
+        return chart;
+    }
 
-            // Customize renderer
-            CategoryPlot plot = chart.getCategoryPlot();
-            LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
-            renderer.setSeriesPaint(0, CORRECT_COLOR);
-            renderer.setSeriesStroke(0, new BasicStroke(2.5f));
-            renderer.setDefaultShapesVisible(true);
-            renderer.setDefaultItemLabelGenerator(new org.jfree.chart.labels.StandardCategoryItemLabelGenerator(
-                    "${2}", new DecimalFormat("0.00")));
-            renderer.setDefaultItemLabelsVisible(true);
-            renderer.setDefaultItemLabelPaint(TEXT_COLOR);
-        } else {
-            // Create time series dataset for daily data
-            TimeSeries series = new TimeSeries("Savings");
+    private TimeSeriesCollection createDailyDataset(Map<LocalDate, Double> savingsData) {
+        TimeSeries series = new TimeSeries("Savings");
+        savingsData.forEach((date, value) -> 
+                series.add(new Day(date.getDayOfMonth(), date.getMonthValue(), date.getYear()), value));
+        
+        TimeSeriesCollection dataset = new TimeSeriesCollection();
+        dataset.addSeries(series);
+        return dataset;
+    }
 
-            // Add data points
-            for (Map.Entry<LocalDate, Double> entry : savingsData.entrySet()) {
-                LocalDate date = entry.getKey();
-                series.add(new Day(date.getDayOfMonth(), date.getMonthValue(), date.getYear()), entry.getValue());
-            }
+    private void configureDailyRenderer(JFreeChart chart) {
+        XYPlot plot = chart.getXYPlot();
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        
+        renderer.setSeriesPaint(0, CORRECT_COLOR);
+        renderer.setSeriesStroke(0, new BasicStroke(2.5f));
+        renderer.setSeriesShapesVisible(0, true);
+        plot.setRenderer(renderer);
+    }
 
-            TimeSeriesCollection dataset = new TimeSeriesCollection();
-            dataset.addSeries(series);
-
-            // Create chart
-            chart = ChartFactory.createTimeSeriesChart(
-                    "Daily Savings Trend",      // Chart title
-                    "Date",                     // X-axis label
-                    "Amount ($)",               // Y-axis label
-                    dataset,                    // Dataset
-                    false,                      // Include legend
-                    true,                       // Tooltips
-                    false                       // URLs
-            );
-
-            // Customize plot
-            XYPlot plot = chart.getXYPlot();
-            XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-            renderer.setSeriesPaint(0, CORRECT_COLOR);
-            renderer.setSeriesStroke(0, new BasicStroke(2.5f));
-            renderer.setSeriesShapesVisible(0, true);
-            plot.setRenderer(renderer);
-        }
-
-        // Apply dark theme and add subtitle
+    private void applyChartStyling(JFreeChart chart) {
         applyDarkTheme(chart);
+        
         TextTitle subtitle = new TextTitle(
                 "Track your cumulative savings over time",
                 new Font("Arial", Font.ITALIC, 12)
         );
         subtitle.setPaint(new Color(180, 180, 180));
         chart.addSubtitle(subtitle);
+    }
 
+    private JFreeChart createExpensesByCategoryChart() throws SQLException {
+        // Get and process data
+        Map<String, Double> expensesByCategory = controller.getExpensesByCategory();
+        double totalExpenses = calculateTotalExpenses(expensesByCategory);
+        
+        // Create chart
+        JFreeChart chart = buildDonutChart(expensesByCategory, totalExpenses);
+        
+        // Apply styling
+        customizeDonutChart(chart, expensesByCategory);
+        
         return chart;
     }
 
-    // Create a donut chart for expenses by category
-    private JFreeChart createExpensesByCategoryChart() throws SQLException {
-        // Create dataset
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+    private double calculateTotalExpenses(Map<String, Double> expensesByCategory) {
+        return expensesByCategory.values().stream()
+                .mapToDouble(Double::doubleValue)
+                .sum();
+    }
 
-        // Get expenses by category
-        Map<String, Double> expensesByCategory = controller.getExpensesByCategory();
-        double totalExpenses = expensesByCategory.values().stream().mapToDouble(Double::doubleValue).sum();
-
-        // Add data to dataset (filter out categories with very small values)
-        for (Map.Entry<String, Double> entry : expensesByCategory.entrySet()) {
-            if (entry.getValue() > 0.01) {  // Filter out very small values
-                dataset.setValue(entry.getKey(), entry.getValue());
-            }
-        }
-
-        // Create PieChart (we'll customize it to be a donut chart)
+    private JFreeChart buildDonutChart(Map<String, Double> expensesByCategory, double totalExpenses) {
+        DefaultPieDataset<String> dataset = createFilteredDataset(expensesByCategory);
+        
         JFreeChart chart = ChartFactory.createPieChart(
-                "Expense Categories",        // Chart title
-                dataset,                     // Dataset
-                false,                       // Legend
-                true,                        // Tooltips
-                false                        // URLs
+                "Expense Categories",
+                dataset,
+                false,  // Legend
+                true,   // Tooltips
+                false   // URLs
         );
+        
+        addTotalExpensesSubtitle(chart, totalExpenses);
+        applyDarkTheme(chart);
+        
+        return chart;
+    }
 
-        // Add subtitle with total expenses
+    private DefaultPieDataset<String> createFilteredDataset(Map<String, Double> expensesByCategory) {
+        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+        expensesByCategory.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0.01)
+                .forEach(entry -> dataset.setValue(entry.getKey(), entry.getValue()));
+        return dataset;
+    }
+
+    private void addTotalExpensesSubtitle(JFreeChart chart, double totalExpenses) {
         TextTitle subtitle = new TextTitle(
                 String.format("Total Expenses: $%.2f", totalExpenses),
                 new Font("Arial", Font.PLAIN, 12)
         );
         subtitle.setPaint(TEXT_COLOR);
         chart.addSubtitle(subtitle);
+    }
 
-        // Apply dark theme
-        applyDarkTheme(chart);
-
-        // Customize the plot to create a donut chart effect
+    private void customizeDonutChart(JFreeChart chart, Map<String, Double> expensesByCategory) {
         PiePlot plot = (PiePlot) chart.getPlot();
+        
+        configureDonutAppearance(plot);
+        applyCategoryColors(plot, expensesByCategory);
+        configureLabels(plot);
+    }
+
+    private void configureDonutAppearance(PiePlot plot) {
         plot.setLabelFont(new Font("Arial", Font.PLAIN, 11));
         plot.setLabelPaint(TEXT_COLOR);
         plot.setLabelBackgroundPaint(null);
@@ -423,26 +488,29 @@ public class AnalyticsUI extends JPanel {
         plot.setCircular(true);
         plot.setLabelGap(0.02);
         plot.setInteriorGap(0.04);
-
-        // JFreeChart 1.5+ uses this instead of setSectionDepth for donut effect
+        
         if (plot instanceof org.jfree.chart.plot.RingPlot) {
             ((org.jfree.chart.plot.RingPlot) plot).setSectionDepth(0.35);
         }
+    }
 
-        // Set custom colors for each category
+    private void applyCategoryColors(PiePlot plot, Map<String, Double> expensesByCategory) {
         int colorIndex = 0;
-        for (Object key : dataset.getKeys()) {
-            // Cast the key to Comparable to match the expected type
-            plot.setSectionPaint((Comparable<?>) key, EXPENSE_CATEGORY_COLORS[colorIndex % EXPENSE_CATEGORY_COLORS.length]);
-            colorIndex++;
+        for (String category : expensesByCategory.keySet()) {
+            if (expensesByCategory.get(category) > 0.01) {
+                plot.setSectionPaint(category, EXPENSE_CATEGORY_COLORS[colorIndex % EXPENSE_CATEGORY_COLORS.length]);
+                colorIndex++;
+            }
         }
+    }
 
-        // Add percentage and dollar amount labels
+    private void configureLabels(PiePlot plot) {
         PieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator(
-                "{0}: {2} (${1})", new DecimalFormat("0.00"), new DecimalFormat("0%"));
+                "{0}: {2} (${1})", 
+                new DecimalFormat("0.00"), 
+                new DecimalFormat("0%")
+        );
         plot.setLabelGenerator(labelGenerator);
-
-        return chart;
     }
 
     // Apply dark theme to all charts
@@ -555,3 +623,4 @@ public class AnalyticsUI extends JPanel {
         repaint();
     }
 }
+
