@@ -4,12 +4,16 @@ import database.DatabaseConfig;
 import database.StubDatabaseConfig;
 
 public class TestDatabaseConfig {
-    private static DatabaseConfig instance;
+    private static StubDatabaseConfig instance;
 
     public static DatabaseConfig getInstance() {
         if (instance == null) {
-            instance = new StubDatabaseConfig();
+            instance = new StubDatabaseConfig(true);
         }
         return instance;
+    }
+
+    public static void resetInstance() {
+        instance = null;
     }
 } 

@@ -6,18 +6,23 @@ import java.util.Map;
 
 public class StubStatement implements Statement {
     protected final Map<Integer, Map<String, Object>> users;
+    protected final Map<Integer, Map<String, Object>> userExperience;
     protected ResultSet resultSet;
     protected boolean closed = false;
 
-    public StubStatement(Map<Integer, Map<String, Object>> users) {
+    public StubStatement(Map<Integer, Map<String, Object>> users, Map<Integer, Map<String, Object>> userExperience) {
         this.users = users;
+        this.userExperience = userExperience;
     }
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
         if (sql.toLowerCase().contains("select")) {
             // Handle SELECT queries
-            if (sql.toLowerCase().contains("users")) {
+            if (sql.toLowerCase().contains("user_experience")) {
+                resultSet = new StubResultSet(userExperience, null, true);
+                return resultSet;
+            } else if (sql.toLowerCase().contains("users")) {
                 resultSet = new StubResultSet(users);
                 return resultSet;
             }
@@ -29,7 +34,22 @@ public class StubStatement implements Statement {
     public int executeUpdate(String sql) throws SQLException {
         if (sql.toLowerCase().contains("insert")) {
             // Handle INSERT queries
-            if (sql.toLowerCase().contains("users")) {
+            if (sql.toLowerCase().contains("user_experience")) {
+                // Extract values from SQL (simplified)
+                String values = sql.substring(sql.indexOf("VALUES") + 6).trim();
+                values = values.substring(1, values.length() - 1);
+                String[] parts = values.split(",");
+                int userId = Integer.parseInt(parts[0].trim());
+                int currentXp = Integer.parseInt(parts[1].trim());
+                int level = Integer.parseInt(parts[2].trim());
+                
+                // Add new user experience
+                Map<String, Object> experienceData = new HashMap<>();
+                experienceData.put("current_xp", currentXp);
+                experienceData.put("level", level);
+                userExperience.put(userId, experienceData);
+                return 1;
+            } else if (sql.toLowerCase().contains("users")) {
                 // Extract values from SQL (simplified)
                 String values = sql.substring(sql.indexOf("VALUES") + 6).trim();
                 values = values.substring(1, values.length() - 1);
@@ -49,13 +69,40 @@ public class StubStatement implements Statement {
             }
         } else if (sql.toLowerCase().contains("delete")) {
             // Handle DELETE queries
-            if (sql.toLowerCase().contains("users")) {
+            if (sql.toLowerCase().contains("user_experience")) {
+                // Extract user ID from SQL (simplified)
+                String idStr = sql.substring(sql.indexOf("user_id =") + 9).trim();
+                int id = Integer.parseInt(idStr);
+                if (userExperience.remove(id) != null) {
+                    return 1;
+                }
+            } else if (sql.toLowerCase().contains("users")) {
                 // Extract user ID from SQL (simplified)
                 String idStr = sql.substring(sql.indexOf("id =") + 4).trim();
                 int id = Integer.parseInt(idStr);
                 if (users.remove(id) != null) {
                     return 1;
                 }
+            }
+        } else if (sql.toLowerCase().contains("update")) {
+            // Handle UPDATE queries
+            if (sql.toLowerCase().contains("user_experience")) {
+                // Extract values from SQL (simplified)
+                String values = sql.substring(sql.indexOf("SET") + 3, sql.indexOf("WHERE")).trim();
+                String[] parts = values.split(",");
+                int currentXp = Integer.parseInt(parts[0].trim().substring(parts[0].trim().indexOf("=") + 1));
+                int level = Integer.parseInt(parts[1].trim().substring(parts[1].trim().indexOf("=") + 1));
+                String idStr = sql.substring(sql.indexOf("user_id =") + 9).trim();
+                int userId = Integer.parseInt(idStr);
+                
+                Map<String, Object> experienceData = userExperience.get(userId);
+                if (experienceData != null) {
+                    experienceData.put("current_xp", currentXp);
+                    experienceData.put("level", level);
+                    return 1;
+                }
+            } else if (sql.toLowerCase().contains("users")) {
+                // ... existing users table handling ...
             }
         }
         return 0;
@@ -194,7 +241,7 @@ public class StubStatement implements Statement {
 
     @Override
     public Connection getConnection() throws SQLException {
-        return new StubConnection(users);
+        return new StubConnection(users, userExperience);
     }
 
     @Override

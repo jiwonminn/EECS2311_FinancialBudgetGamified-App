@@ -6,6 +6,7 @@ import java.util.Calendar;
 
 public class StubResultSet implements ResultSet {
     private final Map<Integer, Map<String, Object>> users;
+    private final Map<Integer, Map<String, Object>> userExperience;
     private final Integer userId;
     private boolean isBeforeFirst = true;
     private boolean isAfterLast = false;
@@ -13,11 +14,24 @@ public class StubResultSet implements ResultSet {
 
     public StubResultSet(Map<Integer, Map<String, Object>> users) {
         this.users = users;
+        this.userExperience = null;
         this.userId = null;
     }
 
     public StubResultSet(Map<Integer, Map<String, Object>> users, Integer userId) {
         this.users = users;
+        this.userExperience = null;
+        this.userId = userId;
+    }
+
+    public StubResultSet(Map<Integer, Map<String, Object>> data, Integer userId, boolean isExperience) {
+        if (isExperience) {
+            this.users = null;
+            this.userExperience = data;
+        } else {
+            this.users = data;
+            this.userExperience = null;
+        }
         this.userId = userId;
     }
 
@@ -29,7 +43,8 @@ public class StubResultSet implements ResultSet {
         if (userId != null) {
             if (isBeforeFirst) {
                 isBeforeFirst = false;
-                if (users.containsKey(userId)) {
+                if ((users != null && users.containsKey(userId)) || 
+                    (userExperience != null && userExperience.containsKey(userId))) {
                     return true;
                 }
             }
@@ -54,23 +69,39 @@ public class StubResultSet implements ResultSet {
         if (userId == null) {
             throw new SQLException("No current row");
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            throw new SQLException("User not found");
+        Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
+        if (data == null) {
+            throw new SQLException("Data not found");
         }
-        switch (columnIndex) {
-            case 1: // id
-                return String.valueOf(userId);
-            case 2: // email
-                return (String) userData.get("email");
-            case 3: // password
-                return (String) userData.get("password");
-            case 4: // points
-                return String.valueOf(userData.get("points"));
-            case 5: // balance
-                return String.valueOf(userData.get("balance"));
-            default:
-                throw new SQLException("Invalid column index: " + columnIndex);
+        if (userExperience != null) {
+            switch (columnIndex) {
+                case 1: // user_id
+                    return String.valueOf(userId);
+                case 2: // current_xp
+                    return String.valueOf(data.get("current_xp"));
+                case 3: // level
+                    return String.valueOf(data.get("level"));
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        } else {
+            switch (columnIndex) {
+                case 1: // id
+                    return String.valueOf(userId);
+                case 2: // email
+                    return (String) data.get("email");
+                case 3: // password
+                    return (String) data.get("password");
+                case 4: // points
+                    return String.valueOf(data.get("points"));
+                case 5: // balance
+                    return String.valueOf(data.get("balance"));
+                case 6: // username
+                    String email = (String) data.get("email");
+                    return email != null ? email.split("@")[0] : "";
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
         }
     }
 
@@ -94,17 +125,31 @@ public class StubResultSet implements ResultSet {
         if (userId == null) {
             throw new SQLException("No current row");
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            throw new SQLException("User not found");
+        Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
+        if (data == null) {
+            // For generated keys, return the userId directly
+            return userId;
         }
-        switch (columnIndex) {
-            case 1: // id
-                return userId;
-            case 4: // points
-                return (Integer) userData.get("points");
-            default:
-                throw new SQLException("Invalid column index: " + columnIndex);
+        if (userExperience != null) {
+            switch (columnIndex) {
+                case 1: // user_id
+                    return userId;
+                case 2: // current_xp
+                    return (Integer) data.get("current_xp");
+                case 3: // level
+                    return (Integer) data.get("level");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        } else {
+            switch (columnIndex) {
+                case 1: // id
+                    return userId;
+                case 4: // points
+                    return (Integer) data.get("points");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
         }
     }
 
@@ -177,22 +222,42 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
+        if (columnLabel.equals("username")) {
+            return getString(6); // Use the same logic as column index 6
+        }
         if (userId == null) {
             throw new SQLException("No current row");
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            throw new SQLException("User not found");
+        Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
+        if (data == null) {
+            throw new SQLException("Data not found");
         }
-        switch (columnLabel.toLowerCase()) {
-            case "id":
-                return String.valueOf(userId);
-            case "email":
-                return (String) userData.get("email");
-            case "password":
-                return (String) userData.get("password");
-            default:
-                throw new SQLException("Invalid column label: " + columnLabel);
+        if (userExperience != null) {
+            switch (columnLabel.toLowerCase()) {
+                case "user_id":
+                    return String.valueOf(userId);
+                case "current_xp":
+                    return String.valueOf(data.get("current_xp"));
+                case "level":
+                    return String.valueOf(data.get("level"));
+                default:
+                    throw new SQLException("Invalid column label: " + columnLabel);
+            }
+        } else {
+            switch (columnLabel.toLowerCase()) {
+                case "id":
+                    return String.valueOf(userId);
+                case "email":
+                    return (String) data.get("email");
+                case "password":
+                    return (String) data.get("password");
+                case "points":
+                    return String.valueOf(data.get("points"));
+                case "balance":
+                    return String.valueOf(data.get("balance"));
+                default:
+                    throw new SQLException("Invalid column label: " + columnLabel);
+            }
         }
     }
 
@@ -218,7 +283,8 @@ public class StubResultSet implements ResultSet {
         }
         Map<String, Object> userData = users.get(userId);
         if (userData == null) {
-            throw new SQLException("User not found");
+            // For generated keys, return the userId directly
+            return userId;
         }
         switch (columnLabel.toLowerCase()) {
             case "id":

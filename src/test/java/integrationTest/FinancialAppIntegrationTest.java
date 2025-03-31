@@ -1,6 +1,6 @@
 package integrationTest;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.AfterEach;
@@ -22,53 +22,82 @@ import java.util.Date;
 import java.util.List;
 
 public class FinancialAppIntegrationTest {
-    private static Connection connection;
-    private static UserController userController;
-    private static UserControllerWithDatabase userControllerWithDb;
-    private static TransactionController transactionController;
-    private static UserDao userDao;
-    private static User testUser;
+    private Connection connection;
+    private UserController userController;
+    private UserControllerWithDatabase userControllerWithDb;
+    private TransactionController transactionController;
+    private UserDao userDao;
+    private User testUser;
     private static final String TEST_PASSWORD = "testPassword123";
     private static final String TEST_USERNAME = "testUser";
-    private static final String TEST_EMAIL = "testt12@example.com";
+    private static final String TEST_EMAIL = "testt1331hhh2@example.com";
     private static final double INITIAL_BALANCE = 0.0;
 
-    @BeforeAll
-    public static void setUp() throws SQLException {
+    @BeforeEach
+    public void setUp() throws SQLException {
+        // Reset the test database configuration
+        TestDatabaseConfig.resetInstance();
+        
         // Use the test database configuration
         DatabaseConfig dbConfig = TestDatabaseConfig.getInstance();
         connection = dbConfig.getConnection();
         
         // Initialize DAOs and controllers
         userDao = new UserDaoImpl(connection);
-        userControllerWithDb = new UserControllerWithDatabase();
+        userControllerWithDb = new UserControllerWithDatabase(connection);
         userController = new UserController(TEST_USERNAME, TEST_EMAIL, INITIAL_BALANCE);
         transactionController = new TransactionController(connection);
         
         // Create a test user
-        int userId = userControllerWithDb.registerUser(TEST_EMAIL, TEST_PASSWORD);
-        testUser = userDao.findUserById(userId);
+        try {
+            System.out.println("Attempting to register test user with email: " + TEST_EMAIL);
+            int userId = userControllerWithDb.registerUser(TEST_EMAIL, TEST_PASSWORD);
+            System.out.println("Test user registered with ID: " + userId);
+            
+            // Verify test user was created successfully
+            testUser = userDao.findUserById(userId);
+            if (testUser == null) {
+                throw new SQLException("Failed to create test user - user is null after creation");
+            }
+            System.out.println("Test user created successfully with ID: " + testUser.getId());
+        } catch (SQLException e) {
+            System.err.println("Error during test setup: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @AfterEach
     void tearDown() throws SQLException {
         // Clean up test data
         if (testUser != null) {
-            // Delete user from database
-            boolean deleted = userDao.deleteUser(testUser.getId());
-            if (!deleted) {
-                System.err.println("Failed to delete test user with ID: " + testUser.getId());
+            try {
+                // Delete user from database
+                boolean deleted = userDao.deleteUser(testUser.getId());
+                if (!deleted) {
+                    System.err.println("Failed to delete test user with ID: " + testUser.getId());
+                }
+            } catch (SQLException e) {
+                System.err.println("Error during test cleanup: " + e.getMessage());
+                e.printStackTrace();
             }
         }
-        if (connection != null) {
-            connection.close();
+        
+        // Close the connection if it's still open
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error closing connection: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     @Test
     public void testUserRegistration() throws SQLException {
         // Test registering a new user
-        int userId = userControllerWithDb.registerUser("newusertest123@example.com", "password123");
+        int userId = userControllerWithDb.registerUser("newusertest122j2hh223@example.com", "password123");
         assertTrue(userId >= 0);
         
        
@@ -92,7 +121,6 @@ public class FinancialAppIntegrationTest {
         assertTrue(userId >= 0);
         
         User authenticatedUser = userDao.findUserById(userId);
-        assertNotNull(authenticatedUser);
         assertEquals(TEST_EMAIL, authenticatedUser.getEmail());
         
         // Test failed authentication
