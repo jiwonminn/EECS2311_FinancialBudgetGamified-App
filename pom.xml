@@ -93,6 +93,13 @@
             <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- OpenCSV for enhanced CSV parsing -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>3.8</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -16,7 +16,11 @@ public class TransactionController {
     private static final int XP_REWARD_PER_TRANSACTION = 20; // XP points awarded for logging a transaction
 
     public TransactionController() throws SQLException {
-        connection = DatabaseManager.getConnection();
+        this(DatabaseManager.getConnection());
+    }
+
+    public TransactionController(Connection connection) {
+        this.connection = connection;
     }
 
     /**
@@ -229,7 +233,7 @@ public class TransactionController {
     /**
      * Awards XP to a user for logging a transaction and checks for quest completion
      */
-    private static void awardXpForTransaction(int userId) {
+    public static void awardXpForTransaction(int userId) {
         try {
             QuestController questController = new QuestController();
             // Award XP for the transaction
@@ -242,6 +246,84 @@ public class TransactionController {
             e.printStackTrace();
             System.out.println("Failed to award XP for transaction!");
         }
+    }
+
+    /**
+     * Updates the balance for a user in the database
+     * @param userId The ID of the user
+     * @param newBalance The new balance to set
+     * @return true if the update was successful, false otherwise
+     */
+    public static boolean updateBalance(int userId, double newBalance) {
+        String query = "UPDATE users SET balance = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setDouble(1, newBalance);
+            pstmt.setInt(2, userId);
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Gets the total amount for transactions in a specific category for a user
+     * @param userId The ID of the user
+     * @param category The category to calculate the total for
+     * @return The total amount for the specified category
+     */
+    public static double getCategoryTotal(int userId, String category) {
+        String query = "SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND category = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setString(2, category);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("total");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    /**
+     * Gets all transactions for a user in a specific month
+     * @param userId The ID of the user
+     * @param year The year to filter by
+     * @param month The month to filter by (1-12)
+     * @return A list of transactions for the specified month
+     */
+    public static List<Transaction> getTransactionsByMonth(int userId, int year, int month) {
+        List<Transaction> transactions = new ArrayList<>();
+        String query = "SELECT * FROM transactions WHERE user_id = ? AND EXTRACT(YEAR FROM date) = ? AND EXTRACT(MONTH FROM date) = ? ORDER BY date DESC";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, year);
+            pstmt.setInt(3, month);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Transaction t = new Transaction(
+                            rs.getInt("id"),
+                            userId,
+                            rs.getTimestamp("date"),
+                            rs.getString("description"),
+                            rs.getString("category"),
+                            rs.getString("type"),
+                            rs.getDouble("amount")
+                    );
+                    transactions.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactions;
     }
 
     /**

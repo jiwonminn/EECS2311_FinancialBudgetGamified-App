@@ -195,7 +195,6 @@ Andy
 - Time took around 3 hours
 
 
-
 March 23th, 2025
 
 - Khalifa
@@ -206,7 +205,6 @@ March 23th, 2025
 - Integrated database connection into the application.
 - Streamlined setup for easier future management.
 - Time spent: 5 hours
-
 
 
 
@@ -222,16 +220,21 @@ March 25th, 2025
 
 
 
-
 March 26th, 2025
 
 - Khalifa
 - Modified almost all the controllers classes to use the new database modules.
 - Time spent: 3 hours
 
+Joshua
+- Fixed some of the quests not updating after user completion
+- Fixed quiz not giving XP after user completion
+- Added alerts to user after level up
+- Time spent was around 2 hours
 
-
-
+Andy
+- Fixed bug of user losing progress when clicking off the quiz or switching the tab by adding a confirmation pop up asking the user if they are sure they want to switch and that they will lose their progress
+- Time spent was 30 minutes 
 
 March 27th, 2025
 
@@ -246,7 +249,20 @@ March 27th, 2025
 -Removed repetitive steps to make future updates easier.
 -Time spent: 3 hours
 
+Andy
+- Fixed the unit tests and continued fixing the integration test
+- Added a financial tip section 
+- Added categories in the financial tip section 
+- Added financial tips where the user can access by click on one of the categories
+- Time spent was around 4 hours collectively 
 
+Jiwon
+- Started to fix the assigned bug in order to close it
+- Added a checker for custom category bug
+- Was not unsure what is that bug so had to contact the bug founder and discussed how the bug occurred and what he wanted me to solve 
+- Worked on GoalController codes
+- But did not push yet due to incomplete codes 
+- Time spent was around 2 hours 
 
 March 28th, 2025
 
@@ -260,3 +276,65 @@ March 28th, 2025
 -Updated the project setup to support testing without relying on external systems.
 -Documented all changes with clear commit messages.
 -Time spent: 3 hours
+
+Andy
+- Added more questions the quiz 
+- Fixed some of the bugs in the quiz section
+- Removed the take another quiz button
+- Fixed quiz answer being on the same choice
+- Time spent was around 2.5 hours
+
+March 29th, 2025
+
+Joshua
+- Implement proper GUI for leaderboard attempt
+- Tried to import React JS but scratched because of technical difficulties.
+- Time spend around 3 hours
+
+Andy
+- Continue fix of the Integration test
+- Fixed some bugs after errors in the last push
+- Time spent was around 1.5 hours
+
+Jiwon 
+- Completed on fixing the custom category bug
+- Started fixing on the CSV import as it was another bug
+- Handled the bug by ensuring that the program can accept multiple formats and added a checker for receiving the file
+- Committed all changes in codes
+- Time spent was around 5.5 hours in total
+
+March 30th, 2025
+Hosted a customer meeting to record the video, it was so good to share our projects and disussed about it in depth by communicating with the customer directly. Posted the summary video in Youtube and added into the planning document(ITR3)
+
+Joshua
+- Fixed a bunch of GUI issues
+- Re-added icons for log transactions category and synced them up with the recent transactions
+- Changed the icons on the tabs so windows users could see
+- Fixed text alignment in financial tips and added icons
+- Fixed Icon alignment issues in Quiz section
+- Added an option in settings to let users to change their username 
+- Synced usernames with leaderboard displayed names
+- Time spent around 3 hours 
+
+Peyton
+- Refactored AnalyticsUI class to deal with code smells
+- Broke up InitializeUI method into smaller methods to deal with long method smell
+- Split the chart creating methods into smaller parts to handle the different functionality of the methods
+- The methods handle dataset creation, chart creation, appearance customization, renderer configuration and axis configuration
+- This improves readability, maintainability, reusability and consistency of the creation methods
+- Closed the issue addressed on github
+- Time spent 1.5 hours
+
+Andy 
+- Continue fixing the integration test
+- Fixed Duplicate UI Component Code smell
+- Fixed “Methods that combine UI creation, event handling, and component layout (e.g. createCategoryCard()) tend to be lengthy and hard to follow” code smell- 
+- Created a smaller UI handler
+- Time spent was around 4 hours
+
+Jiwon
+- Pushed all commits
+- Worked on revising the planning document, log, and the document for reporting the bugs
+- Worked additional bugs related to CSV file, as well 
+- Time spent 3 hours 
+

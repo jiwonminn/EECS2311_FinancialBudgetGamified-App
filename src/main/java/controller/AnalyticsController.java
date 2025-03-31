@@ -16,10 +16,12 @@ import java.io.IOException;
 public class AnalyticsController {
     private int userId;
     private TransactionDao transactionDao;
+    private Analytics analytics;
 
     public AnalyticsController(int userId) {
         this.userId = userId;
         this.transactionDao = new TransactionDaoImpl();
+        this.analytics = new Analytics();
     }
 
     public List<Transaction> getTransactions() throws SQLException {
@@ -126,6 +128,24 @@ public class AnalyticsController {
 
             // Add the transaction to the database
             addTransaction(date, amount, description, type, category);
+        }
+    }
+
+    public void loadTransactions(File file) {
+        try {
+            List<String[]> transactions = analytics.readCSVFile(file);
+            // Process transactions (e.g., display them in the UI)
+            displayTransactions(transactions);
+        } catch (IOException e) {
+            // Handle error (e.g., show an error message in the UI)
+            System.err.println("Error loading transactions: " + e.getMessage());
+        }
+    }
+
+    private void displayTransactions(List<String[]> transactions) {
+        // Logic to display transactions in the UI
+        for (String[] transaction : transactions) {
+            System.out.println("Date: " + transaction[0] + ", Amount: " + transaction[1] + ", Category: " + transaction[2]);
         }
     }
 }

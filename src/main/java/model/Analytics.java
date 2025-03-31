@@ -15,6 +15,9 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+import java.util.Arrays;
 
 public class Analytics {
     private Map<String, Double> categorySpending;
@@ -32,28 +35,28 @@ public class Analytics {
 
     public List<String[]> readCSVFile(File file) throws IOException {
         List<String[]> transactions = new ArrayList<>();
-        CSVFormat format = CSVFormat.DEFAULT.builder()
-                .setSkipHeaderRecord(true)
-                .build();
 
-        try (FileReader reader = new FileReader(file, StandardCharsets.UTF_8);
-             CSVParser parser = format.parse(reader)) {
+        try (CSVReader csvReader = new CSVReader(new FileReader(file, StandardCharsets.UTF_8))) {
+            String[] record;
 
-            for (CSVRecord record : parser) {
+            // Read and discard the header line
+            csvReader.readNext(); // This reads the header line and discards it
+
+            while ((record = csvReader.readNext()) != null) {
                 // Check for the expected number of columns
-                if (record.size() < 4) { // At least Date, Description, Amount (Debit/Credit)
-                    throw new IllegalArgumentException("Invalid CSV format: insufficient columns in record " + record);
+                if (record.length < 4) { // At least Date, Description, Amount (Debit/Credit)
+                    throw new IllegalArgumentException("Invalid CSV format: insufficient columns in record " + Arrays.toString(record));
                 }
 
                 // Extract fields based on common column names
-                String date = getFieldValue(record, "Date", "Transaction Date", "date");
-                String description = getFieldValue(record, "Description", "Transaction Description", "description");
-                String debit = getFieldValue(record, "Debit", "Amount", "debit");
-                String credit = getFieldValue(record, "Credit", "Income", "credit");
+                String date = record[0]; // Assuming the first column is Date
+                String description = record[1]; // Assuming the second column is Description
+                String debit = record[2]; // Assuming the third column is Debit
+                String credit = record[3]; // Assuming the fourth column is Credit
 
                 // Validate the format of the transaction
                 if (!isValidTransaction(date, description, debit, credit)) {
-                    throw new IllegalArgumentException("Invalid transaction format: " + record);
+                    throw new IllegalArgumentException("Invalid transaction format: " + Arrays.toString(record));
                 }
 
                 // Skip if both debit and credit are empty
@@ -72,6 +75,9 @@ public class Analytics {
 
                 transactions.add(transaction);
             }
+        } catch (IOException e) {
+            System.err.println("Error reading CSV file: " + e.getMessage());
+            throw e; // Rethrow the exception after logging
         }
         return transactions;
     }

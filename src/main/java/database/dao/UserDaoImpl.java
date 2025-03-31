@@ -68,8 +68,8 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public int registerUser(String email, String password) throws SQLException {
-        int userId = authenticateUser(email, password);
-        if (userId != -1) {
+        // First check if user already exists
+        if (isEmailExists(email)) {
             System.out.println("User already exists with email: " + email);
             throw new SQLException("User with email " + email + " already exists");
         }
@@ -79,18 +79,30 @@ public class UserDaoImpl implements UserDao {
             pstmt.setString(1, email);
             pstmt.setString(2, password);
             System.out.println("Attempting to register new user with email: " + email);
+            
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Creating user failed, no rows affected.");
             }
+            
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    userId = generatedKeys.getInt(1);
+                    int userId = generatedKeys.getInt(1);
                     System.out.println("User registration successful. New user ID: " + userId);
                     return userId;
                 } else {
                     throw new SQLException("Creating user failed, no ID obtained.");
                 }
+            }
+        }
+    }
+
+    private boolean isEmailExists(String email) throws SQLException {
+        String query = "SELECT id FROM users WHERE email = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // Returns true if a user with this email exists
             }
         }
     }
