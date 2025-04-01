@@ -14,15 +14,21 @@ import database.dao.UserDao;
 import database.dao.UserDaoImpl;
 import model.User;
 import model.Transaction;
+import model.Quiz.QuizQuestion;
 import controller.UserController;
 import controller.UserControllerWithDatabase;
 import controller.TransactionController;
+import controller.QuizController;
+import view.QuizUI;
+import view.FinancialTipsUI;
+import view.CalendarUI;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.sql.PreparedStatement;
+import java.util.Map;
 
 public class FinancialAppIntegrationTest {
     private Connection connection;
@@ -171,7 +177,7 @@ public class FinancialAppIntegrationTest {
         
         User authenticatedUser = userDao.findUserById(userId);
         assertEquals(TEST_EMAIL, authenticatedUser.getEmail());
-        
+       
     }
 
     @Test
@@ -541,6 +547,136 @@ public class FinancialAppIntegrationTest {
             
             assertTrue(foundJanuaryTransaction, "January transaction with amount " + amount1 + " not found");
             assertTrue(foundFebruaryTransaction, "February transaction with amount " + amount2 + " not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("UI and Educational Content Tests")
+    class UIAndEducationalContentTests {
+        
+        @Test
+        @DisplayName("Test Quiz UI Integration")
+        void testQuizUIIntegration() throws SQLException {
+            // Create UI components with authenticated user
+            int userId = userControllerWithDb.authenticateUser(TEST_EMAIL, TEST_PASSWORD);
+            assertTrue(userId > 0);
+            
+            // Create user controller for the UI
+            UserController uiUserController = new UserController(TEST_USERNAME, TEST_EMAIL, INITIAL_BALANCE);
+            uiUserController.setUserId(userId);
+            
+            // Create quiz controller
+            QuizController quizController = new QuizController(uiUserController);
+            
+            // Create and initialize QuizUI
+            QuizUI quizUI = new QuizUI(quizController);
+            
+            // Verify quiz UI was created successfully
+            assertNotNull(quizUI, "Quiz UI should be created successfully");
+            
+            // Verify quiz controller has questions loaded
+            assertFalse(quizController.getQuiz().getQuestions().isEmpty(), 
+                      "Quiz should have questions loaded");
+            
+            // Start a new quiz and check quiz in progress flag
+            quizController.startNewQuiz();
+            
+            // Set selected answer for the first question to the correct answer
+            QuizQuestion currentQuestion = quizController.getQuiz().getCurrentQuestion();
+            assertNotNull(currentQuestion, "Should have a current question");
+            
+            // Submit the correct answer
+            boolean isCorrect = quizController.submitAnswer(currentQuestion.getCorrectAnswerIndex());
+            assertTrue(isCorrect, "Should mark correct answer as correct");
+            
+            // Move to the next question
+            boolean hasNext = quizController.nextQuestion();
+            if (hasNext) {
+                // Test another question to ensure quiz flow works
+                currentQuestion = quizController.getQuiz().getCurrentQuestion();
+                assertNotNull(currentQuestion, "Should have a next question");
+            }
+            
+            // Verify quiz can be completed
+            int initialScore = quizController.getQuiz().getScore();
+            assertTrue(initialScore > 0, "Score should increase after correct answer");
+        }
+        
+        @Test
+        @DisplayName("Test Financial Tips UI Integration")
+        void testFinancialTipsUIIntegration() {
+            // Create the tips UI
+            FinancialTipsUI tipsUI = new FinancialTipsUI();
+            
+            // Verify UI was created successfully
+            assertNotNull(tipsUI, "Financial Tips UI should be created successfully");
+            
+            // Get all categories from the UI by using reflection to access private field
+            try {
+                java.lang.reflect.Field categoryField = FinancialTipsUI.class.getDeclaredField("tipsByCategory");
+                categoryField.setAccessible(true);
+                Map<String, String[]> tipsByCategory = (Map<String, String[]>) categoryField.get(tipsUI);
+                
+                // Verify categories and tips are loaded
+                assertNotNull(tipsByCategory, "Tips by category should be initialized");
+                assertFalse(tipsByCategory.isEmpty(), "Should have tips categories loaded");
+                
+                // Check some specific categories exist
+                assertTrue(tipsByCategory.containsKey("Budgeting"), "Should have Budgeting category");
+                assertTrue(tipsByCategory.containsKey("Saving"), "Should have Saving category");
+                assertTrue(tipsByCategory.containsKey("Investing"), "Should have Investing category");
+                
+                // Verify each category has tips
+                for (Map.Entry<String, String[]> entry : tipsByCategory.entrySet()) {
+                    String[] tips = entry.getValue();
+                    assertNotNull(tips, "Tips for " + entry.getKey() + " should not be null");
+                    assertTrue(tips.length > 0, "Should have tips for " + entry.getKey());
+                }
+            } catch (Exception e) {
+                fail("Failed to access tipsByCategory field: " + e.getMessage());
+            }
+        }
+        
+        @Test
+        @DisplayName("Test UI Navigation Integration")
+        void testUINavigationIntegration() throws SQLException {
+            // Authenticate user
+            int userId = userControllerWithDb.authenticateUser(TEST_EMAIL, TEST_PASSWORD);
+            assertTrue(userId > 0);
+            
+            // Get user details for the CalendarUI constructor
+            User user = userDao.findUserById(userId);
+            assertNotNull(user, "User should exist");
+            
+            // Create CalendarUI with the proper constructor
+            CalendarUI calendarUI = new CalendarUI(userId, user.getUsername(), user.getEmail());
+            
+            // Verify CalendarUI was created successfully
+            assertNotNull(calendarUI, "Calendar UI should be created successfully");
+            
+            // Test tab switching (using reflection to access private method)
+            try {
+                // Get the switchTab method
+                java.lang.reflect.Method switchTabMethod = 
+                    CalendarUI.class.getDeclaredMethod("switchTab", String.class);
+                switchTabMethod.setAccessible(true);
+                
+                // Switch to various tabs and verify no exceptions are thrown
+                String[] tabs = {"Dashboard", "Goals", "Quests", "Analytics", 
+                                "Quiz", "Financial Tips", "Transaction Log"};
+                
+                for (String tab : tabs) {
+                    try {
+                        switchTabMethod.invoke(calendarUI, tab);
+                        // If we get here, no exception was thrown
+                        assertTrue(true, "Should be able to switch to " + tab + " tab");
+                    } catch (Exception e) {
+                        fail("Failed to switch to " + tab + " tab: " + e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                fail("Failed to access switchTab method: " + e.getMessage());
+            }
         }
     }
 }
