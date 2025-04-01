@@ -20,7 +20,8 @@ The main entry point for the application is the `app.Main` class. This class ini
 
 1. Make sure you have Maven installed
 2. Navigate to the project root directory
-3. Run the following command:
+3. Change the URL, USER and PASSWORD string in DatabaseManager class to match the database on your computer
+4. Run the following command:
 
 ```
 mvn clean package
