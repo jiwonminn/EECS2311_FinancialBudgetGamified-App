@@ -8,11 +8,19 @@ import java.util.concurrent.Executor;
 public class StubConnection implements Connection {
     private final Map<Integer, Map<String, Object>> users;
     private final Map<Integer, Map<String, Object>> userExperience;
+    private final Map<Integer, Map<String, Object>> transactions;
     private boolean closed = false;
 
     public StubConnection(Map<Integer, Map<String, Object>> users, Map<Integer, Map<String, Object>> userExperience) {
         this.users = users;
         this.userExperience = userExperience;
+        this.transactions = null;
+    }
+
+    public StubConnection(Map<Integer, Map<String, Object>> users, Map<Integer, Map<String, Object>> userExperience, Map<Integer, Map<String, Object>> transactions) {
+        this.users = users;
+        this.userExperience = userExperience;
+        this.transactions = transactions;
     }
 
     @Override
@@ -22,7 +30,7 @@ public class StubConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new StubPreparedStatement(users, userExperience, sql);
+        return new StubPreparedStatement(users, userExperience, transactions, sql);
     }
 
     @Override

@@ -2,6 +2,7 @@ package unitTests;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +22,7 @@ class QuizControllerTest {
     private static final double INITIAL_BALANCE = 1000.0;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws SQLException {
         userController = new UserController(TEST_USERNAME, TEST_EMAIL, INITIAL_BALANCE);
         quizController = new QuizController(userController);
     }

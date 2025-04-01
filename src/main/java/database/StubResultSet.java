@@ -3,24 +3,33 @@ package database;
 import java.sql.*;
 import java.util.Map;
 import java.util.Calendar;
+import java.util.List;
+import java.util.ArrayList;
 
 public class StubResultSet implements ResultSet {
     private final Map<Integer, Map<String, Object>> users;
     private final Map<Integer, Map<String, Object>> userExperience;
+    private final Map<Integer, Map<String, Object>> transactions;
     private final Integer userId;
     private boolean isBeforeFirst = true;
     private boolean isAfterLast = false;
     private boolean isClosed = false;
+    private int currentRow = -1;
+    private List<Integer> transactionIds;
 
-    public StubResultSet(Map<Integer, Map<String, Object>> users) {
-        this.users = users;
+    public StubResultSet(Map<Integer, Map<String, Object>> data) {
+        this.users = null;
         this.userExperience = null;
+        this.transactions = data;
         this.userId = null;
+        this.transactionIds = data != null && !data.isEmpty() ? new ArrayList<>(data.keySet()) : new ArrayList<>();
+        System.out.println("Created ResultSet with " + (transactionIds != null ? transactionIds.size() : 0) + " transactions");
     }
 
     public StubResultSet(Map<Integer, Map<String, Object>> users, Integer userId) {
         this.users = users;
         this.userExperience = null;
+        this.transactions = null;
         this.userId = userId;
     }
 
@@ -28,9 +37,11 @@ public class StubResultSet implements ResultSet {
         if (isExperience) {
             this.users = null;
             this.userExperience = data;
+            this.transactions = null;
         } else {
             this.users = data;
             this.userExperience = null;
+            this.transactions = null;
         }
         this.userId = userId;
     }
@@ -40,6 +51,27 @@ public class StubResultSet implements ResultSet {
         if (isClosed) {
             throw new SQLException("ResultSet is closed");
         }
+        
+        if (transactions != null) {
+            if (transactionIds.isEmpty()) {
+                // No data in result set
+                System.out.println("No transactions found in result set");
+                return false;
+            }
+            
+            if (isBeforeFirst) {
+                isBeforeFirst = false;
+                currentRow = 0;
+                System.out.println("Moving to first row: " + currentRow);
+                return true;
+            }
+            
+            currentRow++;
+            isAfterLast = currentRow >= transactionIds.size();
+            System.out.println("Moving to next row: " + currentRow + ", after last: " + isAfterLast);
+            return !isAfterLast;
+        }
+        
         if (userId != null) {
             if (isBeforeFirst) {
                 isBeforeFirst = false;
@@ -66,6 +98,34 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            switch (columnIndex) {
+                case 1: // id
+                    return String.valueOf(transactionIds.get(currentRow));
+                case 2: // user_id
+                    return String.valueOf(transaction.get("user_id"));
+                case 3: // date
+                    return transaction.get("date").toString();
+                case 4: // description
+                    return (String) transaction.get("description");
+                case 5: // category
+                    return (String) transaction.get("category");
+                case 6: // type
+                    return (String) transaction.get("type");
+                case 7: // amount
+                    return String.valueOf(transaction.get("amount"));
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        }
+        
         if (userId == null) {
             throw new SQLException("No current row");
         }
@@ -122,13 +182,30 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            switch (columnIndex) {
+                case 1: // id
+                    return transactionIds.get(currentRow);
+                case 2: // user_id
+                    return (Integer) transaction.get("user_id");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        }
+        
         if (userId == null) {
             throw new SQLException("No current row");
         }
         Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
         if (data == null) {
-            // For generated keys, return the userId directly
-            return userId;
+            throw new SQLException("Data not found");
         }
         if (userExperience != null) {
             switch (columnIndex) {
@@ -146,7 +223,10 @@ public class StubResultSet implements ResultSet {
                 case 1: // id
                     return userId;
                 case 4: // points
-                    return (Integer) data.get("points");
+                    Object points = data.get("points");
+                    return points != null ? (Integer) points : 0;
+                case 5: // balance
+                    return ((Double) data.get("balance")).intValue();
                 default:
                     throw new SQLException("Invalid column index: " + columnIndex);
             }
@@ -165,18 +245,58 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            switch (columnIndex) {
+                case 7: // amount
+                    return (Double) transaction.get("amount");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        }
+        
         if (userId == null) {
             throw new SQLException("No current row");
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            throw new SQLException("User not found");
+        Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
+        if (data == null) {
+            throw new SQLException("Data not found");
         }
-        switch (columnIndex) {
-            case 5: // balance
-                return (Double) userData.get("balance");
-            default:
-                throw new SQLException("Invalid column index: " + columnIndex);
+        if (userExperience != null) {
+            switch (columnIndex) {
+                case 1: // user_id
+                    return userId;
+                case 2: // current_xp
+                    return (Integer) data.get("current_xp");
+                case 3: // level
+                    return (Integer) data.get("level");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        } else {
+            switch (columnIndex) {
+                case 1: // id
+                    return userId;
+                case 2: // email
+                    throw new SQLException("Cannot convert email to double");
+                case 3: // password
+                    throw new SQLException("Cannot convert password to double");
+                case 4: // points
+                    return (Integer) data.get("points");
+                case 5: // balance
+                    return (Double) data.get("balance");
+                case 6: // total_budget
+                    Object budget = data.get("total_budget");
+                    return budget != null ? (Double) budget : 0.0;
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
         }
     }
 
@@ -192,6 +312,21 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            switch (columnIndex) {
+                case 3: // date
+                    return (Date) transaction.get("date");
+                default:
+                    throw new SQLException("Invalid column index: " + columnIndex);
+            }
+        }
         throw new SQLException("Not supported in stub implementation");
     }
 
@@ -202,6 +337,31 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            
+            // Handle the date column which is stored as a java.sql.Date
+            if (columnIndex == 3) { // date column
+                Object dateObj = transaction.get("date");
+                if (dateObj instanceof java.sql.Date) {
+                    java.sql.Date date = (java.sql.Date) dateObj;
+                    // Convert the Date to a Timestamp
+                    return new Timestamp(date.getTime());
+                } else if (dateObj instanceof Timestamp) {
+                    return (Timestamp) dateObj;
+                } else {
+                    throw new SQLException("Date column is not a Date or Timestamp: " + dateObj);
+                }
+            }
+            
+            throw new SQLException("Invalid column index for timestamp: " + columnIndex);
+        }
         throw new SQLException("Not supported in stub implementation");
     }
 
@@ -222,42 +382,44 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        if (columnLabel.equals("username")) {
-            return getString(6); // Use the same logic as column index 6
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            
+            Integer transactionId = transactionIds.get(currentRow);
+            Map<String, Object> transaction = transactions.get(transactionId);
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            
+            if (columnLabel.equalsIgnoreCase("id")) {
+                return String.valueOf(transactionId);
+            } else if (transaction.containsKey(columnLabel.toLowerCase())) {
+                return String.valueOf(transaction.get(columnLabel.toLowerCase()));
+            } else {
+                throw new SQLException("Invalid column label: " + columnLabel);
+            }
         }
+        
         if (userId == null) {
             throw new SQLException("No current row");
         }
+        
         Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
         if (data == null) {
             throw new SQLException("Data not found");
         }
-        if (userExperience != null) {
-            switch (columnLabel.toLowerCase()) {
-                case "user_id":
-                    return String.valueOf(userId);
-                case "current_xp":
-                    return String.valueOf(data.get("current_xp"));
-                case "level":
-                    return String.valueOf(data.get("level"));
-                default:
-                    throw new SQLException("Invalid column label: " + columnLabel);
-            }
+        
+        if (columnLabel.equalsIgnoreCase("id")) {
+            return String.valueOf(userId);
+        } else if (data.containsKey(columnLabel.toLowerCase())) {
+            return String.valueOf(data.get(columnLabel.toLowerCase()));
+        } else if (columnLabel.equalsIgnoreCase("username") && data.containsKey("email")) {
+            String email = (String) data.get("email");
+            return email != null ? email.split("@")[0] : "";
         } else {
-            switch (columnLabel.toLowerCase()) {
-                case "id":
-                    return String.valueOf(userId);
-                case "email":
-                    return (String) data.get("email");
-                case "password":
-                    return (String) data.get("password");
-                case "points":
-                    return String.valueOf(data.get("points"));
-                case "balance":
-                    return String.valueOf(data.get("balance"));
-                default:
-                    throw new SQLException("Invalid column label: " + columnLabel);
-            }
+            throw new SQLException("Invalid column label: " + columnLabel);
         }
     }
 
@@ -278,21 +440,37 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public int getInt(String columnLabel) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            if (columnLabel.equalsIgnoreCase("id")) {
+                return transactionIds.get(currentRow);
+            } else if (columnLabel.equalsIgnoreCase("user_id")) {
+                return (Integer) transaction.get("user_id");
+            }
+        }
+        
         if (userId == null) {
             throw new SQLException("No current row");
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            // For generated keys, return the userId directly
-            return userId;
+        Map<String, Object> data = userExperience != null ? userExperience.get(userId) : users.get(userId);
+        if (data == null) {
+            throw new SQLException("Data not found");
         }
-        switch (columnLabel.toLowerCase()) {
-            case "id":
-                return userId;
-            case "points":
-                return (Integer) userData.get("points");
-            default:
-                throw new SQLException("Invalid column label: " + columnLabel);
+        
+        if (columnLabel.equalsIgnoreCase("id")) {
+            return userId;
+        } else if (columnLabel.equalsIgnoreCase("user_id")) {
+            return userId;
+        } else if (data.containsKey(columnLabel.toLowerCase()) && data.get(columnLabel.toLowerCase()) instanceof Integer) {
+            return (Integer) data.get(columnLabel.toLowerCase());
+        } else {
+            throw new SQLException("Invalid column label or type: " + columnLabel);
         }
     }
 
@@ -308,19 +486,21 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public double getDouble(String columnLabel) throws SQLException {
-        if (userId == null) {
-            throw new SQLException("No current row");
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            if (columnLabel.equalsIgnoreCase("amount")) {
+                return (Double) transaction.get("amount");
+            } else if (columnLabel.equalsIgnoreCase("total")) {
+                return (Double) transaction.get("total");
+            }
         }
-        Map<String, Object> userData = users.get(userId);
-        if (userData == null) {
-            throw new SQLException("User not found");
-        }
-        switch (columnLabel.toLowerCase()) {
-            case "balance":
-                return (Double) userData.get("balance");
-            default:
-                throw new SQLException("Invalid column label: " + columnLabel);
-        }
+        throw new SQLException("Invalid column label: " + columnLabel);
     }
 
     @Override
@@ -335,7 +515,19 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public Date getDate(String columnLabel) throws SQLException {
-        throw new SQLException("Not supported in stub implementation");
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            if (columnLabel.equalsIgnoreCase("date")) {
+                return (Date) transaction.get("date");
+            }
+        }
+        throw new SQLException("Invalid column label: " + columnLabel);
     }
 
     @Override
@@ -345,6 +537,30 @@ public class StubResultSet implements ResultSet {
 
     @Override
     public Timestamp getTimestamp(String columnLabel) throws SQLException {
+        if (transactions != null) {
+            if (currentRow < 0 || currentRow >= transactionIds.size()) {
+                throw new SQLException("No current row");
+            }
+            Map<String, Object> transaction = transactions.get(transactionIds.get(currentRow));
+            if (transaction == null) {
+                throw new SQLException("Transaction not found");
+            }
+            
+            if (columnLabel.equalsIgnoreCase("date")) {
+                Object dateObj = transaction.get("date");
+                if (dateObj instanceof java.sql.Date) {
+                    java.sql.Date date = (java.sql.Date) dateObj;
+                    // Convert the Date to a Timestamp
+                    return new Timestamp(date.getTime());
+                } else if (dateObj instanceof Timestamp) {
+                    return (Timestamp) dateObj;
+                } else {
+                    throw new SQLException("Date column is not a Date or Timestamp: " + dateObj);
+                }
+            }
+            
+            throw new SQLException("Invalid column label for timestamp: " + columnLabel);
+        }
         throw new SQLException("Not supported in stub implementation");
     }
 

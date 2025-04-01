@@ -8,19 +8,28 @@ import java.sql.*;
 public class UserController {
     private User user;
     private int userId;
+    private Connection connection;
 
-    public UserController(String username, String email, double balance) {
+    public UserController(String username, String email, double balance) throws SQLException {
         this.user = new User(username, email, balance);
         // Default user ID, should be updated from database when available
         this.userId = 1;
+        this.connection = DatabaseManager.getConnection();
     }
     
     /**
      * Constructor with user ID
      */
-    public UserController(int userId, String username, String email, double balance) {
+    public UserController(int userId, String username, String email, double balance) throws SQLException {
         this.user = new User(username, email, balance);
         this.userId = userId;
+        this.connection = DatabaseManager.getConnection();
+    }
+
+    public UserController(Connection connection, int userId, String username, String email, double balance) {
+        this.user = new User(username, email, balance);
+        this.userId = userId;
+        this.connection = connection;
     }
 
     public void addPoints(int points) {
@@ -73,12 +82,23 @@ public class UserController {
      * @return true if successful, false otherwise
      */
     public boolean setMonthlyBudget(int userId, double budget) {
-        String query = "UPDATE users SET monthly_budget = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        // First try to update existing budget
+        String updateQuery = "UPDATE user_budget SET total_budget = ? WHERE user_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(updateQuery)) {
             pstmt.setDouble(1, budget);
             pstmt.setInt(2, userId);
             int affectedRows = pstmt.executeUpdate();
+            
+            // If no rows were updated, insert a new budget
+            if (affectedRows == 0) {
+                String insertQuery = "INSERT INTO user_budget (user_id, total_budget) VALUES (?, ?)";
+                try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, userId);
+                    insertStmt.setDouble(2, budget);
+                    affectedRows = insertStmt.executeUpdate();
+                }
+            }
+            
             return affectedRows > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -92,13 +112,12 @@ public class UserController {
      * @return the monthly budget amount
      */
     public double getMonthlyBudget(int userId) {
-        String query = "SELECT monthly_budget FROM users WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        String query = "SELECT total_budget FROM user_budget WHERE user_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setInt(1, userId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("monthly_budget");
+                    return rs.getDouble("total_budget");
                 }
             }
         } catch (SQLException e) {
@@ -113,14 +132,17 @@ public class UserController {
      * @return true if budget is exceeded, false otherwise
      */
     public boolean isBudgetExceeded(int userId) {
-        String query = "SELECT monthly_budget, (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE)) as total_spent FROM users WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        String query = "SELECT ub.total_budget, " +
+                      "(SELECT COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END), 0) FROM transactions " +
+                      "WHERE user_id = ? AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM CURRENT_DATE) " +
+                      "AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE)) as total_spent " +
+                      "FROM user_budget ub WHERE ub.user_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setInt(1, userId);
             pstmt.setInt(2, userId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    double budget = rs.getDouble("monthly_budget");
+                    double budget = rs.getDouble("total_budget");
                     double spent = rs.getDouble("total_spent");
                     return spent > budget;
                 }

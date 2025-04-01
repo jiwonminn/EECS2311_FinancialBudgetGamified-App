@@ -77,4 +77,3 @@ public class ExperienceDaoImpl implements ExperienceDao {
         return ((currentLevel + 1) * (currentLevel + 1)) * 100;
     }
 }
-

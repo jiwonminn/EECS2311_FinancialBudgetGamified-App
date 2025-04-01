@@ -9,6 +9,7 @@ public class StubDatabaseConfig implements DatabaseConfig {
     private static StubDatabaseConfig instance;
     private final Map<Integer, Map<String, Object>> users = new HashMap<>();
     private final Map<Integer, Map<String, Object>> userExperience = new HashMap<>();
+    private final Map<Integer, Map<String, Object>> transactions = new HashMap<>();
     private int nextUserId = 1;
     private boolean isTestMode = false;
 
@@ -33,6 +34,15 @@ public class StubDatabaseConfig implements DatabaseConfig {
             instance = new StubDatabaseConfig();
         }
         return instance;
+    }
+
+    public static void resetInstance() {
+        if (instance != null) {
+            instance.clearTransactions();
+            instance.clearUsers();
+            instance.clearUserExperience();
+        }
+        instance = null;
     }
 
     private void addTestUser(String email, String password) {
@@ -60,6 +70,10 @@ public class StubDatabaseConfig implements DatabaseConfig {
         return userExperience;
     }
 
+    public Map<Integer, Map<String, Object>> getTransactions() {
+        return transactions;
+    }
+
     public int getNextUserId() {
         return nextUserId;
     }
@@ -70,7 +84,7 @@ public class StubDatabaseConfig implements DatabaseConfig {
 
     @Override
     public Connection getConnection() throws SQLException {
-        return new StubConnection(users, userExperience);
+        return new StubConnection(users, userExperience, transactions);
     }
 
     @Override
@@ -81,5 +95,33 @@ public class StubDatabaseConfig implements DatabaseConfig {
     @Override
     public void closeConnection() throws SQLException {
         // No-op for stub database
+    }
+
+    public void clearTransactions() {
+        System.out.println("Clearing all transactions from StubDatabaseConfig");
+        transactions.clear();
+    }
+
+    public boolean isTransactionsEmpty() {
+        boolean isEmpty = transactions.isEmpty();
+        System.out.println("Checking if transactions are empty: " + isEmpty + " (size=" + transactions.size() + ")");
+        return isEmpty;
+    }
+
+    public void clearUsers() {
+        System.out.println("Clearing all users from StubDatabaseConfig");
+        users.clear();
+        nextUserId = 1;
+    }
+
+    public void clearUserExperience() {
+        System.out.println("Clearing all user experience data from StubDatabaseConfig");
+        userExperience.clear();
+    }
+
+    public boolean isUsersEmpty() {
+        boolean isEmpty = users.isEmpty();
+        System.out.println("Checking if users are empty: " + isEmpty + " (size=" + users.size() + ")");
+        return isEmpty;
     }
 } 

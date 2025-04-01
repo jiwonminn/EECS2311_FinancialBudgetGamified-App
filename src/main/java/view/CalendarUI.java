@@ -912,16 +912,9 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
         try {
             // Get description
             String description = descriptionField.getText().trim();
-            
-            // Get category safely
-            String category = "Other"; // Default category
-            if (categoryComboBox != null && categoryComboBox.getSelectedItem() != null) {
-                category = categoryComboBox.getSelectedItem().toString();
-            }
-            
-            // Make description optional by using category as default if empty
             if (description.isEmpty()) {
-                description = category; // Use the category as the description
+                JOptionPane.showMessageDialog(this, "Please enter a description.");
+                return;
             }
             
             // Get amount
@@ -945,6 +938,12 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
             
             // Get transaction type
             boolean isIncome = incomeButton.isSelected();
+            
+            // Get category safely
+            String category = "Other"; // Default category
+            if (categoryComboBox != null && categoryComboBox.getSelectedItem() != null) {
+                category = categoryComboBox.getSelectedItem().toString();
+            }
             
             // Add transaction
             transactionController.addTransaction(description, amount, date, isIncome, category);
@@ -1091,7 +1090,7 @@ public class CalendarUI extends JFrame implements CategoryChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int transactionId = transaction.getId();
-                boolean success = TransactionController.deleteTransaction(transactionId);
+                boolean success = transactionController.deleteTransaction(transactionId);
                 if (success) {
                     // Update the UI to remove the deleted transaction
                     try {
