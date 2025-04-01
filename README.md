@@ -20,8 +20,7 @@ The main entry point for the application is the `app.Main` class. This class ini
 
 1. Make sure you have Maven installed
 2. Navigate to the project root directory
-3. Change the URL, USER and PASSWORD string in DatabaseManager class to match the database on your computer
-4. Run the following command:
+3. Run the following command:
 
 ```
 mvn clean package
@@ -31,7 +30,11 @@ java -jar target/FBGApp-1.0-SNAPSHOT.jar
 ### Using an IDE
 
 1. Open the project in your IDE (Eclipse, IntelliJ IDEA, etc.)
-2. Run the `app.Main` class
+2. Change the URL, USER and PASSWORD string in DatabaseManager class to match the database on your computer
+    private static final String URL = "jdbc:postgresql://localhost:5432/database_name";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
+3. Run the `app.Main` class
 
 ## Features
 
