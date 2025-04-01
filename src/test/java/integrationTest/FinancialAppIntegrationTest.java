@@ -37,7 +37,7 @@ public class FinancialAppIntegrationTest {
     private TransactionController transactionController;
     private UserDao userDao;
     private User testUser;
-    private static final String TEST_PASSWORD = "testPassword123";
+    private static final String TEST_PASSWORD = "testPassword1234";
     private static final String TEST_USERNAME = "testUser";
     private String TEST_EMAIL; // Make this an instance variable so we can set it uniquely each time
     private static final double INITIAL_BALANCE = 0.0;
