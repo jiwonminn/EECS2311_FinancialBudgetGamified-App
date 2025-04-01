@@ -31,9 +31,11 @@ java -jar target/FBGApp-1.0-SNAPSHOT.jar
 
 1. Open the project in your IDE (Eclipse, IntelliJ IDEA, etc.)
 2. Change the URL, USER and PASSWORD string in DatabaseManager class to match the database on your computer
-    private static final String URL = "jdbc:postgresql://localhost:5432/database_name";
-    private static final String USER = "your_username";
-    private static final String PASSWORD = "your_password";
+```
+private static final String URL = "jdbc:postgresql://localhost:5432/database_name";
+private static final String USER = "your_username";
+private static final String PASSWORD = "your_password";
+```
 3. Run the `app.Main` class
 
 ## Features
