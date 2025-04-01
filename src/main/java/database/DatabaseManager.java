@@ -9,9 +9,9 @@ import java.sql.Statement;
 
 public class DatabaseManager{
     // Updated URL to match host port (5431) and database name (KKS)
-	private static final String URL = "jdbc:postgresql://localhost:5432/your PostgreSQL database name";
-	private static final String USER = "your PostgreSQL username";
-	private static final String PASSWORD = "your PostgreSQL password";
+    private static final String URL = "jdbc:postgresql://localhost:5431/KKS";
+    private static final String USER = "khalifa";
+    private static final String PASSWORD = "your_password";
 
     // Always return a new connection
     public static Connection getConnection() throws SQLException {
